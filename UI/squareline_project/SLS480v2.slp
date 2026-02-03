@@ -1,0 +1,12 @@
+{
+    "uiExportFolderPath": "/Users/matti.vesalasofigate.com/Documents/Arduino/ESP32-Crowpanel-compass/ui_files/",
+    "projectExportFolderPath": "/Users/matti.vesalasofigate.com/Documents/Arduino/ESP32-Crowpanel-compass/UI/squareline_project",
+    "drive_stdio": "-",
+    "drive_stdio_path": "",
+    "drive_posix": "-",
+    "drive_posix_path": "",
+    "drive_win32": "-",
+    "drive_win32_path": "",
+    "drive_fatfs": "-",
+    "drive_fatfs_path": ""
+}

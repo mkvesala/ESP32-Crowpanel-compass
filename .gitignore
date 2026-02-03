@@ -1,0 +1,13 @@
+# Secrets - WiFi credentials etc.
+secrets.h
+
+# Build artifacts
+build/
+.pio/
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store

@@ -1,0 +1,14 @@
+{
+  "codename": "FontHeading64b",
+  "ttf_path": "/assets/ArchivoBlack-Regular.ttf",
+  "bin_path": "/assets/ui_font_FontHeading64b.bin",
+  "c_path": "/assets/ui_font_FontHeading64b.c",
+  "cfg_path": "/assets/ui_font_FontHeading64b.fcfg",
+  "size": 64,
+  "bpp": 4,
+  "letters": 0,
+  "ranges": [],
+  "symbols": "1234567890-°MT",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}
