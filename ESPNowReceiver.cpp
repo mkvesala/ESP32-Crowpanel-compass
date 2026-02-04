@@ -8,6 +8,7 @@ volatile uint32_t ESPNowReceiver::_last_rx_millis = 0;
 volatile uint32_t ESPNowReceiver::_packet_count = 0;
 ESPNowReceiver* ESPNowReceiver::_instance = nullptr;
 
+// Constructor
 ESPNowReceiver::ESPNowReceiver()
     : _channel(1)
     , _packets_per_second(0.0f)
@@ -25,19 +26,19 @@ bool ESPNowReceiver::begin(uint8_t channel) {
 
     _channel = channel;
 
-    // WiFi STA mode ilman yhteyttä
+    // WiFi STA mode but disconnected
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
-    // Aseta kanava manuaalisesti
+    // Set channel manually
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 
-    // Alusta ESP-NOW
+    // Init ESP-NOW
     if (esp_now_init() != ESP_OK) {
         return false;
     }
 
-    // Rekisteröi callback
+    // Register callback
     esp_now_register_recv_cb(onDataRecvStatic);
 
     _initialized = true;
@@ -53,7 +54,7 @@ bool ESPNowReceiver::begin(const char* ssid, const char* password, uint32_t time
         return true;
     }
 
-    // WiFi STA mode ja yhdistä
+    // WiFi STA mode and connect
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
@@ -67,12 +68,12 @@ bool ESPNowReceiver::begin(const char* ssid, const char* password, uint32_t time
 
     _channel = WiFi.channel();
 
-    // Alusta ESP-NOW
+    // Init ESP-NOW
     if (esp_now_init() != ESP_OK) {
         return false;
     }
 
-    // Rekisteröi callback
+    // Register callback
     esp_now_register_recv_cb(onDataRecvStatic);
 
     _initialized = true;
@@ -90,21 +91,18 @@ void ESPNowReceiver::onDataRecvStatic(const uint8_t* mac_addr, const uint8_t* da
 }
 
 void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
-    // Tarkista paketin koko - odotetaan HeadingDelta (16 tavua)
+    // 
     if (data_len != sizeof(HeadingDelta)) {
-        // Debug: väärän kokoinen paketti
-        // Serial.printf("[ESPNow] Wrong size: %d (expected %d)\n",
-        //               data_len, sizeof(HeadingDelta));
         return;
     }
 
-    // Kopioi ja muunna data
+    // Copy and translate data
     HeadingDelta delta;
     memcpy(&delta, data, sizeof(HeadingDelta));
 
     HeadingData converted = convertDeltaToData(delta);
 
-    // Tallenna thread-safe
+    // Save thread-safe
     portENTER_CRITICAL(&_mux);
     _latest_data = converted;
     _has_new_data = true;
@@ -137,7 +135,7 @@ bool ESPNowReceiver::isConnected(uint32_t timeout_ms) const {
     portEXIT_CRITICAL(&_mux);
 
     if (last_rx == 0) {
-        return false;  // Ei vielä vastaanotettu mitään
+        return false; 
     }
 
     return (millis() - last_rx) < timeout_ms;

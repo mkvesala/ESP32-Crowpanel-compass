@@ -6,97 +6,50 @@
 #include <esp_now.h>
 #include "HeadingData.h"
 
-/**
- * @brief ESP-NOW vastaanottoluokka
- *
- * Vastaanottaa HeadingDelta broadcast-viestejä ja muuntaa ne
- * sisäiseen HeadingData formaattiin.
- *
- * Suunniteltu laajennettavaksi kaksisuuntaiseen kommunikaatioon (Phase 2).
- *
- * Käyttö:
- *   ESPNowReceiver receiver;
- *   receiver.begin("your_ssid", "your_password");  // Tai begin() ilman WiFi:tä
- *
- *   // loop():ssa
- *   if (receiver.hasNewData()) {
- *       HeadingData data = receiver.getData();
- *       // käytä dataa
- *   }
- */
+// === C L A S S  E S P N O W R E C E I V E R ===
+//
+// Class ESPNowReceiver - the "receiver", responsible for receiving data via ESP-NOW
+// Owns:
+// Uses:
+// Init: receiver.begin(ssid, password) or without wifi receiver.begin()
+// Loop: if (receiver.hasNewData()) HeadingData data = receiver.getData();
+
 class ESPNowReceiver {
 public:
     ESPNowReceiver();
 
-    /**
-     * @brief Alusta ESP-NOW ilman WiFi-yhteyttä
-     *
-     * HUOM: Vaatii että lähettäjä ja vastaanotin ovat samalla kanavalla.
-     * Oletuskanava on 1, mutta voi vaihdella.
-     *
-     * @param channel WiFi-kanava (1-13), oletus 1
-     * @return true jos alustus onnistui
-     */
+    // Init
     bool begin(uint8_t channel = 1);
-
-    /**
-     * @brief Alusta ESP-NOW WiFi-yhteydellä (suositeltu)
-     *
-     * Yhdistää WiFi-verkkoon varmistaen saman kanavan lähettäjän kanssa.
-     *
-     * @param ssid WiFi-verkon nimi
-     * @param password WiFi-salasana
-     * @param timeout_ms Yhteyden muodostuksen timeout
-     * @return true jos alustus onnistui
-     */
     bool begin(const char* ssid, const char* password, uint32_t timeout_ms = 10000);
 
-    /**
-     * @brief Tarkista onko uutta dataa saatavilla
-     */
+    // Check for newly received data
     bool hasNewData();
 
-    /**
-     * @brief Hae viimeisin data ja nollaa uusi-data -lippu
-     *
-     * Thread-safe, käyttää kritistä sektiota.
-     */
+    // Get the latest data - thread safe
     HeadingData getData();
 
-    /**
-     * @brief Tarkista onko yhteys aktiivinen
-     *
-     * @param timeout_ms Timeout millisekunneissa (oletus 500ms)
-     * @return true jos dataa vastaanotettu timeout-ajan sisällä
-     */
+    // Check the connected state
     bool isConnected(uint32_t timeout_ms = 500) const;
 
-    /**
-     * @brief Hae vastaanotettujen pakettien määrä sekunnissa
-     */
+    // Get received packets per second
     float getPacketsPerSecond() const { return _packets_per_second; }
 
-    /**
-     * @brief Hae WiFi-kanava
-     */
+    // Get wifi channel
     uint8_t getChannel() const { return _channel; }
 
-    /**
-     * @brief Hae oma MAC-osoite
-     */
+    //Get MAC address
     String getMacAddress() const { return WiFi.macAddress(); }
 
-    /**
-     * @brief Päivitä pakettilaskuri (kutsu loop():ssa)
-     */
+    // Update statistics - called from main loop
     void updateStats();
 
-    // Phase 2: Kaksisuuntainen kommunikaatio
+    // Phase 2: two direction comms
     // bool sendCommand(uint8_t cmd, int16_t param1 = 0, int16_t param2 = 0);
     // bool registerPeer(const uint8_t* mac_addr);
 
 private:
-    // Singleton callback - ESP-NOW vaatii static callbackin
+
+    // Singleton callback - ESP-NOW requires static callback
     static void onDataRecvStatic(const uint8_t* mac_addr, const uint8_t* data, int data_len);
     void onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len);
 
@@ -107,7 +60,7 @@ private:
     static volatile uint32_t _last_rx_millis;
     static volatile uint32_t _packet_count;
 
-    // Singleton instance pointer (ESP-NOW callback tarvitsee)
+    // Singleton instance pointer required by ESP-NOW
     static ESPNowReceiver* _instance;
 
     // Instance data
