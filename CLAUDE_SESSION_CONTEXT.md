@@ -4,6 +4,7 @@
 **Projekti:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
+**ESP-NOW lähettäjä** CMPS14-ESP32-SignalK-gateway -kompassi, jonka lähdekoodi ja dokumentaatio löytyy julkisena repositorysta [mkvesala/CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway/tree/feature/crow-panel-integration) branchista `feature/crow-panel-integration`
 ---
 
 ## Projektin yleiskuvaus
