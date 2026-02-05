@@ -29,6 +29,9 @@ extern lv_obj_t *ui_PanelBridge;
 extern lv_obj_t *ui_PanelMast;
 extern lv_obj_t *ui_PanelStarboard;
 extern lv_obj_t *ui_PanelPortside;
+extern lv_obj_t *ui_ContainerLevelingDialog;
+extern lv_obj_t *ui_PanelLevelingDialog;
+extern lv_obj_t *ui_LabelLevelingDialog;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

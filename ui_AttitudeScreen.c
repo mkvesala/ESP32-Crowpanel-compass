@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_AttitudeScreen = NULL;lv_obj_t *ui_ContainerHorizonGroup = NULL;lv_obj_t *ui_ImageHorizon = NULL;lv_obj_t *ui_ContainerAttitudeGroup = NULL;lv_obj_t *ui_PanelPitch = NULL;lv_obj_t *ui_LabelPitchTitle = NULL;lv_obj_t *ui_LabelPitch = NULL;lv_obj_t *ui_PanelRoll = NULL;lv_obj_t *ui_LabelRollTitle = NULL;lv_obj_t *ui_LabelRoll = NULL;lv_obj_t *ui_PanelHull = NULL;lv_obj_t *ui_PanelDeck = NULL;lv_obj_t *ui_PanelBridge = NULL;lv_obj_t *ui_PanelMast = NULL;lv_obj_t *ui_PanelStarboard = NULL;lv_obj_t *ui_PanelPortside = NULL;
+lv_obj_t *ui_AttitudeScreen = NULL;lv_obj_t *ui_ContainerHorizonGroup = NULL;lv_obj_t *ui_ImageHorizon = NULL;lv_obj_t *ui_ContainerAttitudeGroup = NULL;lv_obj_t *ui_PanelPitch = NULL;lv_obj_t *ui_LabelPitchTitle = NULL;lv_obj_t *ui_LabelPitch = NULL;lv_obj_t *ui_PanelRoll = NULL;lv_obj_t *ui_LabelRollTitle = NULL;lv_obj_t *ui_LabelRoll = NULL;lv_obj_t *ui_PanelHull = NULL;lv_obj_t *ui_PanelDeck = NULL;lv_obj_t *ui_PanelBridge = NULL;lv_obj_t *ui_PanelMast = NULL;lv_obj_t *ui_PanelStarboard = NULL;lv_obj_t *ui_PanelPortside = NULL;lv_obj_t *ui_ContainerLevelingDialog = NULL;lv_obj_t *ui_PanelLevelingDialog = NULL;lv_obj_t *ui_LabelLevelingDialog = NULL;
 // event funtions
 
 // build funtions
@@ -171,6 +171,38 @@ lv_obj_set_style_bg_opa(ui_PanelPortside, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_color(ui_PanelPortside, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_border_opa(ui_PanelPortside, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+ui_ContainerLevelingDialog = lv_obj_create(ui_AttitudeScreen);
+lv_obj_remove_style_all(ui_ContainerLevelingDialog);
+lv_obj_set_width( ui_ContainerLevelingDialog, 484);
+lv_obj_set_height( ui_ContainerLevelingDialog, 484);
+lv_obj_set_align( ui_ContainerLevelingDialog, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN );   /// Flags
+lv_obj_clear_flag( ui_ContainerLevelingDialog, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_ContainerLevelingDialog, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_ContainerLevelingDialog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_ContainerLevelingDialog, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_ContainerLevelingDialog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_PanelLevelingDialog = lv_obj_create(ui_ContainerLevelingDialog);
+lv_obj_set_width( ui_PanelLevelingDialog, 484);
+lv_obj_set_height( ui_PanelLevelingDialog, 484);
+lv_obj_set_align( ui_PanelLevelingDialog, LV_ALIGN_CENTER );
+lv_obj_clear_flag( ui_PanelLevelingDialog, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_PanelLevelingDialog, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_PanelLevelingDialog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_PanelLevelingDialog, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_PanelLevelingDialog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_LabelLevelingDialog = lv_label_create(ui_PanelLevelingDialog);
+lv_obj_set_width( ui_LabelLevelingDialog, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelLevelingDialog, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_align( ui_LabelLevelingDialog, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelLevelingDialog,"Level attitude?\n\nPress knob again\nto confirm.");
+lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelLevelingDialog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_align(ui_LabelLevelingDialog, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelLevelingDialog, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 }
 
 void ui_AttitudeScreen_screen_destroy(void)
@@ -194,5 +226,8 @@ ui_PanelBridge= NULL;
 ui_PanelMast= NULL;
 ui_PanelStarboard= NULL;
 ui_PanelPortside= NULL;
+ui_ContainerLevelingDialog= NULL;
+ui_PanelLevelingDialog= NULL;
+ui_LabelLevelingDialog= NULL;
 
 }

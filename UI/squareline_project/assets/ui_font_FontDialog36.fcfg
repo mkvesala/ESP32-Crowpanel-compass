@@ -1,0 +1,16 @@
+{
+  "codename": "FontDialog36",
+  "ttf_path": "/assets/ArchivoBlack-Regular.ttf",
+  "bin_path": "/assets/ui_font_FontDialog36.bin",
+  "c_path": "/assets/ui_font_FontDialog36.c",
+  "cfg_path": "/assets/ui_font_FontDialog36.fcfg",
+  "size": 36,
+  "bpp": 4,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7A"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}

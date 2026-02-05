@@ -9,6 +9,7 @@ SET(SOURCES ui_CompassScreen.c
     fonts/ui_font_FontAttitude84c.c
     fonts/ui_font_FontAttitudeTitle24.c
     fonts/ui_font_FontHeading64b.c
-    fonts/ui_font_FontHeading96b.c)
+    fonts/ui_font_FontHeading96b.c
+    fonts/ui_font_FontDialog36.c)
 
 add_library(ui ${SOURCES})

@@ -35,6 +35,7 @@ LV_FONT_DECLARE( ui_font_FontAttitude84c);
 LV_FONT_DECLARE( ui_font_FontAttitudeTitle24);
 LV_FONT_DECLARE( ui_font_FontHeading64b);
 LV_FONT_DECLARE( ui_font_FontHeading96b);
+LV_FONT_DECLARE( ui_font_FontDialog36);
 
 // UI INIT
 void ui_init(void);
