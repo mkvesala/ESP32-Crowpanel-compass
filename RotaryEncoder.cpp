@@ -27,8 +27,8 @@ void RotaryEncoder::begin(PCF8574& pcf) {
     // Tallenna PCF8574 viittaus
     _pcf8574 = &pcf;
 
-    // Alusta P5 input pullup (painike)
-    _pcf8574->pinMode(P5, INPUT_PULLUP);
+    // Huom: P5 (painike) alustetaan main.ino:ssa ENNEN pcf8574.begin() kutsua
+    // koska PCF8574-kirjasto ei tue pinMode() kutsuja begin():in jälkeen
 
     // Alusta encoder pinnit
     pinMode(ENCODER_A_PIN, INPUT);

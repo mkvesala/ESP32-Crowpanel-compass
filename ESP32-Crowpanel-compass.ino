@@ -29,12 +29,9 @@
 #include "RotaryEncoder.h"
 #include "ScreenManager.h"
 
-// WiFi credentials
-#include "secrets.h"
-
-// Wifi and ESP-NOW config (true = WiFi + ESP-NOW, false = vain ESP-NOW)
-#define USE_WIFI_CONNECTION  true
-#define WIFI_CHANNEL        1  // If not using WiFi connection
+// ESP-NOW config (WiFi removed - ESP-NOW only mode)
+// Channel must match compass WiFi AP channel (compass uses peer.channel=0 = current WiFi channel)
+#define ESP_NOW_CHANNEL  6  // TODO: Set to your WiFi AP channel
 
 // Connection timeout if nothing received (ms)
 // Note: compass broadcast has a deadband so no data sent if no change in compass values
@@ -125,6 +122,7 @@ void initPcfAndResetLines() {
     pcf8574.pinMode(PCF_TP_INT, OUTPUT);
     pcf8574.pinMode(PCF_LCD_PWR, OUTPUT);
     pcf8574.pinMode(PCF_LCD_RST, OUTPUT);
+    pcf8574.pinMode(P5, INPUT_PULLUP);  // Rotary encoder button
 
     pcf8574.begin();
 
@@ -199,12 +197,8 @@ void setup() {
     // 6. Rotary encoder init (käytä samaa PCF8574-instanssia)
     encoder.begin(pcf8574);
 
-    // 7. ESP-NOW init
-#if USE_WIFI_CONNECTION
-    receiver.begin(WIFI_SSID, WIFI_PASSWORD);
-#else
-    receiver.begin(WIFI_CHANNEL);
-#endif
+    // 7. ESP-NOW init (channel must match compass)
+    receiver.begin(ESP_NOW_CHANNEL);
 
     Serial.println("Setup complete - Compass/Attitude display ready");
 }

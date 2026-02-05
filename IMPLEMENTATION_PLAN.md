@@ -154,13 +154,13 @@ enum class LevelState {
 
 ### Label Text and Colors
 
-| State | Label Text | Color |
-|-------|------------|-------|
-| IDLE | (hidden) | - |
-| CONFIRM_WAIT | "Level?\nPress to confirm" | Yellow (0xFFFF00) |
-| SENDING | "Leveling..." | White (0xFFFFFF) |
-| SUCCESS | "Level OK" | Green (0x00FF00) |
-| FAILED | "Level Failed" | Red (0xFF0000) |
+| State | ui_ContainerLevelingDialog | ui_LabelLevelingDialog Text | Color |
+|-------|----------------------------|----------------------------|-------|
+| IDLE | hidden | - | - |
+| CONFIRM_WAIT | visible | "Level?\nPress to confirm" | Yellow (0xFFFF00) |
+| SENDING | visible | "Leveling..." | White (0xFFFFFF) |
+| SUCCESS | visible | "Level OK" | Green (0x00FF00) |
+| FAILED | visible | "Level Failed" | Red (0xFF0000) |
 
 ### Timeouts
 
@@ -375,21 +375,30 @@ void ESPNowBroker::processLevelCommand() {
 
 ## 7. SquareLine Studio Changes
 
-### AttitudeScreen - New Element
+### AttitudeScreen - New Elements (DONE)
 
-Add hidden label for level status:
+Leveling dialog structure added to AttitudeScreen:
 
-| Property | Value |
-|----------|-------|
-| Name | ui_LabelLevelStatus |
-| Parent | ui_AttitudeScreen |
-| Position | Center (x=0, y=0) |
-| Size | 300 x 100 |
-| Font | ui_font_FontAttitudeTitle24 (or larger) |
-| Text | "" (empty) |
-| Text Align | Center |
-| Hidden | true (checked) |
-| Background | Transparent or semi-transparent black |
+```
+ui_AttitudeScreen
+├── ... (existing elements)
+│
+└── ui_ContainerLevelingDialog (hidden)
+    └── ui_PanelLevelingDialog
+        └── ui_LabelLevelingDialog
+```
+
+| Element | Properties |
+|---------|------------|
+| `ui_ContainerLevelingDialog` | Hidden by default, contains dialog panel |
+| `ui_PanelLevelingDialog` | Background panel for dialog (semi-transparent or solid) |
+| `ui_LabelLevelingDialog` | Text label, font includes ASCII 0x20-0x7A |
+
+### Screen Shape Note
+
+SquareLine Studio screen shape setting (Rectangle vs Circle) does not affect generated code.
+Rectangle works fine since the 480×480 content is centered and hardware clips the corners automatically.
+Circle setting is only a visual aid in the editor.
 
 ---
 
@@ -404,7 +413,7 @@ Add hidden label for level status:
 | `ESPNowReceiver.h` | Add LevelCommand/Response structs, sendLevelCommand(), response handling |
 | `ESPNowReceiver.cpp` | Implement bidirectional ESP-NOW, remove WiFi |
 | `AttitudeUI.h` | Add LevelState enum, state machine variables, new methods |
-| `AttitudeUI.cpp` | Implement state machine, label updates, cancelLevelOperation() |
+| `AttitudeUI.cpp` | Implement state machine, update ui_ContainerLevelingDialog visibility, ui_LabelLevelingDialog text/color, cancelLevelOperation() |
 | `ScreenManager.h` | Add reference to AttitudeUI for cancel callback |
 | `ScreenManager.cpp` | Call attitudeUI.cancelLevelOperation() on screen switch |
 | `ESP32-Crowpanel-compass.ino` | Remove secrets.h, update receiver.begin(), add level handling in loop |
@@ -421,7 +430,8 @@ Add hidden label for level status:
 
 ## 9. Implementation Order
 
-1. **SquareLine Studio:** Add ui_LabelLevelStatus to AttitudeScreen, export
+1. ~~**SquareLine Studio:** Add leveling dialog elements to AttitudeScreen, export~~ **DONE**
+   - Added: ui_ContainerLevelingDialog, ui_PanelLevelingDialog, ui_LabelLevelingDialog
 2. **RotaryEncoder:** Implement push-release validation
 3. **HeadingData.h:** Add LevelCommand and LevelResponse structs
 4. **ESPNowReceiver:** Remove WiFi, implement ESP-NOW only mode
