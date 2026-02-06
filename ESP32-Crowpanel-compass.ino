@@ -206,7 +206,7 @@ void setup() {
 // Loop
 
 // UI upddate frequency
-#define UI_UPDATE_INTERVAL_MS  200  // 5 Hz
+#define UI_UPDATE_INTERVAL_MS  101  // ~10 Hz (matches compass 97ms send rate)
 
 // Diagnostics and debug interval
 #define DIAG_PRINT_INTERVAL_MS  5000  // 5 secs
