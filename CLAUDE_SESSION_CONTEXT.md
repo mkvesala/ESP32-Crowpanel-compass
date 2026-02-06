@@ -1,6 +1,6 @@
 # Claude Session Context - ESP32 CrowPanel Compass
 
-**Date:** 2026-02-04 (updated)
+**Date:** 2026-02-05 (updated)
 **Project:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
@@ -19,7 +19,7 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 
 ---
 
-## Current Session (2026-02-04)
+## Current Session (2026-02-05)
 
 ### Implemented Features
 
@@ -30,6 +30,26 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 | Diagnostics added (PPS, UI timing) | Done | .ino |
 | PanelConnected: black=connected, red=disconnected | Done | CompassUI.cpp |
 | Git history cleaned (WiFi credentials removed) | Done | New repo |
+| WiFi removed from CrowPanel (ESP-NOW only) | Done | .ino |
+
+### PPS Variability Issue - SOLVED
+
+**Problem:** PPS (packets per second) varied 0-6 despite compass sending at 97ms intervals (~10.3 pps expected).
+
+**Root cause:** WiFi channel mismatch. CrowPanel was connecting to WiFi and using AP's channel, but compass sends ESP-NOW on its WiFi channel. If channels differ, packets are lost.
+
+**Solution:**
+1. Removed WiFi from CrowPanel - now ESP-NOW only mode
+2. CrowPanel must use same channel as compass's WiFi AP
+3. Compass uses `peer.channel = 0` which means "use current WiFi channel"
+
+**Configuration required:**
+- Set router to fixed WiFi channel (not automatic) - recommended: 1, 6, or 11
+- Set same channel in CrowPanel: `#define ESP_NOW_CHANNEL X`
+
+**Current status:** Channel set to 6 as placeholder. User needs to:
+1. Set router to fixed channel
+2. Update `ESP_NOW_CHANNEL` in .ino to match
 
 ### Planned: Attitude Level Feature
 
@@ -47,6 +67,11 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 - Push-release validation (50-500ms) to prevent accidental triggers
 - Screen switch cancels pending level operation (non-blocking)
 - State machine in AttitudeUI for level dialog flow
+
+**UI elements added in SquareLine:**
+- `ui_ContainerLevelingDialog`
+- `ui_PanelLevelingDialog`
+- `ui_LabelLevelingDialog`
 
 ---
 
@@ -104,7 +129,9 @@ ui_AttitudeScreen (black background)
 │   ├── ui_PanelPortside (red navigation light, left)
 │   └── ui_PanelStarboard (green navigation light, right)
 │
-└── ui_LabelLevelStatus (hidden, for level dialog) [TO BE ADDED]
+└── ui_ContainerLevelingDialog (for level dialog)
+    └── ui_PanelLevelingDialog
+        └── ui_LabelLevelingDialog
 ```
 
 ---
@@ -122,6 +149,12 @@ ui_AttitudeScreen (black background)
 
 ## Important Notes
 
+### ESP-NOW Channel Configuration
+- Compass uses `peer.channel = 0` = uses WiFi AP's channel
+- CrowPanel must be configured to same channel
+- Router should use fixed channel (not automatic) for reliability
+- Non-overlapping channels: 1, 6, 11
+
 ### SquareLine Studio Export
 **WARNING:** SquareLine Studio clears export directory completely! Always git commit or backup before export.
 
@@ -134,6 +167,10 @@ ui_AttitudeScreen (black background)
 - Compass always sends valid data (no validation flags needed)
 - Compass handles normalization (no wrap logic needed in CrowPanel)
 - Simple conversion: radians → degrees × 10
+
+### PCF8574 GPIO Expander
+- **CRITICAL:** pinMode() must be called BEFORE pcf8574.begin()
+- P5 = Rotary encoder button (INPUT_PULLUP)
 
 ---
 
@@ -159,7 +196,6 @@ ESP32-Crowpanel-compass/
 ├── AttitudeUI.h/.cpp            # Attitude screen adapter
 ├── RotaryEncoder.h/.cpp         # Rotary encoder handler
 ├── ScreenManager.h/.cpp         # Screen management
-├── secrets.h                    # WiFi credentials (not in git) - TO BE REMOVED
 ├── IMPLEMENTATION_PLAN.md       # Attitude Level implementation plan
 ├── CLAUDE_SESSION_CONTEXT.md    # This file
 ├── .gitignore
@@ -185,9 +221,9 @@ ESP32-Crowpanel-compass/
 
 ## Next Steps
 
-1. Add `ui_LabelLevelStatus` in SquareLine Studio
-2. Implement push-release validation in RotaryEncoder
-3. Remove WiFi, implement ESP-NOW only mode
+1. **Configure WiFi channel:** Set router to fixed channel, update `ESP_NOW_CHANNEL` in .ino
+2. **Test PPS:** Verify ~10 pps after channel fix
+3. Implement push-release validation in RotaryEncoder (50-500ms)
 4. Implement AttitudeUI state machine for level dialog
 5. Add bidirectional ESP-NOW communication
 6. Implement compass-side LevelCommand handling
