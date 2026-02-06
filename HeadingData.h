@@ -66,3 +66,18 @@ inline HeadingData convertDeltaToData(const HeadingDelta& delta) {
 
     return data;
 }
+
+// === Level Command/Response (ESP-NOW bidirectional) ===
+
+// CrowPanel → Compass (broadcast)
+struct LevelCommand {
+    uint8_t magic[4];     // "LVLC" = Level Command
+    uint8_t reserved[4];  // Future use, padding
+};
+
+// Compass → CrowPanel (unicast to sender MAC)
+struct LevelResponse {
+    uint8_t magic[4];     // "LVLR" = Level Response
+    uint8_t success;      // 1 = OK, 0 = failed
+    uint8_t reserved[3];  // Padding
+};

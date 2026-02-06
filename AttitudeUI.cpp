@@ -1,4 +1,5 @@
 #include "AttitudeUI.h"
+#include "ESPNowReceiver.h"
 #include "ui.h"
 
 AttitudeUI::AttitudeUI()
@@ -7,6 +8,8 @@ AttitudeUI::AttitudeUI()
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF)
     , _initialized(false)
+    , _levelState(LevelState::IDLE)
+    , _stateStartTime(0)
 {
 }
 
@@ -17,6 +20,10 @@ void AttitudeUI::begin() {
     // Kuva on 680x4, joten keskipiste on 340, 2
     lv_img_set_pivot(ui_ImageHorizon, 340, 2);
 
+    // Piilota level-dialogi aluksi
+    lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+
+    _levelState = LevelState::IDLE;
     _initialized = true;
 
     // Näytä aluksi "waiting" tila
@@ -101,4 +108,125 @@ void AttitudeUI::showDisconnected() {
 
     // Näytä viimeiset arvot mutta voisi myös näyttää "---"
     // Tässä toteutuksessa säilytetään viimeiset arvot
+}
+
+// === Level State Machine ===
+
+bool AttitudeUI::handleButtonPress(ESPNowReceiver& receiver) {
+    if (!_initialized) return false;
+
+    switch (_levelState) {
+        case LevelState::IDLE:
+            // First press: show confirmation dialog
+            setLevelState(LevelState::CONFIRM_WAIT);
+            Serial.println("[AttitudeUI] Level: waiting for confirmation");
+            return true;
+
+        case LevelState::CONFIRM_WAIT:
+            // Second press: send level command
+            if (receiver.sendLevelCommand()) {
+                setLevelState(LevelState::SENDING);
+                Serial.println("[AttitudeUI] Level: command sent");
+            } else {
+                setLevelState(LevelState::FAILED);
+                Serial.println("[AttitudeUI] Level: send failed");
+            }
+            return true;
+
+        case LevelState::SENDING:
+        case LevelState::SUCCESS:
+        case LevelState::FAILED:
+            // Ignore presses during these states
+            return true;
+    }
+    return false;
+}
+
+void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
+    if (!_initialized) return;
+    if (_levelState == LevelState::IDLE) return;
+
+    uint32_t elapsed = millis() - _stateStartTime;
+
+    switch (_levelState) {
+        case LevelState::CONFIRM_WAIT:
+            if (elapsed >= CONFIRM_TIMEOUT_MS) {
+                setLevelState(LevelState::IDLE);
+                Serial.println("[AttitudeUI] Level: confirmation timeout");
+            }
+            break;
+
+        case LevelState::SENDING:
+            if (receiver.hasLevelResponse()) {
+                bool success = receiver.getLevelResult();
+                setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
+                Serial.printf("[AttitudeUI] Level: response received - %s\n",
+                    success ? "SUCCESS" : "FAILED");
+            } else if (elapsed >= SENDING_TIMEOUT_MS) {
+                setLevelState(LevelState::FAILED);
+                Serial.println("[AttitudeUI] Level: response timeout");
+            }
+            break;
+
+        case LevelState::SUCCESS:
+            if (elapsed >= SUCCESS_DISPLAY_MS) {
+                setLevelState(LevelState::IDLE);
+            }
+            break;
+
+        case LevelState::FAILED:
+            if (elapsed >= FAILED_DISPLAY_MS) {
+                setLevelState(LevelState::IDLE);
+            }
+            break;
+
+        case LevelState::IDLE:
+            // Already handled above
+            break;
+    }
+}
+
+void AttitudeUI::cancelLevelOperation() {
+    if (_levelState != LevelState::IDLE) {
+        Serial.println("[AttitudeUI] Level: operation cancelled");
+        setLevelState(LevelState::IDLE);
+    }
+}
+
+void AttitudeUI::setLevelState(LevelState newState) {
+    _levelState = newState;
+    _stateStartTime = millis();
+    updateLevelDialog();
+}
+
+void AttitudeUI::updateLevelDialog() {
+    switch (_levelState) {
+        case LevelState::IDLE:
+            lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            break;
+
+        case LevelState::CONFIRM_WAIT:
+            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelLevelingDialog, "Level attitude?\nPress knob again to confirm.");
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFF00), 0);  // Yellow
+            break;
+
+        case LevelState::SENDING:
+            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelLevelingDialog, "Leveling...");
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);  // White
+            break;
+
+        case LevelState::SUCCESS:
+            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelLevelingDialog, "Success!");
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0x00FF00), 0);  // Green
+            break;
+
+        case LevelState::FAILED:
+            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelLevelingDialog, "Failed!");
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFF0000), 0);  // Red
+            break;
+    }
 }

@@ -3,11 +3,15 @@
 #include <Arduino.h>
 #include <lvgl.h>
 
+// Forward declaration
+class AttitudeUI;
+
 /**
  * @brief Näyttöjen hallinta ja vaihto
  *
  * Hallitsee siirtymistä Compass- ja Attitude-näyttöjen välillä.
  * Käyttää LVGL:n screen load -animaatioita sulaviin siirtymiin.
+ * Kutsuu AttitudeUI::cancelLevelOperation() kun vaihdetaan pois AttitudeScreenistä.
  */
 class ScreenManager {
 public:
@@ -21,9 +25,10 @@ public:
     /**
      * @brief Alusta screen manager
      *
+     * @param attitudeUI Pointer to AttitudeUI for cancel callback
      * Kutsutaan setup():ssa ui_init():n jälkeen.
      */
-    void begin();
+    void begin(AttitudeUI* attitudeUI = nullptr);
 
     /**
      * @brief Vaihda seuraavaan näyttöön (CW-rotaatio)
@@ -58,7 +63,11 @@ public:
 private:
     Screen _current;
     bool _initialized;
+    AttitudeUI* _attitudeUI;
 
     // Animaation kesto millisekunteina
     static constexpr uint32_t ANIM_DURATION_MS = 300;
+
+    // Helper to cancel level operation when leaving AttitudeScreen
+    void onLeavingAttitudeScreen();
 };

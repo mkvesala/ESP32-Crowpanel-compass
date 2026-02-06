@@ -8,19 +8,18 @@
 
 // === C L A S S  E S P N O W R E C E I V E R ===
 //
-// Class ESPNowReceiver - the "receiver", responsible for receiving data via ESP-NOW
-// Owns:
-// Uses:
-// Init: receiver.begin(ssid, password) or without wifi receiver.begin()
+// Class ESPNowReceiver - receives heading data and sends level commands via ESP-NOW
+//
+// Init: receiver.begin(channel)
 // Loop: if (receiver.hasNewData()) HeadingData data = receiver.getData();
+// Level: receiver.sendLevelCommand(); if (receiver.hasLevelResponse()) bool ok = receiver.getLevelResult();
 
 class ESPNowReceiver {
 public:
     ESPNowReceiver();
 
-    // Init
+    // Init (ESP-NOW only, no WiFi connection)
     bool begin(uint8_t channel = 1);
-    bool begin(const char* ssid, const char* password, uint32_t timeout_ms = 10000);
 
     // Check for newly received data
     bool hasNewData();
@@ -43,9 +42,10 @@ public:
     // Update statistics - called from main loop
     void updateStats();
 
-    // Phase 2: two direction comms
-    // bool sendCommand(uint8_t cmd, int16_t param1 = 0, int16_t param2 = 0);
-    // bool registerPeer(const uint8_t* mac_addr);
+    // Level command (bidirectional ESP-NOW)
+    bool sendLevelCommand();
+    bool hasLevelResponse();
+    bool getLevelResult();
 
 private:
 
@@ -69,5 +69,9 @@ private:
     uint32_t _last_stats_millis;
     uint32_t _last_packet_count;
     bool _initialized;
+
+    // Level response handling
+    static volatile bool _level_response_received;
+    static volatile bool _level_response_success;
 };
 

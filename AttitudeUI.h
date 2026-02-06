@@ -4,6 +4,20 @@
 #include <lvgl.h>
 #include "HeadingData.h"
 
+// Forward declaration
+class ESPNowReceiver;
+
+/**
+ * @brief Level operation state machine
+ */
+enum class LevelState {
+    IDLE,           // Normal operation, dialog hidden
+    CONFIRM_WAIT,   // "Level? Press to confirm" visible, waiting for 2nd press
+    SENDING,        // "Leveling..." visible, waiting for response
+    SUCCESS,        // "Success!" visible briefly
+    FAILED          // "Failed!" visible briefly
+};
+
 /**
  * @brief Attitude/Horizon UI adapter SquareLine Studio -generoidulle UI:lle
  *
@@ -14,12 +28,18 @@
  * - Pitch: Keula alas (pitch < 0) → horisontti nousee ylös
  * - Roll: Kallistus vasemmalle (roll < 0) → horisontti kallistuu oikealle
  *
+ * Level-toiminto:
+ * - Knob press → CONFIRM_WAIT (näytä dialogi)
+ * - Knob press uudelleen → SENDING (lähetä komento)
+ * - Vastaus tai timeout → SUCCESS/FAILED → IDLE
+ *
  * Käyttö:
  *   ui_init();        // SquareLine-generoitu
  *   attitudeUI.begin();
  *
  *   // loop():ssa kun AttitudeScreen on aktiivinen
  *   attitudeUI.update(headingData, connected, packetsPerSecond);
+ *   attitudeUI.updateLevelState(receiver);
  */
 class AttitudeUI {
 public:
@@ -52,6 +72,29 @@ public:
      */
     void showDisconnected();
 
+    /**
+     * @brief Käsittele knob-painallus
+     * @param receiver ESP-NOW receiver for sending level command
+     * @return true jos painallus käsiteltiin (estää muut toiminnot)
+     */
+    bool handleButtonPress(ESPNowReceiver& receiver);
+
+    /**
+     * @brief Päivitä level-tilakoneen tila
+     * @param receiver ESP-NOW receiver for checking response
+     */
+    void updateLevelState(ESPNowReceiver& receiver);
+
+    /**
+     * @brief Peruuta level-operaatio (kutsutaan screen switchissä)
+     */
+    void cancelLevelOperation();
+
+    /**
+     * @brief Hae nykyinen level-tila
+     */
+    LevelState getLevelState() const { return _levelState; }
+
 private:
     // Päivitysfunktiot
     void updatePitchLabel(int16_t pitch_deg);
@@ -68,4 +111,18 @@ private:
     int16_t _last_roll_deg;
 
     bool _initialized;
+
+    // Level state machine
+    LevelState _levelState;
+    uint32_t _stateStartTime;
+
+    // Level dialog update
+    void setLevelState(LevelState newState);
+    void updateLevelDialog();
+
+    // Timeouts (ms)
+    static constexpr uint32_t CONFIRM_TIMEOUT_MS = 3000;
+    static constexpr uint32_t SENDING_TIMEOUT_MS = 3000;
+    static constexpr uint32_t SUCCESS_DISPLAY_MS = 1500;
+    static constexpr uint32_t FAILED_DISPLAY_MS = 2000;
 };

@@ -1,6 +1,6 @@
 # Claude Session Context - ESP32 CrowPanel Compass
 
-**Date:** 2026-02-05 (updated)
+**Date:** 2026-02-06 (updated)
 **Project:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
@@ -19,59 +19,51 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 
 ---
 
-## Current Session (2026-02-05)
+## Current Session (2026-02-06)
 
 ### Implemented Features
 
 | Feature | Status | Files |
 |---------|--------|-------|
-| Knob button toggles T/M heading mode | Done | RotaryEncoder, CompassUI, .ino |
-| HeadingData simplified (no valid flags, no normalization) | Done | HeadingData.h |
-| Diagnostics added (PPS, UI timing) | Done | .ino |
-| PanelConnected: black=connected, red=disconnected | Done | CompassUI.cpp |
-| Git history cleaned (WiFi credentials removed) | Done | New repo |
-| WiFi removed from CrowPanel (ESP-NOW only) | Done | .ino |
+| Knob button toggles T/M heading mode | ✅ Done | RotaryEncoder, CompassUI, .ino |
+| HeadingData simplified (no valid flags) | ✅ Done | HeadingData.h |
+| Diagnostics added (PPS, UI timing) | ✅ Done | .ino |
+| PanelConnected: black=connected, red=disconnected | ✅ Done | CompassUI.cpp |
+| WiFi removed from CrowPanel (ESP-NOW only) | ✅ Done | ESPNowReceiver, .ino |
+| PPS issue fixed (channel 6) | ✅ Done | Router + .ino |
+| UI update interval 200ms → 101ms | ✅ Done | .ino |
+| **Attitude Level (CrowPanel side)** | ✅ Done | See below |
 
-### PPS Variability Issue - SOLVED
-
-**Problem:** PPS (packets per second) varied 0-6 despite compass sending at 97ms intervals (~10.3 pps expected).
-
-**Root cause:** WiFi channel mismatch. CrowPanel was connecting to WiFi and using AP's channel, but compass sends ESP-NOW on its WiFi channel. If channels differ, packets are lost.
-
-**Solution:**
-1. Removed WiFi from CrowPanel - now ESP-NOW only mode
-2. CrowPanel must use same channel as compass's WiFi AP
-3. Compass uses `peer.channel = 0` which means "use current WiFi channel"
-
-**Configuration required:**
-- Set router to fixed WiFi channel (not automatic) - recommended: 1, 6, or 11
-- Set same channel in CrowPanel: `#define ESP_NOW_CHANNEL X`
-
-**Current status:** Channel set to 6 as placeholder. User needs to:
-1. Set router to fixed channel
-2. Update `ESP_NOW_CHANNEL` in .ino to match
-
-### Planned: Attitude Level Feature
+### Attitude Level Feature - CrowPanel COMPLETE
 
 **Full implementation plan:** See `IMPLEMENTATION_PLAN.md`
 
-**Summary:**
-- Knob press on AttitudeScreen triggers level confirmation dialog
-- Second press sends ESP-NOW LevelCommand to compass
-- Compass calls `CMPS14Processor::level()` and sends LevelResponse back
-- CrowPanel shows success/failure status
+**CrowPanel changes completed:**
 
-**Key design decisions:**
-- ESP-NOW bidirectional (hybrid: broadcast command, unicast response)
-- WiFi removed from CrowPanel, ESP-NOW only
-- Push-release validation (50-500ms) to prevent accidental triggers
-- Screen switch cancels pending level operation (non-blocking)
-- State machine in AttitudeUI for level dialog flow
+| File | Changes |
+|------|---------|
+| `HeadingData.h` | Added LevelCommand and LevelResponse structs |
+| `ESPNowReceiver.h/.cpp` | Added sendLevelCommand(), hasLevelResponse(), getLevelResult(); removed WiFi code |
+| `AttitudeUI.h/.cpp` | Added LevelState enum, state machine, handleButtonPress(), updateLevelState(), cancelLevelOperation() |
+| `ScreenManager.h/.cpp` | Added AttitudeUI pointer, calls cancelLevelOperation() on screen switch |
+| `ESP32-Crowpanel-compass.ino` | Pass &attitudeUI to screenMgr.begin(), handle button press on AttitudeScreen, call updateLevelState() |
 
-**UI elements added in SquareLine:**
-- `ui_ContainerLevelingDialog`
-- `ui_PanelLevelingDialog`
-- `ui_LabelLevelingDialog`
+**State machine flow:**
+1. Knob press → CONFIRM_WAIT (show "Level attitude? Press knob again to confirm." in yellow)
+2. Second press → SENDING (show "Leveling..." in white, send ESP-NOW broadcast)
+3. Response received → SUCCESS ("Success!" in green) or FAILED ("Failed!" in red)
+4. Timeout or screen switch → return to IDLE (dialog hidden)
+
+**Timeouts:** CONFIRM_WAIT 3s, SENDING 3s, SUCCESS 1.5s, FAILED 2s
+
+### Compass Side - PENDING
+
+Compass (CMPS14-ESP32-SignalK-gateway) `ESPNowBroker` needs:
+- Register `esp_now_register_recv_cb()` to receive LevelCommand
+- Store sender MAC, call `_compass->level()`
+- Send LevelResponse unicast back to CrowPanel
+
+See `IMPLEMENTATION_PLAN.md` section 6 for full code examples.
 
 ---
 
@@ -129,7 +121,7 @@ ui_AttitudeScreen (black background)
 │   ├── ui_PanelPortside (red navigation light, left)
 │   └── ui_PanelStarboard (green navigation light, right)
 │
-└── ui_ContainerLevelingDialog (for level dialog)
+└── ui_ContainerLevelingDialog (hidden by default)
     └── ui_PanelLevelingDialog
         └── ui_LabelLevelingDialog
 ```
@@ -141,9 +133,7 @@ ui_AttitudeScreen (black background)
 | Screen | Action |
 |--------|--------|
 | CompassScreen | Toggle True/Magnetic heading mode |
-| AttitudeScreen | Trigger level confirmation (planned) |
-
-**Safety:** Push-release validation (50-500ms duration required)
+| AttitudeScreen | Trigger level confirmation dialog |
 
 ---
 
@@ -151,9 +141,24 @@ ui_AttitudeScreen (black background)
 
 ### ESP-NOW Channel Configuration
 - Compass uses `peer.channel = 0` = uses WiFi AP's channel
-- CrowPanel must be configured to same channel
-- Router should use fixed channel (not automatic) for reliability
-- Non-overlapping channels: 1, 6, 11
+- CrowPanel configured to channel 6: `#define ESP_NOW_CHANNEL 6`
+- Router set to fixed channel 6
+
+### Level Command Protocol
+```cpp
+// CrowPanel → Compass (broadcast, 8 bytes)
+struct LevelCommand {
+    uint8_t magic[4];     // "LVLC"
+    uint8_t reserved[4];
+};
+
+// Compass → CrowPanel (unicast, 8 bytes)
+struct LevelResponse {
+    uint8_t magic[4];     // "LVLR"
+    uint8_t success;      // 1 = OK, 0 = failed
+    uint8_t reserved[3];
+};
+```
 
 ### SquareLine Studio Export
 **WARNING:** SquareLine Studio clears export directory completely! Always git commit or backup before export.
@@ -162,11 +167,6 @@ ui_AttitudeScreen (black background)
 - 256 = 100% (original size)
 - Formula: (target_size / original_size) × 256
 - Example: 480/240 × 256 = 512
-
-### HeadingData
-- Compass always sends valid data (no validation flags needed)
-- Compass handles normalization (no wrap logic needed in CrowPanel)
-- Simple conversion: radians → degrees × 10
 
 ### PCF8574 GPIO Expander
 - **CRITICAL:** pinMode() must be called BEFORE pcf8574.begin()
@@ -190,12 +190,12 @@ ui_AttitudeScreen (black background)
 ```
 ESP32-Crowpanel-compass/
 ├── ESP32-Crowpanel-compass.ino  # Main program
-├── HeadingData.h                # Data structures
-├── ESPNowReceiver.h/.cpp        # ESP-NOW receiver
+├── HeadingData.h                # Data structures (incl. LevelCommand/Response)
+├── ESPNowReceiver.h/.cpp        # ESP-NOW receiver + level command sender
 ├── CompassUI.h/.cpp             # Compass screen adapter
-├── AttitudeUI.h/.cpp            # Attitude screen adapter
+├── AttitudeUI.h/.cpp            # Attitude screen adapter + level state machine
 ├── RotaryEncoder.h/.cpp         # Rotary encoder handler
-├── ScreenManager.h/.cpp         # Screen management
+├── ScreenManager.h/.cpp         # Screen management + level cancel
 ├── IMPLEMENTATION_PLAN.md       # Attitude Level implementation plan
 ├── CLAUDE_SESSION_CONTEXT.md    # This file
 ├── .gitignore
@@ -221,9 +221,9 @@ ESP32-Crowpanel-compass/
 
 ## Next Steps
 
-1. **Configure WiFi channel:** Set router to fixed channel, update `ESP_NOW_CHANNEL` in .ino
-2. **Test PPS:** Verify ~10 pps after channel fix
-3. Implement push-release validation in RotaryEncoder (50-500ms)
-4. Implement AttitudeUI state machine for level dialog
-5. Add bidirectional ESP-NOW communication
-6. Implement compass-side LevelCommand handling
+1. ✅ ~~Configure WiFi channel (done: channel 6)~~
+2. ✅ ~~UI update interval 200ms → 101ms~~
+3. ✅ ~~Implement AttitudeUI state machine for level dialog~~
+4. ✅ ~~Add bidirectional ESP-NOW communication (CrowPanel side)~~
+5. **Implement compass-side LevelCommand handling** (see IMPLEMENTATION_PLAN.md section 6)
+6. **End-to-end testing**

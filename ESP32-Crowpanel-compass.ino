@@ -191,8 +191,8 @@ void setup() {
     compassUI.begin();
     attitudeUI.begin();
 
-    // 5. Screen manager init
-    screenMgr.begin();
+    // 5. Screen manager init (pass AttitudeUI for level cancel callback)
+    screenMgr.begin(&attitudeUI);
 
     // 6. Rotary encoder init (käytä samaa PCF8574-instanssia)
     encoder.begin(pcf8574);
@@ -234,11 +234,20 @@ void loop() {
         screenMgr.switchPrevious(); // counter-clockwise
     }
 
-    // Check knob button press for heading mode toggle
+    // Check knob button press
     if (encoder.getButtonPressed()) {
         if (screenMgr.isCompassActive()) {
+            // CompassScreen: toggle heading mode (T/M)
             compassUI.toggleHeadingMode();
+        } else {
+            // AttitudeScreen: handle level operation
+            attitudeUI.handleButtonPress(receiver);
         }
+    }
+
+    // Update level state machine (check for response, timeouts)
+    if (screenMgr.isAttitudeActive()) {
+        attitudeUI.updateLevelState(receiver);
     }
 
     // UI update
