@@ -26,16 +26,16 @@ extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
 extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
-LV_IMG_DECLARE( ui_img_45664948);   // assets/Compass-8.png
+LV_IMG_DECLARE( ui_img_1036064231);   // assets/Compass-9.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
 LV_IMG_DECLARE( ui_img_horizonline_png);   // assets/horizonline.png
 
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);
 LV_FONT_DECLARE( ui_font_FontAttitudeTitle24);
+LV_FONT_DECLARE( ui_font_FontDialog36);
 LV_FONT_DECLARE( ui_font_FontHeading64b);
 LV_FONT_DECLARE( ui_font_FontHeading96b);
-LV_FONT_DECLARE( ui_font_FontDialog36);
 
 // UI INIT
 void ui_init(void);

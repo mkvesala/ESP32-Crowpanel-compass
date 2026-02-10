@@ -34,7 +34,7 @@ lv_obj_set_style_bg_color(ui_PanelCompassRose, lv_color_hex(0xFFFFFF), LV_PART_M
 lv_obj_set_style_bg_opa(ui_PanelCompassRose, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ImageCompassRose = lv_img_create(ui_PanelCompassRose);
-lv_img_set_src(ui_ImageCompassRose, &ui_img_45664948);
+lv_img_set_src(ui_ImageCompassRose, &ui_img_1036064231);
 lv_obj_set_width( ui_ImageCompassRose, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_ImageCompassRose, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_align( ui_ImageCompassRose, LV_ALIGN_CENTER );

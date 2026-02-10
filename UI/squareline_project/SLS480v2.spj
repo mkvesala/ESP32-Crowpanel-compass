@@ -148,7 +148,7 @@
                       {
                         "nid": 1020,
                         "strtype": "IMAGE/Asset",
-                        "strval": "assets/Compass-8.png",
+                        "strval": "assets/Compass-9.png",
                         "InheritedType": 5
                       },
                       {
@@ -200,33 +200,6 @@
                         "strtype": "IMAGE/Style_main",
                         "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                         "InheritedType": 11
-                      },
-                      {
-                        "disabled": false,
-                        "nid": 1000473,
-                        "strtype": "_event/EventHandler",
-                        "strval": "CLICKED",
-                        "childs": [
-                          {
-                            "nid": 1000474,
-                            "strtype": "_event/name",
-                            "strval": "Event1",
-                            "InheritedType": 10
-                          },
-                          {
-                            "nid": 1000475,
-                            "strtype": "_event/condition_C",
-                            "strval": "",
-                            "InheritedType": 10
-                          },
-                          {
-                            "nid": 1000476,
-                            "strtype": "_event/condition_P",
-                            "strval": "",
-                            "InheritedType": 10
-                          }
-                        ],
-                        "InheritedType": 4
                       }
                     ],
                     "saved_objtypeKey": "IMAGE"
@@ -5329,7 +5302,7 @@
     }
   ],
   "selected_theme": "Default",
-  "selected_screen": "GUID62516728-299641S8731532",
+  "selected_screen": "GUID55069174-951400S0531",
   "info": {
     "name": "SquareLine_Project.spj",
     "depth": 1,
@@ -5357,7 +5330,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 877,
+    "backup_cnt": 879,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
