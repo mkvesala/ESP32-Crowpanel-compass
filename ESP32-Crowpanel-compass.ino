@@ -213,11 +213,21 @@ void setup() {
 static uint32_t diag_ui_updates = 0;
 static uint32_t diag_ui_update_time_total = 0;
 static uint32_t diag_ui_update_time_max = 0;
+static uint32_t diag_lvgl_time_total = 0;
+static uint32_t diag_lvgl_time_max = 0;
+static uint32_t diag_lvgl_calls = 0;
 static uint32_t diag_last_print = 0;
 
 void loop() {
     // LVGL tick
+    uint32_t lvgl_start = micros();
     lv_timer_handler();
+    uint32_t lvgl_elapsed = micros() - lvgl_start;
+    diag_lvgl_time_total += lvgl_elapsed;
+    if (lvgl_elapsed > diag_lvgl_time_max) {
+        diag_lvgl_time_max = lvgl_elapsed;
+    }
+    diag_lvgl_calls++;
 
     // Update statistics
     receiver.updateStats();
@@ -303,8 +313,14 @@ void loop() {
         float avg_ui_time = (diag_ui_updates > 0) ?
             (float)diag_ui_update_time_total / diag_ui_updates / 1000.0f : 0;
 
+        float avg_lvgl_time = (diag_lvgl_calls > 0) ?
+            (float)diag_lvgl_time_total / diag_lvgl_calls / 1000.0f : 0;
+
         Serial.printf("[DIAG] PPS: %.1f | UI updates: %lu | UI avg: %.2f ms | UI max: %.2f ms\n",
             pps, diag_ui_updates, avg_ui_time, diag_ui_update_time_max / 1000.0f);
+
+        Serial.printf("[DIAG] LVGL calls: %lu | avg: %.2f ms | max: %.2f ms\n",
+            (unsigned long)diag_lvgl_calls, avg_lvgl_time, diag_lvgl_time_max / 1000.0f);
 
         // Memory and stack diagnostics
         Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
@@ -318,6 +334,9 @@ void loop() {
         diag_ui_updates = 0;
         diag_ui_update_time_total = 0;
         diag_ui_update_time_max = 0;
+        diag_lvgl_time_total = 0;
+        diag_lvgl_time_max = 0;
+        diag_lvgl_calls = 0;
     }
 
     delay(5);
