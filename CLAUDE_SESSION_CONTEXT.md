@@ -1,6 +1,6 @@
 # Claude Session Context - ESP32 CrowPanel Compass
 
-**Date:** 2026-02-06 (updated)
+**Date:** 2026-02-11 (updated)
 **Project:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
@@ -19,51 +19,53 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 
 ---
 
-## Current Session (2026-02-06)
+## All Features Implemented
 
-### Implemented Features
+| Feature | Files |
+|---------|-------|
+| Knob button toggles T/M heading mode | RotaryEncoder, CompassUI, .ino |
+| HeadingData simplified (no valid flags) | HeadingData.h |
+| PanelConnected: black=connected, red=disconnected | CompassUI.cpp |
+| WiFi removed from CrowPanel (ESP-NOW only) | ESPNowReceiver |
+| ESP-NOW channel 6 (matches router) | .ino |
+| Attitude Level feature (full end-to-end) | AttitudeUI, ESPNowReceiver, ScreenManager, .ino |
+| Compass rose rotation threshold 0.5° | CompassUI |
+| Diagnostics: PPS, UI timing, LVGL timing, heap, stack | .ino |
+| Leveling dialog text wrapping fixed | AttitudeUI.cpp |
+| ESPNowReceiver simplified (direct static callback, no _instance pointer) | ESPNowReceiver.h/.cpp |
+| Serial.print cleanup (only [DIAG] lines remain) | All own files |
 
-| Feature | Status | Files |
-|---------|--------|-------|
-| Knob button toggles T/M heading mode | ✅ Done | RotaryEncoder, CompassUI, .ino |
-| HeadingData simplified (no valid flags) | ✅ Done | HeadingData.h |
-| Diagnostics added (PPS, UI timing) | ✅ Done | .ino |
-| PanelConnected: black=connected, red=disconnected | ✅ Done | CompassUI.cpp |
-| WiFi removed from CrowPanel (ESP-NOW only) | ✅ Done | ESPNowReceiver, .ino |
-| PPS issue fixed (channel 6) | ✅ Done | Router + .ino |
-| UI update interval 200ms → 101ms | ✅ Done | .ino |
-| **Attitude Level (CrowPanel side)** | ✅ Done | See below |
-
-### Attitude Level Feature - CrowPanel COMPLETE
-
-**Full implementation plan:** See `IMPLEMENTATION_PLAN.md`
-
-**CrowPanel changes completed:**
-
-| File | Changes |
-|------|---------|
-| `HeadingData.h` | Added LevelCommand and LevelResponse structs |
-| `ESPNowReceiver.h/.cpp` | Added sendLevelCommand(), hasLevelResponse(), getLevelResult(); removed WiFi code |
-| `AttitudeUI.h/.cpp` | Added LevelState enum, state machine, handleButtonPress(), updateLevelState(), cancelLevelOperation() |
-| `ScreenManager.h/.cpp` | Added AttitudeUI pointer, calls cancelLevelOperation() on screen switch |
-| `ESP32-Crowpanel-compass.ino` | Pass &attitudeUI to screenMgr.begin(), handle button press on AttitudeScreen, call updateLevelState() |
+### Attitude Level Feature
 
 **State machine flow:**
-1. Knob press → CONFIRM_WAIT (show "Level attitude? Press knob again to confirm." in yellow)
+1. Knob press → CONFIRM_WAIT (show "Level attitude?\n\nPress knob again\nto confirm." in yellow)
 2. Second press → SENDING (show "Leveling..." in white, send ESP-NOW broadcast)
 3. Response received → SUCCESS ("Success!" in green) or FAILED ("Failed!" in red)
 4. Timeout or screen switch → return to IDLE (dialog hidden)
 
 **Timeouts:** CONFIRM_WAIT 3s, SENDING 3s, SUCCESS 1.5s, FAILED 2s
 
-### Compass Side - PENDING
+### Compass Rose Rotation Threshold
 
-Compass (CMPS14-ESP32-SignalK-gateway) `ESPNowBroker` needs:
-- Register `esp_now_register_recv_cb()` to receive LevelCommand
-- Store sender MAC, call `_compass->level()`
-- Send LevelResponse unicast back to CrowPanel
+CompassUI skips `lv_img_set_angle()` when heading changes < 0.5° (5 x10-units).
+Handles 360°→0° wraparound. First render always draws (sentinel 0xFFFF).
+Reduces heavy LVGL re-renders: compass rose software rotation takes ~194 ms on ESP32-S3.
 
-See `IMPLEMENTATION_PLAN.md` section 6 for full code examples.
+### Diagnostics
+
+Three diagnostic lines printed every 5 seconds:
+```
+[DIAG] PPS: 18.4 | UI updates: 25 | UI avg: 0.57 ms | UI max: 0.72 ms
+[DIAG] LVGL calls: 25 | avg: 201.57 ms | max: 206.75 ms
+[DIAG] Heap free: 8133839 | min: 8128811 | Stack loop: 4844 | enc: 1312 | btn: 728
+```
+
+- **UI updates:** How many times UI draw code ran in 5s window
+- **LVGL calls/avg/max:** `lv_timer_handler()` call count and duration — reveals rendering bottleneck
+- **Heap free/min:** Current and all-time minimum free heap (leak detection)
+- **Stack loop/enc/btn:** Stack high water marks for main loop, encoder task, button task
+
+**Key finding:** Compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-render per frame (480×480 px). This is the main performance bottleneck on CompassScreen. No practical alternative exists on this hardware (no GPU, no hardware rotation support in GC9A01 display controller).
 
 ---
 
@@ -144,6 +146,10 @@ ui_AttitudeScreen (black background)
 - CrowPanel configured to channel 6: `#define ESP_NOW_CHANNEL 6`
 - Router set to fixed channel 6
 
+### ESP-NOW Callback API Versions
+- **CrowPanel (Core 2.x):** `void (*)(const uint8_t* mac, const uint8_t* data, int len)`
+- **Compass (Core 3.x):** `void (*)(const esp_now_recv_info_t* recv_info, const uint8_t* data, int len)` — MAC from `recv_info->src_addr`
+
 ### Level Command Protocol
 ```cpp
 // CrowPanel → Compass (broadcast, 8 bytes)
@@ -160,8 +166,16 @@ struct LevelResponse {
 };
 ```
 
+### Compass Deadband
+- Compass sender has 0.25° deadband — no packet sent if heading AND attitude change less than 0.25°
+- CrowPanel has additional 0.5° threshold for compass rose rotation rendering only
+- Heading label updates at 1° resolution (cheap text operation)
+
 ### SquareLine Studio Export
 **WARNING:** SquareLine Studio clears export directory completely! Always git commit or backup before export.
+
+### SquareLine Studio Generated Files
+`CMakeLists.txt` and `filelist.txt` (in root and `ui_files/`) are auto-generated by SquareLine Studio for ESP-IDF CMake builds. **Arduino IDE ignores them completely.**
 
 ### LVGL Scale Value
 - 256 = 100% (original size)
@@ -171,6 +185,11 @@ struct LevelResponse {
 ### PCF8574 GPIO Expander
 - **CRITICAL:** pinMode() must be called BEFORE pcf8574.begin()
 - P5 = Rotary encoder button (INPUT_PULLUP)
+
+### Code Style Preferences
+- Prefer `static constexpr` over `#define` for constants (already used in AttitudeUI.h, CompassUI.h, RotaryEncoder.h)
+- `#define` still used in .ino for pin assignments and configuration — can be converted
+- Exception: `lv_color_hex()` macros must stay as `#define` (not constexpr-compatible)
 
 ---
 
@@ -182,6 +201,7 @@ struct LevelResponse {
 | `ui_font_FontHeading64b` | CompassScreen: T/M mode |
 | `ui_font_FontAttitude84c` | AttitudeScreen: pitch/roll (includes +) |
 | `ui_font_FontAttitudeTitle24` | AttitudeScreen: "Pitch", "Roll" |
+| `ui_font_FontDialog36` | AttitudeScreen: leveling dialog |
 
 ---
 
@@ -196,7 +216,6 @@ ESP32-Crowpanel-compass/
 ├── AttitudeUI.h/.cpp            # Attitude screen adapter + level state machine
 ├── RotaryEncoder.h/.cpp         # Rotary encoder handler
 ├── ScreenManager.h/.cpp         # Screen management + level cancel
-├── IMPLEMENTATION_PLAN.md       # Attitude Level implementation plan
 ├── CLAUDE_SESSION_CONTEXT.md    # This file
 ├── .gitignore
 ├── ui.h/.c                      # SquareLine generated
@@ -205,6 +224,8 @@ ESP32-Crowpanel-compass/
 ├── ui_helpers.h/.c              # SquareLine generated
 ├── ui_font_*.c                  # Fonts
 ├── ui_img_*.c                   # Images
+├── CMakeLists.txt               # SquareLine generated (not used by Arduino IDE)
+├── filelist.txt                 # SquareLine generated (not used by Arduino IDE)
 ├── UI/                          # SquareLine project
 └── RotaryScreen_2_1/            # Elecrow demo (reference)
 ```
@@ -219,11 +240,11 @@ ESP32-Crowpanel-compass/
 
 ---
 
-## Next Steps
+## Performance Characteristics
 
-1. ✅ ~~Configure WiFi channel (done: channel 6)~~
-2. ✅ ~~UI update interval 200ms → 101ms~~
-3. ✅ ~~Implement AttitudeUI state machine for level dialog~~
-4. ✅ ~~Add bidirectional ESP-NOW communication (CrowPanel side)~~
-5. **Implement compass-side LevelCommand handling** (see IMPLEMENTATION_PLAN.md section 6)
-6. **End-to-end testing**
+| Screen | UI updates/5s | LVGL avg | Notes |
+|--------|--------------|----------|-------|
+| CompassScreen (heading changing) | ~25 | ~200 ms | Bottleneck: compass rose software rotation |
+| CompassScreen (stable heading) | 48–74 | 1–7 ms | Threshold prevents unnecessary re-renders |
+| AttitudeScreen (data flowing) | ~80 | 4–13 ms | Horizon line 680×4 is cheap to render |
+| AttitudeScreen (stable) | ~83 | <1 ms | Nothing to render |
