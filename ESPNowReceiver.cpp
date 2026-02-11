@@ -1,6 +1,7 @@
 #include "ESPNowReceiver.h"
 
-// Static member initialization
+// === S T A T I C ===
+
 portMUX_TYPE ESPNowReceiver::_mux = portMUX_INITIALIZER_UNLOCKED;
 HeadingData ESPNowReceiver::_latest_data;
 volatile bool ESPNowReceiver::_has_new_data = false;
@@ -8,10 +9,9 @@ volatile uint32_t ESPNowReceiver::_last_rx_millis = 0;
 volatile uint32_t ESPNowReceiver::_packet_count = 0;
 volatile bool ESPNowReceiver::_level_response_received = false;
 volatile bool ESPNowReceiver::_level_response_success = false;
-ESPNowReceiver* ESPNowReceiver::_instance = nullptr;
-
-// Broadcast address for ESP-NOW
 static const uint8_t BROADCAST_ADDR[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+// === P U B L I C ===
 
 // Constructor
 ESPNowReceiver::ESPNowReceiver()
@@ -19,19 +19,15 @@ ESPNowReceiver::ESPNowReceiver()
     , _packets_per_second(0.0f)
     , _last_stats_millis(0)
     , _last_packet_count(0)
-    , _initialized(false)
-{
-    _instance = this;
-}
+    , _initialized(false) {}
 
+// Initialization
 bool ESPNowReceiver::begin(uint8_t channel) {
-    if (_initialized) {
-        return true;
-    }
+    if (_initialized) return true;
 
     _channel = channel;
 
-    // WiFi STA mode but disconnected
+    // Init and disconnect WiFi
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
 
@@ -39,12 +35,10 @@ bool ESPNowReceiver::begin(uint8_t channel) {
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 
     // Init ESP-NOW
-    if (esp_now_init() != ESP_OK) {
-        return false;
-    }
+    if (esp_now_init() != ESP_OK) return false;
 
     // Register callback
-    esp_now_register_recv_cb(onDataRecvStatic);
+    esp_now_register_recv_cb(onDataRecv);
 
     _initialized = true;
     _last_stats_millis = millis();
@@ -52,42 +46,7 @@ bool ESPNowReceiver::begin(uint8_t channel) {
     return true;
 }
 
-
-void ESPNowReceiver::onDataRecvStatic(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
-    if (_instance) {
-        _instance->onDataRecv(mac_addr, data, data_len);
-    }
-}
-
-void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
-    // Check for HeadingDelta (compass data)
-    if (data_len == sizeof(HeadingDelta)) {
-        HeadingDelta delta;
-        memcpy(&delta, data, sizeof(HeadingDelta));
-
-        HeadingData converted = convertDeltaToData(delta);
-
-        portENTER_CRITICAL(&_mux);
-        _latest_data = converted;
-        _has_new_data = true;
-        _last_rx_millis = millis();
-        _packet_count++;
-        portEXIT_CRITICAL(&_mux);
-    }
-    // Check for LevelResponse
-    else if (data_len == sizeof(LevelResponse)) {
-        LevelResponse resp;
-        memcpy(&resp, data, sizeof(LevelResponse));
-
-        if (memcmp(resp.magic, "LVLR", 4) == 0) {
-            portENTER_CRITICAL(&_mux);
-            _level_response_received = true;
-            _level_response_success = (resp.success == 1);
-            portEXIT_CRITICAL(&_mux);
-        }
-    }
-}
-
+// Returns true if new packet available, otherwise false
 bool ESPNowReceiver::hasNewData() {
     bool result;
     portENTER_CRITICAL(&_mux);
@@ -96,6 +55,7 @@ bool ESPNowReceiver::hasNewData() {
     return result;
 }
 
+// Returns the latest data packet received via ESP-NOW
 HeadingData ESPNowReceiver::getData() {
     HeadingData data;
     portENTER_CRITICAL(&_mux);
@@ -105,19 +65,19 @@ HeadingData ESPNowReceiver::getData() {
     return data;
 }
 
+// Returns true if timeout not reached, otherwise false
 bool ESPNowReceiver::isConnected(uint32_t timeout_ms) const {
     uint32_t last_rx;
     portENTER_CRITICAL(&_mux);
     last_rx = _last_rx_millis;
     portEXIT_CRITICAL(&_mux);
 
-    if (last_rx == 0) {
-        return false; 
-    }
+    if (last_rx == 0) return false;
 
     return (millis() - last_rx) < timeout_ms;
 }
 
+// Update the PPS statistics
 void ESPNowReceiver::updateStats() {
     uint32_t now = millis();
     uint32_t elapsed = now - _last_stats_millis;
@@ -136,6 +96,7 @@ void ESPNowReceiver::updateStats() {
     }
 }
 
+// Send attitude leveling command to ESP-NOW as broadcast
 bool ESPNowReceiver::sendLevelCommand() {
     // Add broadcast peer if not exists
     if (!esp_now_is_peer_exist(BROADCAST_ADDR)) {
@@ -180,4 +141,35 @@ bool ESPNowReceiver::getLevelResult() {
     _level_response_received = false;  // Clear flag after reading
     portEXIT_CRITICAL(&_mux);
     return success;
+}
+
+// === P R I V A T E ===
+
+void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
+    // Check for HeadingDelta (compass data)
+    if (data_len == sizeof(HeadingDelta)) {
+        HeadingDelta delta;
+        memcpy(&delta, data, sizeof(HeadingDelta));
+
+        HeadingData converted = convertDeltaToData(delta);
+
+        portENTER_CRITICAL(&_mux);
+        _latest_data = converted;
+        _has_new_data = true;
+        _last_rx_millis = millis();
+        _packet_count++;
+        portEXIT_CRITICAL(&_mux);
+    }
+    // Check for LevelResponse
+    else if (data_len == sizeof(LevelResponse)) {
+        LevelResponse resp;
+        memcpy(&resp, data, sizeof(LevelResponse));
+
+        if (memcmp(resp.magic, "LVLR", 4) == 0) {
+            portENTER_CRITICAL(&_mux);
+            _level_response_received = true;
+            _level_response_success = (resp.success == 1);
+            portEXIT_CRITICAL(&_mux);
+        }
+    }
 }

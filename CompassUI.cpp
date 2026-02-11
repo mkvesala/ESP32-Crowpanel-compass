@@ -52,7 +52,16 @@ void CompassUI::toggleHeadingMode() {
 }
 
 void CompassUI::setCompassRotation(uint16_t heading_x10) {
-    if (heading_x10 == _last_heading_x10) return;
+    // Threshold to avoid heavy LVGL re-render on small changes
+    // _last_heading_x10 == 0xFFFF is sentinel for first render (always draw)
+    // Handles 360°→0° wraparound: e.g. 3599→1 = diff 2, not 3598
+    if (_last_heading_x10 != 0xFFFF) {
+        int16_t diff = (int16_t)heading_x10 - (int16_t)_last_heading_x10;
+        if (diff > 1800) diff -= 3600;
+        if (diff < -1800) diff += 3600;
+        if (abs(diff) < ROTATION_THRESHOLD_X10) return;
+    }
+
     _last_heading_x10 = heading_x10;
 
     // LVGL: 0.1° yksikköä, negatiivinen = myötäpäivään

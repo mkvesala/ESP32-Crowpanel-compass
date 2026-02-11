@@ -68,6 +68,10 @@ private:
     void updateHeadingMode(bool is_true);
     void setConnectionIndicator(bool connected);
 
+    // Compass rose rotation threshold (0.5° = 5 in x10 units)
+    // Reduces heavy LVGL re-renders when heading changes are small
+    static constexpr uint16_t ROTATION_THRESHOLD_X10 = 5;
+
     // Cached values (vältetään turhat LVGL-päivitykset)
     uint16_t _last_heading_x10;
     uint16_t _last_heading_deg;

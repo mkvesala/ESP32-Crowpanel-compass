@@ -12,16 +12,18 @@
  // Hardware: Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS) Rotary Display Round Knob Screen
  // ESP32 Core: 2.0.14
 
+#include <Arduino.h>
+#include <Wire.h>
 
+// Graphics libraries for Elecrow CrowPanel
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
 #include "PCF8574.h"
-#include <Wire.h>
 
-// SquareLine Studio UI (flat export to root folder)
+// SquareLine Studio UI export
 #include "ui.h"
 
-// Class implementations
+// Own class implementations
 #include "HeadingData.h"
 #include "ESPNowReceiver.h"
 #include "CompassUI.h"
@@ -29,15 +31,13 @@
 #include "RotaryEncoder.h"
 #include "ScreenManager.h"
 
-// ESP-NOW config (WiFi removed - ESP-NOW only mode)
-// Channel must match compass WiFi AP channel (compass uses peer.channel=0 = current WiFi channel)
-#define ESP_NOW_CHANNEL  6  // TODO: Set to your WiFi AP channel
+// ESP-NOW config
+
+// Channel must match compass WiFi AP channel
+#define ESP_NOW_CHANNEL  6
 
 // Connection timeout if nothing received (ms)
-// Note: compass broadcast has a deadband so no data sent if no change in compass values
 #define CONNECTION_TIMEOUT_MS  3000
-
-// Hardware Pins (CrowPanel 2.1")
 
 // I2C / PCF8574
 #define I2C_SDA_PIN 38
@@ -49,6 +49,7 @@ PCF8574 pcf8574(0x21);
 #define PCF_TP_INT   P2
 #define PCF_LCD_PWR  P3
 #define PCF_LCD_RST  P4
+#define PCF_RE_BTN   P5
 
 // Backlight PWM (ESP32 core 2.0.14 API)
 #define SCREEN_BACKLIGHT_PIN 6
@@ -57,7 +58,6 @@ const int pwmChannel = 0;
 const int pwmResolution = 8;
 
 // Display
-
 static const uint16_t screenWidth  = 480;
 static const uint16_t screenHeight = 480;
 
@@ -65,6 +65,21 @@ static const uint16_t screenHeight = 480;
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *buf1 = NULL;
 static const uint32_t buf_pixels = screenWidth * 40;
+
+// UI upddate frequency
+#define UI_UPDATE_INTERVAL_MS  59  // ~17 Hz (compass send rate is 53 ms)
+
+// Diagnostics and debug interval
+#define DIAG_PRINT_INTERVAL_MS  5000  // 5 secs
+
+// Diagnostic counters
+static uint32_t diag_ui_updates = 0;
+static uint32_t diag_ui_update_time_total = 0;
+static uint32_t diag_ui_update_time_max = 0;
+static uint32_t diag_lvgl_time_total = 0;
+static uint32_t diag_lvgl_time_max = 0;
+static uint32_t diag_lvgl_calls = 0;
+static uint32_t diag_last_print = 0;
 
 // Arduino_GFX bus + panel
 Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
@@ -84,8 +99,7 @@ Arduino_ST7701_RGBPanel *gfx = new Arduino_ST7701_RGBPanel(
     10 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 20 /* vsync_back_porch */
 );
 
-// Global objects
-
+// Global instances
 ESPNowReceiver receiver;
 CompassUI compassUI;
 AttitudeUI attitudeUI;
@@ -93,7 +107,6 @@ RotaryEncoder encoder;
 ScreenManager screenMgr;
 
 // LVGL flush callback
-
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
@@ -109,12 +122,14 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 // Hardware init functions
 
+// Screen backlight
 void initBacklight(uint8_t duty) {
     ledcSetup(pwmChannel, pwmFreq, pwmResolution);
     ledcAttachPin(SCREEN_BACKLIGHT_PIN, pwmChannel);
     ledcWrite(pwmChannel, duty);
 }
 
+// PCF init
 void initPcfAndResetLines() {
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
 
@@ -122,7 +137,7 @@ void initPcfAndResetLines() {
     pcf8574.pinMode(PCF_TP_INT, OUTPUT);
     pcf8574.pinMode(PCF_LCD_PWR, OUTPUT);
     pcf8574.pinMode(PCF_LCD_RST, OUTPUT);
-    pcf8574.pinMode(P5, INPUT_PULLUP);  // Rotary encoder button
+    pcf8574.pinMode(PCF_RE_BTN, INPUT_PULLUP); 
 
     pcf8574.begin();
 
@@ -150,6 +165,7 @@ void initPcfAndResetLines() {
     delay(50);
 }
 
+// LVGL init
 void initLvgl() {
     lv_init();
 
@@ -168,12 +184,13 @@ void initLvgl() {
     lv_disp_drv_register(&disp_drv);
 }
 
-// Setup
+// === S E T U P ===
 
 void setup() {
+
     Serial.begin(115200);
 
-    // 1. Hardware init
+    // Hardware init
     initPcfAndResetLines();
 
     gfx->begin();
@@ -181,48 +198,35 @@ void setup() {
 
     initBacklight(200);
 
-    // 2. LVGL init
+    // LVGL init
     initLvgl();
 
-    // 3. SquareLine UI init 
+    // SquareLine UI init 
     ui_init();
 
-    // 4. UI adapter init
+    // UI adapter init
     compassUI.begin();
     attitudeUI.begin();
 
-    // 5. Screen manager init (pass AttitudeUI for level cancel callback)
+    // Screen manager init 
     screenMgr.begin(&attitudeUI);
 
-    // 6. Rotary encoder init (käytä samaa PCF8574-instanssia)
+    // Rotary encoder init
     encoder.begin(pcf8574);
 
-    // 7. ESP-NOW init (channel must match compass)
+    // ESP-NOW init
     receiver.begin(ESP_NOW_CHANNEL);
 }
 
-// Loop
-
-// UI upddate frequency
-#define UI_UPDATE_INTERVAL_MS  59  // ~17 Hz (compass send rate is 53 ms)
-
-// Diagnostics and debug interval
-#define DIAG_PRINT_INTERVAL_MS  5000  // 5 secs
-
-// Diagnostic counters
-static uint32_t diag_ui_updates = 0;
-static uint32_t diag_ui_update_time_total = 0;
-static uint32_t diag_ui_update_time_max = 0;
-static uint32_t diag_lvgl_time_total = 0;
-static uint32_t diag_lvgl_time_max = 0;
-static uint32_t diag_lvgl_calls = 0;
-static uint32_t diag_last_print = 0;
+// === L O O P ===
 
 void loop() {
+    
     // LVGL tick
     uint32_t lvgl_start = micros();
     lv_timer_handler();
     uint32_t lvgl_elapsed = micros() - lvgl_start;
+
     diag_lvgl_time_total += lvgl_elapsed;
     if (lvgl_elapsed > diag_lvgl_time_max) {
         diag_lvgl_time_max = lvgl_elapsed;
@@ -338,6 +342,6 @@ void loop() {
         diag_lvgl_time_max = 0;
         diag_lvgl_calls = 0;
     }
-
+    
     delay(5);
 }
