@@ -60,7 +60,6 @@ void RotaryEncoder::begin(PCF8574& pcf) {
     );
 
     _initialized = true;
-    Serial.println("[RotaryEncoder] Initialized with button support");
 }
 
 int8_t RotaryEncoder::getDirection() {
@@ -140,7 +139,6 @@ void RotaryEncoder::processButton() {
                 portENTER_CRITICAL(&_spinlock);
                 _buttonPressed = true;
                 portEXIT_CRITICAL(&_spinlock);
-                Serial.println("[RotaryEncoder] Button pressed");
             }
             _lastButtonState = currentState;
             _lastButtonTime = now;

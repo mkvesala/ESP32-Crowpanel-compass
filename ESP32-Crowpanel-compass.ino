@@ -199,14 +199,12 @@ void setup() {
 
     // 7. ESP-NOW init (channel must match compass)
     receiver.begin(ESP_NOW_CHANNEL);
-
-    Serial.println("Setup complete - Compass/Attitude display ready");
 }
 
 // Loop
 
 // UI upddate frequency
-#define UI_UPDATE_INTERVAL_MS  101  // ~10 Hz (matches compass 97ms send rate)
+#define UI_UPDATE_INTERVAL_MS  59  // ~17 Hz (compass send rate is 53 ms)
 
 // Diagnostics and debug interval
 #define DIAG_PRINT_INTERVAL_MS  5000  // 5 secs
@@ -307,6 +305,14 @@ void loop() {
 
         Serial.printf("[DIAG] PPS: %.1f | UI updates: %lu | UI avg: %.2f ms | UI max: %.2f ms\n",
             pps, diag_ui_updates, avg_ui_time, diag_ui_update_time_max / 1000.0f);
+
+        // Memory and stack diagnostics
+        Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
+            (unsigned long)esp_get_free_heap_size(),
+            (unsigned long)esp_get_minimum_free_heap_size(),
+            (unsigned long)uxTaskGetStackHighWaterMark(NULL),  // Current task (loop)
+            (unsigned long)uxTaskGetStackHighWaterMark(encoder.getEncoderTaskHandle()),
+            (unsigned long)uxTaskGetStackHighWaterMark(encoder.getButtonTaskHandle()));
 
         // Reset counters
         diag_ui_updates = 0;

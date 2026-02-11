@@ -119,17 +119,14 @@ bool AttitudeUI::handleButtonPress(ESPNowReceiver& receiver) {
         case LevelState::IDLE:
             // First press: show confirmation dialog
             setLevelState(LevelState::CONFIRM_WAIT);
-            Serial.println("[AttitudeUI] Level: waiting for confirmation");
             return true;
 
         case LevelState::CONFIRM_WAIT:
             // Second press: send level command
             if (receiver.sendLevelCommand()) {
                 setLevelState(LevelState::SENDING);
-                Serial.println("[AttitudeUI] Level: command sent");
             } else {
                 setLevelState(LevelState::FAILED);
-                Serial.println("[AttitudeUI] Level: send failed");
             }
             return true;
 
@@ -152,7 +149,6 @@ void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
         case LevelState::CONFIRM_WAIT:
             if (elapsed >= CONFIRM_TIMEOUT_MS) {
                 setLevelState(LevelState::IDLE);
-                Serial.println("[AttitudeUI] Level: confirmation timeout");
             }
             break;
 
@@ -160,11 +156,8 @@ void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
             if (receiver.hasLevelResponse()) {
                 bool success = receiver.getLevelResult();
                 setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
-                Serial.printf("[AttitudeUI] Level: response received - %s\n",
-                    success ? "SUCCESS" : "FAILED");
             } else if (elapsed >= SENDING_TIMEOUT_MS) {
                 setLevelState(LevelState::FAILED);
-                Serial.println("[AttitudeUI] Level: response timeout");
             }
             break;
 
@@ -188,7 +181,6 @@ void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
 
 void AttitudeUI::cancelLevelOperation() {
     if (_levelState != LevelState::IDLE) {
-        Serial.println("[AttitudeUI] Level: operation cancelled");
         setLevelState(LevelState::IDLE);
     }
 }
@@ -207,7 +199,7 @@ void AttitudeUI::updateLevelDialog() {
 
         case LevelState::CONFIRM_WAIT:
             lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
-            lv_label_set_text(ui_LabelLevelingDialog, "Level attitude?\nPress knob again to confirm.");
+            lv_label_set_text(ui_LabelLevelingDialog, "Level attitude?\n\nPress knob again\nto confirm.");
             lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFF00), 0);  // Yellow
             break;
 

@@ -148,7 +148,7 @@
                       {
                         "nid": 1020,
                         "strtype": "IMAGE/Asset",
-                        "strval": "assets/Compass-9.png",
+                        "strval": "assets/Compass-8.png",
                         "InheritedType": 5
                       },
                       {
@@ -5311,7 +5311,7 @@
     "rotation": 0,
     "offset_x": 0,
     "offset_y": 0,
-    "shape": "RECTANGLE",
+    "shape": "CIRCLE",
     "multilang": "DISABLE",
     "description": "",
     "board": "Arduino with TFT_eSPI",
@@ -5330,7 +5330,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 879,
+    "backup_cnt": 882,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",

@@ -47,6 +47,10 @@ public:
      */
     bool getButtonPressed();
 
+    // Task handles for diagnostics (stack high water mark)
+    TaskHandle_t getEncoderTaskHandle() const { return _encoderTaskHandle; }
+    TaskHandle_t getButtonTaskHandle() const { return _buttonTaskHandle; }
+
 private:
     static void encoderTask(void* param);
     static void buttonTask(void* param);

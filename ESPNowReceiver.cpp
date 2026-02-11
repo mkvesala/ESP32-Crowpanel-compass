@@ -49,8 +49,6 @@ bool ESPNowReceiver::begin(uint8_t channel) {
     _initialized = true;
     _last_stats_millis = millis();
 
-    Serial.printf("MAC: %s  CH: %d\n", WiFi.macAddress().c_str(), _channel);
-
     return true;
 }
 
@@ -86,8 +84,6 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
             _level_response_received = true;
             _level_response_success = (resp.success == 1);
             portEXIT_CRITICAL(&_mux);
-            Serial.printf("[ESPNowReceiver] Level response: %s\n",
-                resp.success ? "SUCCESS" : "FAILED");
         }
     }
 }
@@ -149,7 +145,6 @@ bool ESPNowReceiver::sendLevelCommand() {
         peerInfo.encrypt = false;
 
         if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-            Serial.println("[ESPNowReceiver] Failed to add broadcast peer");
             return false;
         }
     }
@@ -167,13 +162,7 @@ bool ESPNowReceiver::sendLevelCommand() {
 
     esp_err_t result = esp_now_send(BROADCAST_ADDR, (uint8_t*)&cmd, sizeof(cmd));
 
-    if (result == ESP_OK) {
-        Serial.println("[ESPNowReceiver] Level command sent");
-        return true;
-    } else {
-        Serial.printf("[ESPNowReceiver] Level command failed: %d\n", result);
-        return false;
-    }
+    return (result == ESP_OK);
 }
 
 bool ESPNowReceiver::hasLevelResponse() {

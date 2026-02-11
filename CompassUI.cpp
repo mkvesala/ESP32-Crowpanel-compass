@@ -49,8 +49,6 @@ void CompassUI::toggleHeadingMode() {
     _last_heading_x10 = 0xFFFF;
     _last_heading_deg = 0xFFFF;
     _last_is_true = !_use_true_heading;  // Pakota päivitys
-
-    Serial.printf("[CompassUI] Heading mode: %s\n", _use_true_heading ? "TRUE" : "MAGNETIC");
 }
 
 void CompassUI::setCompassRotation(uint16_t heading_x10) {
