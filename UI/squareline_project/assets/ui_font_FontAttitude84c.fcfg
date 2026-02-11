@@ -8,7 +8,7 @@
   "bpp": 4,
   "letters": 0,
   "ranges": [],
-  "symbols": "01234567890+-°",
+  "symbols": "01234567890+-°%",
   "customparams": "--no-compress --no-prefilter",
   "uploaded": false
 }
