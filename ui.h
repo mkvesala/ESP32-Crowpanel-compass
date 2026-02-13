@@ -18,7 +18,7 @@ extern "C" {
 ///////////////////// SCREENS ////////////////////
 #include "ui_CompassScreen.h"
 #include "ui_AttitudeScreen.h"
-#include "ui_BrighnessScreen.h"
+#include "ui_BrightnessScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);

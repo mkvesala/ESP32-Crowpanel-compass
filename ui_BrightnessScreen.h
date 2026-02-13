@@ -3,16 +3,16 @@
 // LVGL version: 8.3.11
 // Project name: SLS480v2
 
-#ifndef UI_BRIGHNESSSCREEN_H
-#define UI_BRIGHNESSSCREEN_H
+#ifndef UI_BRIGHTNESSSCREEN_H
+#define UI_BRIGHTNESSSCREEN_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// SCREEN: ui_BrighnessScreen
-extern void ui_BrighnessScreen_screen_init(void);
-extern void ui_BrighnessScreen_screen_destroy(void);
+// SCREEN: ui_BrightnessScreen
+extern void ui_BrightnessScreen_screen_init(void);
+extern void ui_BrightnessScreen_screen_destroy(void);
 extern lv_obj_t *ui_BrightnessScreen;
 extern lv_obj_t *ui_ContainerBrightness;
 extern lv_obj_t *ui_PanelBrightness;

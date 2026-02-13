@@ -16,6 +16,7 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 
 1. **CompassScreen** - Compass rose and heading value
 2. **AttitudeScreen** - Artificial horizon (white line) and pitch/roll values
+3. **BrightnessScreen** - Display backlight brightness adjustment (NVS persistence)
 
 ---
 
@@ -29,6 +30,7 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 | WiFi removed from CrowPanel (ESP-NOW only) | ESPNowReceiver |
 | ESP-NOW channel 6 (matches router) | .ino |
 | Attitude Level feature (full end-to-end) | AttitudeUI, ESPNowReceiver, ScreenManager, .ino |
+| BrightnessScreen (backlight adjustment, NVS persist) | BrightnessUI, ScreenManager, .ino |
 | Compass rose rotation threshold 0.5° | CompassUI |
 | Diagnostics: PPS, UI timing, LVGL timing, heap, stack | .ino |
 | Leveling dialog text wrapping fixed | AttitudeUI.cpp |
@@ -44,6 +46,22 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 4. Timeout or screen switch → return to IDLE (dialog hidden)
 
 **Timeouts:** CONFIRM_WAIT 3s, SENDING 3s, SUCCESS 1.5s, FAILED 2s
+
+### BrightnessScreen Feature
+
+**State machine flow:**
+1. Knob press → ADJUSTING (show arc overlay, ContainerAdjustment visible)
+2. Knob rotation → ±5% brightness (arc, label, and backlight update in real-time)
+3. 3 sec timeout after last rotation → save to NVS, hide arc, return to IDLE
+4. Screen switch while ADJUSTING → save + cancel (return to IDLE)
+
+**Normal mode (IDLE):** Shows sun icon, "Brightness" label, and current percentage. Knob rotation switches screens normally.
+
+**Brightness range:** 5%–100% (5% minimum prevents screen going completely dark). Default: 78% (~200/255).
+
+**Persistence:** ESP32 Preferences library (NVS), namespace `"display"`, key `"brightness"`. Loaded on boot in `begin()`, saved on auto-save timeout or screen switch.
+
+**PWM mapping:** Linear `percent * 255 / 100`. GPIO 6, LEDC channel 0, 5 kHz, 8-bit.
 
 ### Compass Rose Rotation Threshold
 
@@ -128,14 +146,28 @@ ui_AttitudeScreen (black background)
         └── ui_LabelLevelingDialog
 ```
 
+### BrightnessScreen
+```
+ui_BrightnessScreen (black background)
+├── ui_ContainerBrightness (484×484, stationary)
+│   └── ui_PanelBrightness (280×280)
+│       ├── ui_ImageBrightness (sun icon, Scale=512)
+│       ├── ui_LabelBrightness ("Brightness", top)
+│       └── ui_LabelBrightnessValue ("XX%", bottom)
+│
+└── ui_ContainerAdjustment (476×476, hidden by default)
+    └── ui_ArcAdjustment (460×460, blue bg, white indicator, 20px)
+```
+
 ---
 
 ## Knob Button Behavior
 
-| Screen | Action |
-|--------|--------|
-| CompassScreen | Toggle True/Magnetic heading mode |
-| AttitudeScreen | Trigger level confirmation dialog |
+| Screen | Button Action | Rotation (normal) | Rotation (special) |
+|--------|---------------|-------------------|-------------------|
+| CompassScreen | Toggle True/Magnetic heading mode | Switch screen | — |
+| AttitudeScreen | Trigger level confirmation dialog | Switch screen | — |
+| BrightnessScreen | Enter ADJUSTING mode (show arc) | Switch screen | ±5% brightness (ADJUSTING mode only) |
 
 ---
 
@@ -165,6 +197,15 @@ struct LevelResponse {
     uint8_t reserved[3];
 };
 ```
+
+### Screen Carousel Order
+- **CW (clockwise):** COMPASS → ATTITUDE → BRIGHTNESS → COMPASS → ...
+- **CCW (counter-clockwise):** COMPASS → BRIGHTNESS → ATTITUDE → COMPASS → ...
+
+### NVS Persistence (Preferences)
+- Namespace: `"display"`, Key: `"brightness"` (int8_t, 5–100%)
+- Loaded once in `brightnessUI.begin()`, saved on auto-save timeout or screen switch
+- Default value (first boot): 78% (~200/255)
 
 ### Compass Deadband
 - Compass sender has 0.25° deadband — no packet sent if heading AND attitude change less than 0.25°
@@ -214,13 +255,15 @@ ESP32-Crowpanel-compass/
 ├── ESPNowReceiver.h/.cpp        # ESP-NOW receiver + level command sender
 ├── CompassUI.h/.cpp             # Compass screen adapter
 ├── AttitudeUI.h/.cpp            # Attitude screen adapter + level state machine
+├── BrightnessUI.h/.cpp          # Brightness screen adapter + adjustment state machine
 ├── RotaryEncoder.h/.cpp         # Rotary encoder handler
-├── ScreenManager.h/.cpp         # Screen management + level cancel
+├── ScreenManager.h/.cpp         # Screen management (3-screen carousel) + cleanup
 ├── CLAUDE_SESSION_CONTEXT.md    # This file
 ├── .gitignore
 ├── ui.h/.c                      # SquareLine generated
 ├── ui_CompassScreen.h/.c        # SquareLine generated
 ├── ui_AttitudeScreen.h/.c       # SquareLine generated
+├── ui_BrightnessScreen.h/.c     # SquareLine generated
 ├── ui_helpers.h/.c              # SquareLine generated
 ├── ui_font_*.c                  # Fonts
 ├── ui_img_*.c                   # Images

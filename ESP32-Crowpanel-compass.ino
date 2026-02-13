@@ -8,6 +8,7 @@
  // Turn knob to switch screens:
  // - CompassScreen: compass rose and heading
  // - AttitudeScreen: artificial horizon, pitch and roll
+ // - BrightnessScreen: display backlight brightness adjustment
  //
  // Hardware: Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS) Rotary Display Round Knob Screen
  // ESP32 Core: 2.0.14
@@ -28,6 +29,7 @@
 #include "ESPNowReceiver.h"
 #include "CompassUI.h"
 #include "AttitudeUI.h"
+#include "BrightnessUI.h"
 #include "RotaryEncoder.h"
 #include "ScreenManager.h"
 
@@ -103,6 +105,7 @@ Arduino_ST7701_RGBPanel *gfx = new Arduino_ST7701_RGBPanel(
 ESPNowReceiver receiver;
 CompassUI compassUI;
 AttitudeUI attitudeUI;
+BrightnessUI brightnessUI;
 RotaryEncoder encoder;
 ScreenManager screenMgr;
 
@@ -207,9 +210,10 @@ void setup() {
     // UI adapter init
     compassUI.begin();
     attitudeUI.begin();
+    brightnessUI.begin(pwmChannel);
 
-    // Screen manager init 
-    screenMgr.begin(&attitudeUI);
+    // Screen manager init
+    screenMgr.begin(&attitudeUI, &brightnessUI);
 
     // Rotary encoder init
     encoder.begin(pcf8574);
@@ -236,14 +240,20 @@ void loop() {
     // Update statistics
     receiver.updateStats();
 
-    // Check rotary encoder for screen switching
-    // Note that the screens work as an endless loop:
-    // Next one from the last is the first one and vice versa
+    // Check rotary encoder
+    // In BrightnessScreen ADJUSTING mode: rotation adjusts brightness
+    // Otherwise: rotation switches screens (endless loop)
     int8_t dir = encoder.getDirection();
-    if (dir > 0) {
-        screenMgr.switchNext(); // clockwise
-    } else if (dir < 0) {
-        screenMgr.switchPrevious(); // counter-clockwise
+    if (dir != 0) {
+        if (screenMgr.isBrightnessActive() && brightnessUI.isAdjusting()) {
+            brightnessUI.handleRotation(dir);
+        } else {
+            if (dir > 0) {
+                screenMgr.switchNext();     // clockwise
+            } else {
+                screenMgr.switchPrevious(); // counter-clockwise
+            }
+        }
     }
 
     // Check knob button press
@@ -251,15 +261,21 @@ void loop() {
         if (screenMgr.isCompassActive()) {
             // CompassScreen: toggle heading mode (T/M)
             compassUI.toggleHeadingMode();
-        } else {
+        } else if (screenMgr.isAttitudeActive()) {
             // AttitudeScreen: handle level operation
             attitudeUI.handleButtonPress(receiver);
+        } else if (screenMgr.isBrightnessActive()) {
+            // BrightnessScreen: toggle adjustment mode
+            brightnessUI.handleButtonPress();
         }
     }
 
-    // Update level state machine (check for response, timeouts)
+    // Update state machines (check for timeouts)
     if (screenMgr.isAttitudeActive()) {
         attitudeUI.updateLevelState(receiver);
+    }
+    if (screenMgr.isBrightnessActive()) {
+        brightnessUI.updateState();
     }
 
     // UI update
@@ -279,10 +295,10 @@ void loop() {
             // Measure the runtime of UI update
             uint32_t ui_start = micros();
 
-            // Update screen
+            // Update screen (BrightnessScreen has no compass data to display)
             if (screenMgr.isCompassActive()) {
                 compassUI.update(data, is_connected, pps);
-            } else {
+            } else if (screenMgr.isAttitudeActive()) {
                 attitudeUI.update(data, is_connected, pps);
             }
 
@@ -301,9 +317,10 @@ void loop() {
             if (was_connected && !is_connected) {
                 if (screenMgr.isCompassActive()) {
                     compassUI.showDisconnected();
-                } else {
+                } else if (screenMgr.isAttitudeActive()) {
                     attitudeUI.showDisconnected();
                 }
+                // BrightnessScreen: no connection indicator
             }
             was_connected = is_connected;
         }
