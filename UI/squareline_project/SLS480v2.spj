@@ -5173,6 +5173,12 @@
                         "InheritedType": 1
                       },
                       {
+                        "nid": 100,
+                        "strtype": "IMAGE/Hidden",
+                        "strval": "False",
+                        "InheritedType": 2
+                      },
+                      {
                         "nid": 110,
                         "strtype": "OBJECT/Clickable",
                         "strval": "False",
@@ -5308,7 +5314,7 @@
                       {
                         "nid": 10,
                         "strtype": "OBJECT/Name",
-                        "strval": "LabelImage",
+                        "strval": "LabelBrightness",
                         "InheritedType": 10
                       },
                       {
@@ -5370,6 +5376,12 @@
                         "flags": 1048576,
                         "strtype": "OBJECT/Flags",
                         "InheritedType": 1
+                      },
+                      {
+                        "nid": 100,
+                        "strtype": "LABEL/Hidden",
+                        "strval": "False",
+                        "InheritedType": 2
                       },
                       {
                         "nid": 110,
@@ -5480,7 +5492,7 @@
                       {
                         "nid": 10,
                         "strtype": "OBJECT/Name",
-                        "strval": "LabelValue",
+                        "strval": "LabelBrightnessValue",
                         "InheritedType": 10
                       },
                       {
@@ -5544,6 +5556,12 @@
                         "InheritedType": 1
                       },
                       {
+                        "nid": 100,
+                        "strtype": "LABEL/Hidden",
+                        "strval": "False",
+                        "InheritedType": 2
+                      },
+                      {
                         "nid": 110,
                         "strtype": "OBJECT/Clickable",
                         "strval": "False",
@@ -5599,7 +5617,7 @@
                       {
                         "nid": 1030,
                         "strtype": "LABEL/Text",
-                        "strval": "100%",
+                        "strval": "50%",
                         "InheritedType": 10
                       },
                       {
@@ -5657,7 +5675,7 @@
                   {
                     "nid": 10,
                     "strtype": "OBJECT/Name",
-                    "strval": "PanelImage",
+                    "strval": "PanelBrightness",
                     "InheritedType": 10
                   },
                   {
@@ -5719,6 +5737,12 @@
                     "flags": 1048576,
                     "strtype": "OBJECT/Flags",
                     "InheritedType": 1
+                  },
+                  {
+                    "nid": 100,
+                    "strtype": "PANEL/Hidden",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "nid": 225,
@@ -5819,7 +5843,7 @@
               {
                 "nid": 10,
                 "strtype": "OBJECT/Name",
-                "strval": "ContainerImage",
+                "strval": "ContainerBrightness",
                 "InheritedType": 10
               },
               {
@@ -5881,6 +5905,12 @@
                 "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
+              },
+              {
+                "nid": 100,
+                "strtype": "CONTAINER/Hidden",
+                "strval": "False",
+                "InheritedType": 2
               },
               {
                 "nid": 110,
@@ -6038,9 +6068,44 @@
                   },
                   {
                     "nid": 90,
-                    "flags": 1048576,
                     "strtype": "OBJECT/Flags",
                     "InheritedType": 1
+                  },
+                  {
+                    "nid": 100,
+                    "strtype": "ARC/Hidden",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
+                    "nid": 110,
+                    "strtype": "OBJECT/Clickable",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
+                    "nid": 130,
+                    "strtype": "OBJECT/Press_lock",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
+                    "nid": 140,
+                    "strtype": "OBJECT/Click_focusable",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
+                    "nid": 210,
+                    "strtype": "OBJECT/Gesture_bubble",
+                    "strval": "False",
+                    "InheritedType": 2
+                  },
+                  {
+                    "nid": 220,
+                    "strtype": "OBJECT/Snappable",
+                    "strval": "False",
+                    "InheritedType": 2
                   },
                   {
                     "nid": 225,
@@ -6080,6 +6145,7 @@
                   },
                   {
                     "nid": 1010,
+                    "flags": 1048576,
                     "strtype": "ARC/Arc",
                     "InheritedType": 1
                   },
@@ -6133,8 +6199,8 @@
                             "flags": 4096,
                             "strtype": "_style/Arc_Color",
                             "intarray": [
-                              255,
-                              255,
+                              0,
+                              0,
                               255,
                               255
                             ],
@@ -6164,6 +6230,18 @@
                         "strval": "DEFAULT",
                         "childs": [
                           {
+                            "nid": 10310,
+                            "flags": 4096,
+                            "strtype": "_style/Arc_Color",
+                            "intarray": [
+                              255,
+                              255,
+                              255,
+                              255
+                            ],
+                            "InheritedType": 7
+                          },
+                          {
                             "nid": 10320,
                             "strtype": "_style/Arc_Width",
                             "integer": 20,
@@ -6180,7 +6258,28 @@
                   },
                   {
                     "part": "lv.PART.KNOB",
-                    "childs": [],
+                    "childs": [
+                      {
+                        "nid": 10000,
+                        "strtype": "_style/StyleState",
+                        "strval": "DEFAULT",
+                        "childs": [
+                          {
+                            "nid": 10520,
+                            "flags": 4096,
+                            "strtype": "_style/Bg_Color",
+                            "intarray": [
+                              255,
+                              255,
+                              255,
+                              255
+                            ],
+                            "InheritedType": 7
+                          }
+                        ],
+                        "InheritedType": 1
+                      }
+                    ],
                     "nid": 1090,
                     "strtype": "ARC/Style_knob",
                     "strval": "lv.PART.KNOB, Rectangle, Pad",
@@ -6194,7 +6293,7 @@
               {
                 "nid": 10,
                 "strtype": "OBJECT/Name",
-                "strval": "ContainerArc",
+                "strval": "ContainerAdjustment",
                 "InheritedType": 10
               },
               {
@@ -6253,9 +6352,14 @@
               },
               {
                 "nid": 90,
-                "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
+              },
+              {
+                "nid": 100,
+                "strtype": "CONTAINER/Hidden",
+                "strval": "True",
+                "InheritedType": 2
               },
               {
                 "nid": 110,
@@ -6332,7 +6436,7 @@
           {
             "nid": 10,
             "strtype": "OBJECT/Name",
-            "strval": "BrighnessScreen",
+            "strval": "BrightnessScreen",
             "InheritedType": 10
           },
           {
@@ -6363,6 +6467,12 @@
             "flags": 1048576,
             "strtype": "OBJECT/Flags",
             "InheritedType": 1
+          },
+          {
+            "nid": 100,
+            "strtype": "SCREEN/Hidden",
+            "strval": "False",
+            "InheritedType": 2
           },
           {
             "nid": 225,
@@ -6693,7 +6803,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 883,
+    "backup_cnt": 890,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
