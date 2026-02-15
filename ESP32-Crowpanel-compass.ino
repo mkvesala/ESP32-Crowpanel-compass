@@ -36,25 +36,25 @@
 // ESP-NOW config
 
 // Channel must match compass WiFi AP channel
-#define ESP_NOW_CHANNEL  6
+static constexpr uint8_t ESP_NOW_CHANNEL = 6;
 
 // Connection timeout if nothing received (ms)
-#define CONNECTION_TIMEOUT_MS  3000
+static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
 
 // I2C / PCF8574
-#define I2C_SDA_PIN 38
-#define I2C_SCL_PIN 39
+static constexpr uint8_t I2C_SDA_PIN = 38;
+static constexpr uint8_t I2C_SCL_PIN = 39;
 PCF8574 pcf8574(0x21);
 
 // PCF pins
-#define PCF_TP_RST   P0
-#define PCF_TP_INT   P2
-#define PCF_LCD_PWR  P3
-#define PCF_LCD_RST  P4
-#define PCF_RE_BTN   P5
+static constexpr uint8_t PCF_TP_RST  = P0;  // 0
+static constexpr uint8_t PCF_TP_INT  = P2;  // 2
+static constexpr uint8_t PCF_LCD_PWR = P3;  // 3
+static constexpr uint8_t PCF_LCD_RST = P4;  // 4
+static constexpr uint8_t PCF_RE_BTN  = P5;  // 5
 
 // Backlight PWM (ESP32 core 2.0.14 API)
-#define SCREEN_BACKLIGHT_PIN 6
+static constexpr uint8_t SCREEN_BACKLIGHT_PIN = 6;
 const int pwmFreq = 5000;
 const int pwmChannel = 0;
 const int pwmResolution = 8;
@@ -68,11 +68,11 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *buf1 = NULL;
 static const uint32_t buf_pixels = screenWidth * 40;
 
-// UI upddate frequency
-#define UI_UPDATE_INTERVAL_MS  59  // ~17 Hz (compass send rate is 53 ms)
+// UI upddate frequency ~17 Hz (compass send rate is 53 ms)
+static constexpr uint8_t UI_UPDATE_INTERVAL_MS = 59;
 
-// Diagnostics and debug interval
-#define DIAG_PRINT_INTERVAL_MS  5000  // 5 secs
+// Diagnostics and debug interval 5 secs
+static constexpr uint8_t DIAG_PRINT_INTERVAL_MS = 5000; 
 
 // Diagnostic counters
 static uint32_t diag_ui_updates = 0;
@@ -114,16 +114,11 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
-#if (LV_COLOR_16_SWAP != 0)
-    gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-#else
+    // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-#endif
 
     lv_disp_flush_ready(disp);
 }
-
-// Hardware init functions
 
 // Screen backlight
 void initBacklight(uint8_t duty) {

@@ -4,65 +4,34 @@
 #include <lvgl.h>
 #include "HeadingData.h"
 
-/**
- * @brief Kompassi-UI adapter SquareLine Studio -generoidulle UI:lle
- *
- * Päivittää SquareLine-generoituja UI-elementtejä HeadingData-datan perusteella.
- * Ei luo omia elementtejä - käyttää ui_* globaaleja suoraan.
- *
- * Käyttö:
- *   ui_init();     // SquareLine-generoitu
- *   ui.begin();    // CompassUI adapter
- *
- *   // loop():ssa
- *   ui.update(headingData, connected, packetsPerSecond);
- */
+// === C L A S S  C O M P A S S U I ===
+//
+// - Class CompassUI - responsible for managing SquareLine generated UI elements on CompassScreen
+// - Initialize: compassUI.begin()
+// - Update in loop(): compassUI.update(..)
+// - Provides public API to:
+//   - Show "waiting for data" status
+//   - Show "disconnected" status
+//   - Toggle heading mode (TRUE/MAGNETIC)
+//   - Return current heading mode (TRUE/MAGNETIC)
+// - Owned by: CrowPanelApplication
+
 class CompassUI {
+
 public:
+
     CompassUI();
 
-    /**
-     * @brief Alusta adapter
-     *
-     * Kutsutaan setup():ssa ui_init():n jälkeen.
-     * Ei luo elementtejä, vain alustaa sisäisen tilan.
-     */
     void begin();
-
-    /**
-     * @brief Päivitä UI uudella datalla
-     *
-     * @param data Kompassidata
-     * @param connected Onko yhteys aktiivinen
-     * @param packetsPerSec Paketteja sekunnissa (ei käytetä tällä hetkellä)
-     */
     void update(const HeadingData& data, bool connected, float packetsPerSec);
-
-    /**
-     * @brief Näytä "waiting for data" tila
-     */
     void showWaiting();
-
-    /**
-     * @brief Näytä "disconnected" tila
-     */
     void showDisconnected();
-
-    /**
-     * @brief Vaihda heading-moodia (True ↔ Magnetic)
-     *
-     * Kutsutaan kun käyttäjä painaa rotary knob -painiketta.
-     * Oletuksena näytetään True heading.
-     */
     void toggleHeadingMode();
-
-    /**
-     * @brief Palauttaa true jos näytetään True heading
-     */
     bool isShowingTrueHeading() const { return _use_true_heading; }
 
 private:
-    // Päivitysfunktiot SquareLine-elementeille
+
+    // Methods to update SquareLine UI elements
     void setCompassRotation(uint16_t heading_x10);
     void updateHeadingLabel(uint16_t heading_deg);
     void updateHeadingMode(bool is_true);
@@ -71,15 +40,20 @@ private:
     // Compass rose rotation threshold (0.5° = 5 in x10 units)
     // Reduces heavy LVGL re-renders when heading changes are small
     static constexpr uint16_t ROTATION_THRESHOLD_X10 = 5;
+    
+    // Colors for "connected" panel on UI, "the red dot"
+    static constexpr uint32_t COLOR_CONNECTED    = 0x000000;  // Black
+    static constexpr uint32_t COLOR_DISCONNECTED = 0xFF0000;  // Red
 
-    // Cached values (vältetään turhat LVGL-päivitykset)
+    // Cached values
     uint16_t _last_heading_x10;
     uint16_t _last_heading_deg;
     bool     _last_is_true;
     bool     _last_connected;
 
-    // Heading mode toggle
-    bool _use_true_heading;  // true = True heading, false = Magnetic heading
+    // true = True heading, false = Magnetic heading
+    bool _use_true_heading;
 
     bool _initialized;
+    
 };

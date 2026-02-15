@@ -109,14 +109,14 @@ private:
     // Auto-save timeout
     static constexpr uint32_t AUTOSAVE_TIMEOUT_MS = 3000;
 
-    // Kirkkauden muutosaskel per encoder-klikkaus
+    // Brightness adjustment (% change of one step of rotating the knob)
     static constexpr int8_t BRIGHTNESS_STEP = 5;
 
-    // Kirkkauden rajat (0% = näyttö pimeänä, ei toivottua)
+    // Boundaries for brightness adjustment
     static constexpr int8_t MIN_BRIGHTNESS_PERCENT = 5;
     static constexpr int8_t MAX_BRIGHTNESS_PERCENT = 100;
 
-    // NVS namespace ja avain
+    // NVS namespace ja key, default brightness value
     static constexpr const char* NVS_NAMESPACE = "display";
     static constexpr const char* NVS_KEY_BRIGHTNESS = "brightness";
     static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 78;  // ~200/255
