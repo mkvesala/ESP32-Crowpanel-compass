@@ -104,7 +104,7 @@ Arduino_ST7701_RGBPanel *gfx = new Arduino_ST7701_RGBPanel(
 // Global instances
 ESPNowReceiver receiver;
 CompassUI compassUI;
-AttitudeUI attitudeUI;
+AttitudeUI attitudeUI(receiver);
 BrightnessUI brightnessUI;
 RotaryEncoder encoder;
 ScreenManager screenMgr;
@@ -258,7 +258,7 @@ void loop() {
             compassUI.toggleHeadingMode();
         } else if (screenMgr.isAttitudeActive()) {
             // AttitudeScreen: handle level operation
-            attitudeUI.handleButtonPress(receiver);
+            attitudeUI.handleButtonPress();
         } else if (screenMgr.isBrightnessActive()) {
             // BrightnessScreen: toggle adjustment mode
             brightnessUI.handleButtonPress();
@@ -267,7 +267,7 @@ void loop() {
 
     // Update state machines (check for timeouts)
     if (screenMgr.isAttitudeActive()) {
-        attitudeUI.updateLevelState(receiver);
+        attitudeUI.updateLevelState();
     }
     if (screenMgr.isBrightnessActive()) {
         brightnessUI.updateState();

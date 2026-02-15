@@ -1,98 +1,56 @@
 #include "AttitudeUI.h"
-#include "ESPNowReceiver.h"
-#include "ui.h"
 
-AttitudeUI::AttitudeUI()
-    : _last_pitch_x10(0x7FFF)  // Invalid initial value
+// === P U B L I C ===
+
+// Constructor
+AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
+    : _receiver(receiver)
+    , _last_pitch_x10(0x7FFF)
     , _last_roll_x10(0x7FFF)
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF)
     , _initialized(false)
     , _levelState(LevelState::IDLE)
-    , _stateStartTime(0)
-{
-}
+    , _stateStartTime(0) {}
 
+// Initialize
 void AttitudeUI::begin() {
     if (_initialized) return;
 
-    // Aseta rotaation pivot-piste ImageHorizon:n keskelle
-    // Kuva on 680x4, joten keskipiste on 340, 2
+    // Set rotation pivot to the center of ImageHorizon element
+    // PNG is 680x4, center point is 340, 2
     lv_img_set_pivot(ui_ImageHorizon, 340, 2);
 
-    // Piilota level-dialogi aluksi
+    // Set ContainerLevelingDialog hidden
     lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
 
     _levelState = LevelState::IDLE;
     _initialized = true;
 
-    // Näytä aluksi "waiting" tila
-    showWaiting();
+    this->showWaiting();
 }
 
+// Update attitude screen with the compass data
 void AttitudeUI::update(const HeadingData& data, bool connected, float packetsPerSec) {
     if (!_initialized) return;
 
-    // Päivitä horisontin sijainti ja rotaatio
-    updateHorizon(data.pitch_x10, data.roll_x10);
+    // Update horizon location and rotation
+    this->updateHorizon(data.pitch_x10, data.roll_x10);
 
-    // Päivitä labelit
-    updatePitchLabel(data.getPitchDeg());
-    updateRollLabel(data.getRollDeg());
+    // Update values to pitch and roll UI label elements
+    this->updatePitchLabel(data.getPitchDeg());
+    this->updateRollLabel(data.getRollDeg());
 }
 
-void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
-    // Optimointi: päivitä vain jos muuttunut
-    if (pitch_x10 == _last_pitch_x10 && roll_x10 == _last_roll_x10) return;
-    _last_pitch_x10 = pitch_x10;
-    _last_roll_x10 = roll_x10;
-
-    // PITCH: Siirrä horisonttiviivaa Y-suunnassa
-    // Horisontin toiminta: keula alas (pitch < 0) → horisontti nousee ylös näytöllä
-    // lv_obj_set_y: positiivinen arvo siirtää objektia ALAS suhteessa align-pisteeseen
-    // ImageHorizon on ALIGN_CENTER, joten y=0 on keskellä
-    // - pitch < 0 (keula alas) → horisontti nousee → tarvitaan negatiivinen y
-    // - pitch = -10° (-100 x10) → y = -(-100 * 3) / 10 = +30 → viiva alas → VÄÄRIN
-    // Korjaus: y = (pitch_x10 * PITCH_SCALE) / 10
-    // - pitch = -10° → y = (-100 * 3) / 10 = -30 → viiva ylös → horisontti nousee ✓
-    int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
-    lv_obj_set_y(ui_ImageHorizon, y_offset);
-
-    // ROLL: Kuvan rotaatio
-    // Horisontin toiminta: kallistus vasemmalle (roll < 0) → horisontti kallistuu oikealle
-    // lv_img_set_angle: positiivinen kulma = myötäpäivään, käyttää 0.1° yksikköjä
-    // roll < 0 (kallistus vasemmalle) → horisontti kallistuu myötäpäivään (oikealle)
-    // roll = -10° (-100 x10) → angle = -(-100) = +100 = +10° myötäpäivään ✓
-    lv_img_set_angle(ui_ImageHorizon, -roll_x10);
-}
-
-void AttitudeUI::updatePitchLabel(int16_t pitch_deg) {
-    if (pitch_deg == _last_pitch_deg) return;
-    _last_pitch_deg = pitch_deg;
-
-    char buf[16];
-    // Formaatti: "+003°" tai "-012°" (etumerkki aina, 3 numeroa, aste-merkki)
-    snprintf(buf, sizeof(buf), "%+04d°", pitch_deg);
-    lv_label_set_text(ui_LabelPitch, buf);
-}
-
-void AttitudeUI::updateRollLabel(int16_t roll_deg) {
-    if (roll_deg == _last_roll_deg) return;
-    _last_roll_deg = roll_deg;
-
-    char buf[16];
-    // Formaatti: "+003°" tai "-012°"
-    snprintf(buf, sizeof(buf), "%+04d°", roll_deg);
-    lv_label_set_text(ui_LabelRoll, buf);
-}
-
+// Update AttitudeScreen to show "waiting for data" 
 void AttitudeUI::showWaiting() {
     if (!_initialized) return;
 
+    // Pitch and roll UI labels to show "---"
     lv_label_set_text(ui_LabelPitch, "---");
     lv_label_set_text(ui_LabelRoll, "---");
 
-    // Palauta horisontti keskelle
+    // Horizon to the neutral position
     lv_obj_set_y(ui_ImageHorizon, 0);
     lv_img_set_angle(ui_ImageHorizon, 0);
 
@@ -103,30 +61,28 @@ void AttitudeUI::showWaiting() {
     _last_roll_deg = 0x7FFF;
 }
 
+// Do nothing
 void AttitudeUI::showDisconnected() {
     if (!_initialized) return;
 
-    // Näytä viimeiset arvot mutta voisi myös näyttää "---"
-    // Tässä toteutuksessa säilytetään viimeiset arvot
 }
 
-// === Level State Machine ===
-
-bool AttitudeUI::handleButtonPress(ESPNowReceiver& receiver) {
+// Level state machine - handle knob press
+bool AttitudeUI::handleButtonPress() {
     if (!_initialized) return false;
 
     switch (_levelState) {
         case LevelState::IDLE:
             // First press: show confirmation dialog
-            setLevelState(LevelState::CONFIRM_WAIT);
+            this->setLevelState(LevelState::CONFIRM_WAIT);
             return true;
 
         case LevelState::CONFIRM_WAIT:
             // Second press: send level command
-            if (receiver.sendLevelCommand()) {
-                setLevelState(LevelState::SENDING);
+            if (_receiver.sendLevelCommand()) {
+                this->setLevelState(LevelState::SENDING);
             } else {
-                setLevelState(LevelState::FAILED);
+                this->setLevelState(LevelState::FAILED);
             }
             return true;
 
@@ -139,7 +95,8 @@ bool AttitudeUI::handleButtonPress(ESPNowReceiver& receiver) {
     return false;
 }
 
-void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
+// Level state machine - update level state
+void AttitudeUI::updateLevelState() {
     if (!_initialized) return;
     if (_levelState == LevelState::IDLE) return;
 
@@ -148,28 +105,28 @@ void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
     switch (_levelState) {
         case LevelState::CONFIRM_WAIT:
             if (elapsed >= CONFIRM_TIMEOUT_MS) {
-                setLevelState(LevelState::IDLE);
+                this->setLevelState(LevelState::IDLE);
             }
             break;
 
         case LevelState::SENDING:
-            if (receiver.hasLevelResponse()) {
-                bool success = receiver.getLevelResult();
-                setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
+            if (_receiver.hasLevelResponse()) {
+                bool success = _receiver.getLevelResult();
+                this->setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
             } else if (elapsed >= SENDING_TIMEOUT_MS) {
-                setLevelState(LevelState::FAILED);
+                this->setLevelState(LevelState::FAILED);
             }
             break;
 
         case LevelState::SUCCESS:
             if (elapsed >= SUCCESS_DISPLAY_MS) {
-                setLevelState(LevelState::IDLE);
+                this->setLevelState(LevelState::IDLE);
             }
             break;
 
         case LevelState::FAILED:
             if (elapsed >= FAILED_DISPLAY_MS) {
-                setLevelState(LevelState::IDLE);
+                this->setLevelState(LevelState::IDLE);
             }
             break;
 
@@ -179,18 +136,58 @@ void AttitudeUI::updateLevelState(ESPNowReceiver& receiver) {
     }
 }
 
+// Level state machine - cancel operation and go to idle
 void AttitudeUI::cancelLevelOperation() {
     if (_levelState != LevelState::IDLE) {
-        setLevelState(LevelState::IDLE);
+        this->setLevelState(LevelState::IDLE);
     }
 }
 
-void AttitudeUI::setLevelState(LevelState newState) {
-    _levelState = newState;
-    _stateStartTime = millis();
-    updateLevelDialog();
+// === P R I V A T E ===
+
+// Update artificial horizon based on pitch and roll values
+void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
+    // Update only if changed
+    if (pitch_x10 == _last_pitch_x10 && roll_x10 == _last_roll_x10) return;
+    _last_pitch_x10 = pitch_x10;
+    _last_roll_x10 = roll_x10;
+
+    // PITCH: Move ImageHorizon UI element vertically
+    // Bow down - pitch down - horizon up
+    // lv_obj_set_y: positive value moves object down in relation to align-poing
+    // ImageHorizon is ALIGN_CENTER, y=0 is the center point
+    int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
+    lv_obj_set_y(ui_ImageHorizon, y_offset);
+
+    // ROLL: Rotate ImageHorizon UI element
+    // Roll port side → horizon rotates starboard
+    // lv_img_set_angle: positive ange = clockwise, uses 0.1° resolution
+    lv_img_set_angle(ui_ImageHorizon, -roll_x10);
 }
 
+// Update UI label element for pitch value
+void AttitudeUI::updatePitchLabel(int16_t pitch_deg) {
+    if (pitch_deg == _last_pitch_deg) return;
+    _last_pitch_deg = pitch_deg;
+
+    char buf[16];
+    // Format: "+003°" or "-012°"
+    snprintf(buf, sizeof(buf), "%+04d°", pitch_deg);
+    lv_label_set_text(ui_LabelPitch, buf);
+}
+
+// Update UI label element for roll value
+void AttitudeUI::updateRollLabel(int16_t roll_deg) {
+    if (roll_deg == _last_roll_deg) return;
+    _last_roll_deg = roll_deg;
+
+    char buf[16];
+    // Format: "+003°" or "-012°"
+    snprintf(buf, sizeof(buf), "%+04d°", roll_deg);
+    lv_label_set_text(ui_LabelRoll, buf);
+}
+
+// Level state machine - update UI label element for dialog
 void AttitudeUI::updateLevelDialog() {
     switch (_levelState) {
         case LevelState::IDLE:
@@ -221,4 +218,11 @@ void AttitudeUI::updateLevelDialog() {
             lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFF0000), 0);  // Red
             break;
     }
+}
+
+// Level state machine - set new state
+void AttitudeUI::setLevelState(LevelState newState) {
+    _levelState = newState;
+    _stateStartTime = millis();
+    this->updateLevelDialog();
 }
