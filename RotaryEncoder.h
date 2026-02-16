@@ -33,11 +33,6 @@ public:
     int8_t getDirection();
 
     /**
-     * @brief Hae kumulatiivinen laskuri (debuggausta varten)
-     */
-    int32_t getCounter() const { return _counter; }
-
-    /**
      * @brief Tarkista onko painiketta painettu
      *
      * Palauttaa true kerran per painallus (kuluttaa eventin).

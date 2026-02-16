@@ -8,11 +8,13 @@
 
 // === C L A S S  E S P N O W R E C E I V E R ===
 //
-// Class ESPNowReceiver - receives heading data and sends level commands via ESP-NOW
+// - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication
 //
-// Init: receiver.begin(channel)
-// Loop: if (receiver.hasNewData()) HeadingData data = receiver.getData();
-// Level: receiver.sendLevelCommand(); if (receiver.hasLevelResponse()) bool ok = receiver.getLevelResult();
+// - Provides public API to manage inbound compass data and outbound attitude leveling command
+// - Init: receiver.begin(channel)
+// - Loop: if (receiver.hasNewData()) HeadingData data = receiver.getData();
+// - Level: receiver.sendLevelCommand(); if (receiver.hasLevelResponse()) bool ok = receiver.getLevelResult();
+// - Owned by: CrowPanelApplication
 
 class ESPNowReceiver {
 
@@ -30,8 +32,6 @@ public:
     bool getLevelResult();
 
     float getPacketsPerSecond() const { return _packets_per_second; }
-    uint8_t getChannel() const { return _channel; }
-    String getMacAddress() const { return WiFi.macAddress(); }
 
 private:
 

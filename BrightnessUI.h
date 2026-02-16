@@ -87,11 +87,6 @@ public:
      */
     bool isAdjusting() const { return _state == BrightnessState::ADJUSTING; }
 
-    /**
-     * @brief Hae nykyinen tila
-     */
-    BrightnessState getState() const { return _state; }
-
 private:
     // Tila
     BrightnessState _state;
