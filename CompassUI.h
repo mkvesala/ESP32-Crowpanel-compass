@@ -10,7 +10,6 @@
 // - Initialize: compassUI.begin()
 // - Update in loop(): compassUI.update(..)
 // - Provides public API to:
-//   - Show "waiting for data" status
 //   - Show "disconnected" status
 //   - Toggle heading mode (TRUE/MAGNETIC)
 //   - Return current heading mode (TRUE/MAGNETIC)
@@ -24,14 +23,13 @@ public:
 
     void begin();
     void update(const HeadingData& data, bool connected, float packetsPerSec);
-    void showWaiting();
     void showDisconnected();
     void toggleHeadingMode();
-    bool isShowingTrueHeading() const { return _use_true_heading; }
 
 private:
 
     // Methods to update SquareLine UI elements
+    void showWaiting();
     void setCompassRotation(uint16_t heading_x10);
     void updateHeadingLabel(uint16_t heading_deg);
     void updateHeadingMode(bool is_true);

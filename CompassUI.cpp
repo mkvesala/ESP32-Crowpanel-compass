@@ -45,6 +45,17 @@ void CompassUI::toggleHeadingMode() {
     _last_is_true = !_use_true_heading;
 }
 
+// Show "disconnected" status on UI
+void CompassUI::showDisconnected() {
+    if (!_initialized) return;
+
+    // "The red dot"
+    lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
+    _last_connected = false;
+}
+
+// === P R I V A T E ===
+
 // Show "waiting for data" status on UI
 void CompassUI::showWaiting() {
     if (!_initialized) return;
@@ -60,17 +71,6 @@ void CompassUI::showWaiting() {
     _last_is_true = false;
     _last_connected = false;
 }
-
-// Show "disconnected" status on UI
-void CompassUI::showDisconnected() {
-    if (!_initialized) return;
-
-    // "The red dot"
-    lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
-    _last_connected = false;
-}
-
-// === P R I V A T E ===
 
 // Rotate the compass rose UI image element based on heading
 void CompassUI::setCompassRotation(uint16_t heading_x10) {

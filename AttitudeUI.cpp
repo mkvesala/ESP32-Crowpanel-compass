@@ -42,29 +42,10 @@ void AttitudeUI::update(const HeadingData& data, bool connected, float packetsPe
     this->updateRollLabel(data.getRollDeg());
 }
 
-// Update AttitudeScreen to show "waiting for data" 
-void AttitudeUI::showWaiting() {
-    if (!_initialized) return;
-
-    // Pitch and roll UI labels to show "---"
-    lv_label_set_text(ui_LabelPitch, "---");
-    lv_label_set_text(ui_LabelRoll, "---");
-
-    // Horizon to the neutral position
-    lv_obj_set_y(ui_ImageHorizon, 0);
-    lv_img_set_angle(ui_ImageHorizon, 0);
-
-    // Reset cached values
-    _last_pitch_x10 = 0x7FFF;
-    _last_roll_x10 = 0x7FFF;
-    _last_pitch_deg = 0x7FFF;
-    _last_roll_deg = 0x7FFF;
-}
-
 // Do nothing
 void AttitudeUI::showDisconnected() {
     if (!_initialized) return;
-
+    this->showWaiting();
 }
 
 // Level state machine - handle knob press
@@ -144,6 +125,25 @@ void AttitudeUI::cancelLevelOperation() {
 }
 
 // === P R I V A T E ===
+
+// Update AttitudeScreen to show "waiting for data" 
+void AttitudeUI::showWaiting() {
+    if (!_initialized) return;
+
+    // Pitch and roll UI labels to show "---"
+    lv_label_set_text(ui_LabelPitch, "---");
+    lv_label_set_text(ui_LabelRoll, "---");
+
+    // Horizon to the neutral position
+    lv_obj_set_y(ui_ImageHorizon, 0);
+    lv_img_set_angle(ui_ImageHorizon, 0);
+
+    // Reset cached values
+    _last_pitch_x10 = 0x7FFF;
+    _last_roll_x10 = 0x7FFF;
+    _last_pitch_deg = 0x7FFF;
+    _last_roll_deg = 0x7FFF;
+}
 
 // Update artificial horizon based on pitch and roll values
 void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {

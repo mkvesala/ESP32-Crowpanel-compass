@@ -24,8 +24,6 @@ enum class LevelState {
 //   - attitudeUI.update(..)
 //   - attitudeUI.updateLevelState(..)
 // - Provides public API to:
-//   - Show "waiting for data" status
-//   - Show "disconnected" status
 //   - Handle knob button press (activates attitude leveling)
 //   - Update attitude leveling state
 //   - Cancel attitude leveling
@@ -47,18 +45,17 @@ public:
 
     void begin();
     void update(const HeadingData& data, bool connected, float packetsPerSec);
-    void showWaiting();
     void showDisconnected();
     bool handleButtonPress();
     void updateLevelState();
     void cancelLevelOperation();
-    LevelState getLevelState() const { return _levelState; }
 
 private:
 
     ESPNowReceiver &_receiver;
 
     // Methods for updating the SquareLine generated UI elements 
+    void showWaiting();
     void updatePitchLabel(int16_t pitch_deg);
     void updateRollLabel(int16_t roll_deg);
     void updateHorizon(int16_t pitch_x10, int16_t roll_x10);
