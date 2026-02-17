@@ -1,6 +1,6 @@
 # Claude Session Context - ESP32 CrowPanel Compass
 
-**Date:** 2026-02-16 (updated)
+**Date:** 2026-02-17 (updated)
 **Project:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
@@ -44,6 +44,9 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 | AttitudeUI takes ESPNowReceiver& in constructor (was method param) | AttitudeUI.h/.cpp, .ino |
 | AttitudeUI::showDisconnected() now calls showWaiting() (was empty) | AttitudeUI.cpp |
 | LV_COLOR_16_SWAP preprocessor check simplified | .ino |
+| ScreenManager takes UI refs in constructor, unified `switchTo(Screen, Direction)` | ScreenManager.h/.cpp |
+| ScreenManager `switchNext`/`switchPrevious` refactored to use `nextScreen()`/`previousScreen()` helpers | ScreenManager.cpp |
+| BrightnessUI header cleaned up (doxygen → banner comments, `<Preferences.h>` include added) | BrightnessUI.h |
 
 ### Attitude Level Feature
 
@@ -241,10 +244,19 @@ struct LevelResponse {
 - LVGL/preprocessor checks (`LV_COLOR_16_SWAP`, `LV_COLOR_DEPTH`) kept as `#if` — these are LVGL config macros
 - PCF8574 pin constants (`P0`–`P7`) are `#define 0`–`7` from library, stored as `static constexpr uint8_t`
 
-### AttitudeUI Dependency Injection
-- `ESPNowReceiver&` passed via constructor, stored as private `_receiver` reference
-- Used by level state machine: `sendLevelCommand()`, `hasLevelResponse()`, `getLevelResult()`
-- Global instantiation order matters: `receiver` before `attitudeUI(receiver)` in .ino
+### Dependency Injection (constructor references)
+- **AttitudeUI:** `ESPNowReceiver&` passed via constructor, stored as private `_receiver` reference
+  - Used by level state machine: `sendLevelCommand()`, `hasLevelResponse()`, `getLevelResult()`
+- **ScreenManager:** `CompassUI&`, `AttitudeUI&`, `BrightnessUI&` passed via constructor
+  - Used by `onLeavingCurrentScreen()`: calls `_attitudeUI.cancelLevelOperation()`, `_brightnessUI.cancelAdjustment()`
+  - `_compassUI` stored for future use (no cleanup needed currently)
+- Global instantiation order matters in .ino: `receiver` → `compassUI` → `attitudeUI(receiver)` → `brightnessUI` → `screenMgr(compassUI, attitudeUI, brightnessUI)`
+
+### ScreenManager Internal Design
+- `switchNext()` / `switchPrevious()` are thin public methods that delegate to private `switchTo(Screen, Direction)`
+- Carousel order defined in pure `const` helpers: `nextScreen()`, `previousScreen()`
+- `enum class Direction { CW, CCW }` is private — maps to `LV_SCR_LOAD_ANIM_MOVE_LEFT` / `MOVE_RIGHT`
+- Single unified `switchTo()` handles: `_initialized` guard → `onLeavingCurrentScreen()` → state update → target selection → animated screen load
 
 ---
 
