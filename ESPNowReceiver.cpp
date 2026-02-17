@@ -126,6 +126,7 @@ bool ESPNowReceiver::sendLevelCommand() {
     return (result == ESP_OK);
 }
 
+// Check for attitude leveling command response
 bool ESPNowReceiver::hasLevelResponse() {
     bool result;
     portENTER_CRITICAL(&_mux);
@@ -134,17 +135,19 @@ bool ESPNowReceiver::hasLevelResponse() {
     return result;
 }
 
+// Check for success of the attitude leveling command
 bool ESPNowReceiver::getLevelResult() {
     bool success;
     portENTER_CRITICAL(&_mux);
     success = _level_response_success;
-    _level_response_received = false;  // Clear flag after reading
+    _level_response_received = false; 
     portEXIT_CRITICAL(&_mux);
     return success;
 }
 
 // === P R I V A T E ===
 
+// Callback for data receive of ESP-NOW
 void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
     // Check for HeadingDelta (compass data)
     if (data_len == sizeof(HeadingDelta)) {

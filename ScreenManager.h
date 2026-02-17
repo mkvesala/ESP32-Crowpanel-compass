@@ -7,20 +7,11 @@
 #include "BrightnessUI.h"
 #include "ui.h"
 
-/**
- * @brief Näyttöjen hallinta ja vaihto
- *
- * Hallitsee siirtymistä Compass-, Attitude- ja Brightness-näyttöjen välillä.
- * Käyttää LVGL:n screen load -animaatioita sulaviin siirtymiin.
- * Kutsuu AttitudeUI::cancelLevelOperation() kun vaihdetaan pois AttitudeScreenistä.
- * Kutsuu BrightnessUI::cancelAdjustment() kun vaihdetaan pois BrightnessScreenistä.
- */
-
 // ===  C L A S S  S C R E E N M A N A G E R ===
 //
 // - Class ScreenManager - responsible for switching between screens
-// - Init: 
-// - Provides public API to switch smoothly between screens CW or CCW.
+// - Init: screenMgr.begin();
+// - Provides public API to switch smoothly (lvgl animation) between screens CW or CCW.
 // - Uses: AttitudeUI, CompassUI, BrightnessUI
 // - Owned by: CrowPanelApplication
 
