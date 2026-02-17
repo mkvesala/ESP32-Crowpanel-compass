@@ -107,7 +107,7 @@ CompassUI compassUI;
 AttitudeUI attitudeUI(receiver);
 BrightnessUI brightnessUI;
 RotaryEncoder encoder;
-ScreenManager screenMgr;
+ScreenManager screenMgr(compassUI, attitudeUI, brightnessUI);
 
 // LVGL flush callback
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
@@ -208,7 +208,7 @@ void setup() {
     brightnessUI.begin(pwmChannel);
 
     // Screen manager init
-    screenMgr.begin(&attitudeUI, &brightnessUI);
+    screenMgr.begin();
 
     // Rotary encoder init
     encoder.begin(pcf8574);

@@ -1,21 +1,14 @@
 #include "ScreenManager.h"
-#include "AttitudeUI.h"
-#include "BrightnessUI.h"
-#include "ui.h"
 
-ScreenManager::ScreenManager()
-    : _current(Screen::COMPASS)
-    , _initialized(false)
-    , _attitudeUI(nullptr)
-    , _brightnessUI(nullptr)
-{
-}
+ScreenManager::ScreenManager(CompassUI &compassUI, AttitudeUI &attitudeUI, BrightnessUI &brightnessUI)
+    : _compassUI(compassUI)
+    , _attitudeUI(attitudeUI)
+    , _brightnessUI(brightnessUI)
+    , _current(Screen::COMPASS)
+    , _initialized(false) {}
 
-void ScreenManager::begin(AttitudeUI* attitudeUI, BrightnessUI* brightnessUI) {
+void ScreenManager::begin() {
     if (_initialized) return;
-
-    _attitudeUI = attitudeUI;
-    _brightnessUI = brightnessUI;
 
     // Aloitusnäyttö on CompassScreen (ladataan ui_init():ssa)
     _current = Screen::COMPASS;
@@ -93,10 +86,10 @@ void ScreenManager::switchTo(Screen screen) {
 }
 
 void ScreenManager::onLeavingCurrentScreen() {
-    if (_current == Screen::ATTITUDE && _attitudeUI) {
-        _attitudeUI->cancelLevelOperation();
+    if (_current == Screen::ATTITUDE) {
+        _attitudeUI.cancelLevelOperation();
     }
-    if (_current == Screen::BRIGHTNESS && _brightnessUI) {
-        _brightnessUI->cancelAdjustment();
+    if (_current == Screen::BRIGHTNESS) {
+        _brightnessUI.cancelAdjustment();
     }
 }

@@ -2,10 +2,10 @@
 
 #include <Arduino.h>
 #include <lvgl.h>
-
-// Forward declarations
-class AttitudeUI;
-class BrightnessUI;
+#include "CompassUI.h"
+#include "AttitudeUI.h"
+#include "BrightnessUI.h"
+#include "ui.h"
 
 /**
  * @brief Näyttöjen hallinta ja vaihto
@@ -20,8 +20,7 @@ class BrightnessUI;
 //
 // - Class ScreenManager - responsible for switching between screens
 // - Init: 
-// - Provides public API for:
-//   - ...
+// - Provides public API to switch smoothly between screens CW or CCW.
 // - Uses: AttitudeUI, CompassUI, BrightnessUI
 // - Owned by: CrowPanelApplication
 
@@ -35,9 +34,9 @@ public:
         BRIGHTNESS
     };
 
-    ScreenManager();
+    ScreenManager(CompassUI &compassUI, AttitudeUI &attitudeUI, BrightnessUI &brightnessUI);
 
-    void begin(AttitudeUI* attitudeUI = nullptr, BrightnessUI* brightnessUI = nullptr);
+    void begin();
     void switchNext();
     void switchPrevious();
 
@@ -47,10 +46,12 @@ public:
 
 private:
 
-    Screen _current;
     bool _initialized;
-    AttitudeUI* _attitudeUI;
-    BrightnessUI* _brightnessUI;
+    Screen _current;
+
+    CompassUI &_compassUI;
+    AttitudeUI &_attitudeUI;
+    BrightnessUI &_brightnessUI;
 
     // Animation duration
     static constexpr uint32_t ANIM_DURATION_MS = 300;
