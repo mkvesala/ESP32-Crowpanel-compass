@@ -56,8 +56,16 @@ private:
     // Animation duration
     static constexpr uint32_t ANIM_DURATION_MS = 300;
 
+    // Animation direction (internal implementation detail)
+    enum class Direction { CW, CCW };
+
+    // Carousel order helpers
+    Screen nextScreen() const;
+    Screen previousScreen() const;
+
+    // Unified screen switch with animation direction
+    void switchTo(Screen screen, Direction dir);
+
     // Helper to clean up when leaving the current screen
     void onLeavingCurrentScreen();
-
-    void switchTo(Screen screen);
 };
