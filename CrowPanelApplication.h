@@ -1,0 +1,107 @@
+#pragma once
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <lvgl.h>
+#include <Arduino_GFX_Library.h>
+#include "PCF8574.h"
+#include "ui.h"
+#include "HeadingData.h"
+#include "ESPNowReceiver.h"
+#include "CompassUI.h"
+#include "AttitudeUI.h"
+#include "BrightnessUI.h"
+#include "RotaryEncoder.h"
+#include "ScreenManager.h"
+
+// === C L A S S  C R O W P A N E L A P P L I C A T I O N ===
+//
+// - Class CrowPanelApplication - "the app", responsible for orchestrating everything
+// - Init: app.begin();
+// - Loop: app.loop()
+// - Provides public API to:
+//  - ..
+// - Uses: 
+// - Owns: PCF8574, ESPNowReceiver, CompassUI, AttitudeUI, BrightnessUI, RotaryEncoder, ScreenManager
+
+class CrowPanelApplication {
+
+public:
+
+    CrowPanelApplication();
+
+    bool begin();
+    void loop();
+
+
+private:
+
+    // Channel must match compass WiFi AP channel
+    static constexpr uint8_t ESP_NOW_CHANNEL = 6;
+
+    // Connection timeout if nothing received (ms)
+    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
+
+    // I2C / PCF8574
+    static constexpr uint8_t I2C_SDA_PIN = 38;
+    static constexpr uint8_t I2C_SCL_PIN = 39;
+
+    // PCF pins
+    static constexpr uint8_t PCF_TP_RST  = P0;  // 0
+    static constexpr uint8_t PCF_TP_INT  = P2;  // 2
+    static constexpr uint8_t PCF_LCD_PWR = P3;  // 3
+    static constexpr uint8_t PCF_LCD_RST = P4;  // 4
+    static constexpr uint8_t PCF_RE_BTN  = P5;  // 5
+
+    // Backlight PWM (ESP32 core 2.0.14 API)
+    static constexpr uint8_t SCREEN_BACKLIGHT_PIN = 6;
+    const int pwmFreq = 5000;
+    const int pwmChannel = 0;
+    const int pwmResolution = 8;
+
+    // Display
+    static const uint16_t screenWidth  = 480;
+    static const uint16_t screenHeight = 480;
+
+    // LVGL draw buffer (40 lines)
+    static lv_disp_draw_buf_t draw_buf;
+    static lv_color_t *buf1 = NULL;
+    static const uint32_t buf_pixels = screenWidth * 40;
+
+    // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
+    static constexpr uint8_t UI_UPDATE_INTERVAL_MS = 59;
+
+    // Diagnostics and debug interval 5 secs
+    static constexpr uint8_t DIAG_PRINT_INTERVAL_MS = 5000; 
+
+    // Diagnostic counters
+    static uint32_t diag_ui_updates = 0;
+    static uint32_t diag_ui_update_time_total = 0;
+    static uint32_t diag_ui_update_time_max = 0;
+    static uint32_t diag_lvgl_time_total = 0;
+    static uint32_t diag_lvgl_time_max = 0;
+    static uint32_t diag_lvgl_calls = 0;
+    static uint32_t diag_last_print = 0;
+
+    // Arduino_GFX bus + panel
+    Arduino_ESP32RGBPanel _bus;
+    Arduino_ST7701_RGBPanel _gfx;
+
+    // Core instances for the app
+    PCF8574 _pcf8574;
+    ESPNowReceiver _receiver;
+    CompassUI _compassUI;
+    AttitudeUI _attitudeUI;
+    BrightnessUI _brightnessUI;
+    RotaryEncoder _encoder;
+    ScreenManager _screenMgr;
+
+    void initPcfAndResetLines();
+    void initBacklight(uint8_t duty);
+    void initDisplay();
+    void initLvgl();
+    void handleEncoder();
+    void handleUI();
+    void printDiagnostics();
+    
+};
