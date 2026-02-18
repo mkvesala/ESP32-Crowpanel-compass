@@ -1,85 +1,89 @@
 #include "RotaryEncoder.h"
 
-// Staattinen viittaus instanssiin taskia varten
+// === S T A T I C ===
+
+// Static pointer for FreeRTOS tasks
 static RotaryEncoder* s_instance = nullptr;
 
-RotaryEncoder::RotaryEncoder()
-    : _direction(0)
+// === P U B L I C ===
+
+// Constructor
+RotaryEncoder::RotaryEncoder(PCF8574 &pcf)
+    : _pcf8574(pcf)
+    , _direction(0)
     , _counter(0)
     , _lastStateCLK(0)
     , _buttonPressed(false)
-    , _lastButtonState(true)  // HIGH = ei painettu (INPUT_PULLUP)
+    , _lastButtonState(true)
     , _lastButtonTime(0)
-    , _pcf8574(nullptr)
     , _encoderTaskHandle(nullptr)
     , _buttonTaskHandle(nullptr)
     , _spinlock(portMUX_INITIALIZER_UNLOCKED)
-    , _initialized(false)
-{
-}
+    , _initialized(false) {}
 
-void RotaryEncoder::begin(PCF8574& pcf) {
+// Initialize
+void RotaryEncoder::begin() {
     if (_initialized) return;
 
-    // Tallenna instanssi staattiseen muuttujaan
+    // Static pointer to 'this' 
     s_instance = this;
 
-    // Tallenna PCF8574 viittaus
-    _pcf8574 = &pcf;
+    // P5 (knob button) init in main.ino before pcf8574.begin()
+    // PCF8574 library does not allow pinMode() calls after begin()
 
-    // Huom: P5 (painike) alustetaan main.ino:ssa ENNEN pcf8574.begin() kutsua
-    // koska PCF8574-kirjasto ei tue pinMode() kutsuja begin():in jälkeen
-
-    // Alusta encoder pinnit
+    // Init encoder pins
     pinMode(ENCODER_A_PIN, INPUT);
     pinMode(ENCODER_B_PIN, INPUT);
 
-    // Lue alkutilat
+    // Initial states
     _lastStateCLK = digitalRead(ENCODER_A_PIN);
-    _lastButtonState = _pcf8574->digitalRead(P5, true);
+    _lastButtonState = _pcf8574.digitalRead(P5, true);
 
-    // Käynnistä FreeRTOS-taskit core 0:lla (jättää core 1 pääloopille)
+    // FreeRTOS tasks on core 0 (core 1: main loop)
     xTaskCreatePinnedToCore(
-        encoderTask,         // Funktio
-        "RotaryEnc",         // Nimi
+        encoderTask,         // Callback
+        "RotaryEnc",         // Name
         2048,                // Stack size
-        this,                // Parametri (this-osoitin)
-        1,                   // Prioriteetti
+        this,                // Param (this)
+        1,                   // Priority
         &_encoderTaskHandle, // Handle
-        0                    // Core 0
+        0                    // Core
     );
 
     xTaskCreatePinnedToCore(
-        buttonTask,          // Funktio
-        "RotaryBtn",         // Nimi
+        buttonTask,          // Callback
+        "RotaryBtn",         // Name
         2048,                // Stack size
-        this,                // Parametri (this-osoitin)
-        1,                   // Prioriteetti
+        this,                // Param (this)
+        1,                   // Priority
         &_buttonTaskHandle,  // Handle
-        0                    // Core 0
+        0                    // Core
     );
 
     _initialized = true;
 }
 
+// Return rotation direction -1 = CCW, 0 = neutral, +1 = CW
 int8_t RotaryEncoder::getDirection() {
     int8_t dir;
     portENTER_CRITICAL(&_spinlock);
     dir = _direction;
-    _direction = 0;  // Nollaa luettu suunta
+    _direction = 0;
     portEXIT_CRITICAL(&_spinlock);
     return dir;
 }
 
+// Return true when knob button pressed
 bool RotaryEncoder::getButtonPressed() {
     bool pressed;
     portENTER_CRITICAL(&_spinlock);
     pressed = _buttonPressed;
-    _buttonPressed = false;  // Kuluta event
+    _buttonPressed = false;
     portEXIT_CRITICAL(&_spinlock);
     return pressed;
 }
 
+// Rotary knob task, 500 Hz
 void RotaryEncoder::encoderTask(void* param) {
     RotaryEncoder* self = static_cast<RotaryEncoder*>(param);
 
@@ -89,6 +93,7 @@ void RotaryEncoder::encoderTask(void* param) {
     }
 }
 
+// Knob button task, 200 Hz
 void RotaryEncoder::buttonTask(void* param) {
     RotaryEncoder* self = static_cast<RotaryEncoder*>(param);
 
@@ -98,22 +103,23 @@ void RotaryEncoder::buttonTask(void* param) {
     }
 }
 
+// Process the rotary knob rotation
 void RotaryEncoder::processEncoder() {
-    // Lue nykyinen CLK-tila
+    // Read current state of CLK
     uint8_t currentStateCLK = digitalRead(ENCODER_A_PIN);
 
-    // Tunnista muutos: reagoi vain nousevaan reunaan
+    // Capture rising edge
     if (currentStateCLK != _lastStateCLK && currentStateCLK == 1) {
-        // Lue DT (B-pinni) määrittääksesi suunnan
+        // Read DT to determine direction
         uint8_t stateDT = digitalRead(ENCODER_B_PIN);
 
         portENTER_CRITICAL(&_spinlock);
         if (stateDT != currentStateCLK) {
-            // CCW (vastapäivään)
+            // CCW
             _direction = -1;
             _counter--;
         } else {
-            // CW (myötäpäivään)
+            // CW
             _direction = 1;
             _counter++;
         }
@@ -123,19 +129,18 @@ void RotaryEncoder::processEncoder() {
     _lastStateCLK = currentStateCLK;
 }
 
+// Process the knob button press
 void RotaryEncoder::processButton() {
-    if (!_pcf8574) return;
 
-    // Lue painikkeen tila (LOW = painettu, INPUT_PULLUP)
-    bool currentState = _pcf8574->digitalRead(P5, true);
+    // Read knob button state (LOW = pressed, INPUT_PULLUP)
+    bool currentState = _pcf8574.digitalRead(P5, true);
     uint32_t now = millis();
 
-    // Debounce: reagoi vain jos tarpeeksi aikaa kulunut
+    // Debounce, react only if timer due
     if (currentState != _lastButtonState) {
         if (now - _lastButtonTime >= DEBOUNCE_MS) {
-            // Tila muuttui ja debounce-aika kulunut
             if (currentState == LOW && _lastButtonState == HIGH) {
-                // Painallus havaittu (falling edge)
+                // Captured falling edge
                 portENTER_CRITICAL(&_spinlock);
                 _buttonPressed = true;
                 portEXIT_CRITICAL(&_spinlock);

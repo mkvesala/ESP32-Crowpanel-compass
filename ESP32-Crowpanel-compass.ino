@@ -106,7 +106,7 @@ ESPNowReceiver receiver;
 CompassUI compassUI;
 AttitudeUI attitudeUI(receiver);
 BrightnessUI brightnessUI;
-RotaryEncoder encoder;
+RotaryEncoder encoder(pcf8574);
 ScreenManager screenMgr(compassUI, attitudeUI, brightnessUI);
 
 // LVGL flush callback
@@ -211,7 +211,7 @@ void setup() {
     screenMgr.begin();
 
     // Rotary encoder init
-    encoder.begin(pcf8574);
+    encoder.begin();
 
     // ESP-NOW init
     receiver.begin(ESP_NOW_CHANNEL);
