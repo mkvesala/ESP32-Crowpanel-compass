@@ -1,3 +1,5 @@
+![Logo](docs/projectlogo.svg)
+
 # ESP32 CrowPanel Compass Multi-Function Display
 
 [![Platform: ESP32-S3](https://img.shields.io/badge/Platform-ESP32--S3-blue)](https://www.espressif.com/en/sdks/esp-arduino)
