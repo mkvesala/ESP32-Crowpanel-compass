@@ -30,9 +30,8 @@ public:
 
     CrowPanelApplication();
 
-    bool begin();
+    void begin();
     void loop();
-
 
 private:
 
@@ -55,18 +54,19 @@ private:
 
     // Backlight PWM (ESP32 core 2.0.14 API)
     static constexpr uint8_t SCREEN_BACKLIGHT_PIN = 6;
-    const int pwmFreq = 5000;
-    const int pwmChannel = 0;
-    const int pwmResolution = 8;
+    static constexpr uint32_t PWM_FREQ = 5000;
+    static constexpr uint8_t PWM_CHANNEL = 0;
+    static constexpr uint8_t PWM_RESOLUTION = 8;
+    static constexpr uint8_t PWM_DUTY = 200;
 
     // Display
-    static const uint16_t screenWidth  = 480;
-    static const uint16_t screenHeight = 480;
+    static constexpr uint16_t SCREEN_WIDTH  = 480;
+    static constexpr uint16_t SCREEN_HEIGHT = 480;
 
     // LVGL draw buffer (40 lines)
     static lv_disp_draw_buf_t draw_buf;
     static lv_color_t *buf1 = NULL;
-    static const uint32_t buf_pixels = screenWidth * 40;
+    static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 40;
 
     // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
     static constexpr uint8_t UI_UPDATE_INTERVAL_MS = 59;
@@ -87,8 +87,10 @@ private:
     Arduino_ESP32RGBPanel _bus;
     Arduino_ST7701_RGBPanel _gfx;
 
-    // Core instances for the app
+    // Knob button switch
     PCF8574 _pcf8574;
+
+    // Core instances for the app
     ESPNowReceiver _receiver;
     CompassUI _compassUI;
     AttitudeUI _attitudeUI;
@@ -100,8 +102,10 @@ private:
     void initBacklight(uint8_t duty);
     void initDisplay();
     void initLvgl();
-    void handleEncoder();
-    void handleUI();
-    void printDiagnostics();
+    void handleLvglTick();
+    void handleKnobRotation();
+    void handleKnobPress();
+    void handleUIUpdate();
+    void handleDiagnostics();
     
 };

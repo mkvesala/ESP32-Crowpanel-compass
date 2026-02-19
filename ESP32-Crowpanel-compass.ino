@@ -24,7 +24,7 @@ void setup() {
 
     Serial.begin(115200);
     delay(100);
-    if (!app.begin()) while(1) delay(1000);
+    app.begin();
 
 }
 

@@ -2,8 +2,10 @@
 
 // === S T A T I C ===
 
+// Static pointer to _gfx for lvgl callback function
 static Arduino_ST7701_RGBPanel* s_gfx = nullptr;
 
+// Static callback function for lvgl
 static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
 
     uint32_t w = (area->x2 - area->x1 + 1);
@@ -39,29 +41,57 @@ CrowPanelApplication::CrowPanelApplication():
     _screenMgr(_compassUI, _attitudeUI, _brightnessUI) {}
 
 // Initialize
-bool CrowPanelApplication::begin() {
+void CrowPanelApplication::begin() {
 
     this->initPcfAndResetLines();
 
-    _gfx->begin();
-    _gfx->fillScreen(BLACK);
+    this->initDisplay()
 
-    this->initBacklight(200);
+    this->initBacklight(PWM_DUTY);
 
     this->initLvgl();
 
+    // SquareLine UI init 
+    ui_init();
+
+    // UI adapter init
+    _compassUI.begin();
+    _attitudeUI.begin();
+    _brightnessUI.begin(PWM_CHANNEL);
+
+    // Screen manager init
+    _screenMgr.begin();
+
+    // Rotary encoder init
+    _encoder.begin();
+
+    // ESP-NOW init
+    _receiver.begin(ESP_NOW_CHANNEL);
 
 }
 
 // Loop
 void CrowPanelApplication::loop() {
 
+    this->handleLvglTick();
+
+    // Update statistics
+    _receiver.updateStats();
+
+    this->handleKnobRotation();
+
+    this->handleKnobPress();
+
+    this->handleUIUpdate();
+
+    this->handleDiagnostics();
+
 }
 
 // === P R I V A T E ===
 
 // PCF init
-void initPcfAndResetLines() {
+void CrowPanelApplication::initPcfAndResetLines() {
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
 
     _pcf8574.pinMode(PCF_TP_RST, OUTPUT);
@@ -96,110 +126,86 @@ void initPcfAndResetLines() {
     delay(50);
 }
 
+// Display init
+void CrowPanelApplication::initDisplay() {
+    _gfx.begin();
+    _gfx.fillScreen(BLACK);
+}
+
 // Screen backlight
-void initBacklight(uint8_t duty) {
-    ledcSetup(pwmChannel, pwmFreq, pwmResolution);
-    ledcAttachPin(SCREEN_BACKLIGHT_PIN, pwmChannel);
-    ledcWrite(pwmChannel, duty);
+void CrowPanelApplication::initBacklight(uint8_t duty) {
+    ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+    ledcAttachPin(SCREEN_BACKLIGHT_PIN, PWM_CHANNEL);
+    ledcWrite(PWM_CHANNEL, duty);
 }
 
 // LVGL init
-void initLvgl() {
+void CrowPanelApplication::initLvgl() {
+    
     lv_init();
 
-    buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * buf_pixels, MALLOC_CAP_INTERNAL);
+    buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
     if (!buf1) {
         while (1) delay(1000);  // Halt
     }
-    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, buf_pixels);
+    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, BUF_PIXELS);
 
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = screenWidth;
-    disp_drv.ver_res = screenHeight;
-    disp_drv.flush_cb = my_disp_flush;
+    disp_drv.hor_res = SCREEN_WIDTH;
+    disp_drv.ver_res = SCREEN_HEIGHT;
+    disp_drv.flush_cb = lvglFlushCb;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
+
 }
 
-// === S E T U P ===
-
-void setup() {
-
-JATKA TÄSTÄ:
-    // SquareLine UI init 
-    ui_init();
-
-    // UI adapter init
-    compassUI.begin();
-    attitudeUI.begin();
-    brightnessUI.begin(pwmChannel);
-
-    // Screen manager init
-    screenMgr.begin();
-
-    // Rotary encoder init
-    encoder.begin();
-
-    // ESP-NOW init
-    receiver.begin(ESP_NOW_CHANNEL);
-}
-
-// === L O O P ===
-
-void loop() {
+// Diagnostics for lvgl draw
+void CrowPanelApplication::handleLvglTick() {
     
-    // LVGL tick
     uint32_t lvgl_start = micros();
     lv_timer_handler();
     uint32_t lvgl_elapsed = micros() - lvgl_start;
 
     diag_lvgl_time_total += lvgl_elapsed;
-    if (lvgl_elapsed > diag_lvgl_time_max) {
-        diag_lvgl_time_max = lvgl_elapsed;
-    }
+    if (lvgl_elapsed > diag_lvgl_time_max) diag_lvgl_time_max = lvgl_elapsed;
     diag_lvgl_calls++;
 
-    // Update statistics
-    receiver.updateStats();
+}
+
+// Handle knob rotation
+void CrowPanelApplication::handleKnobRotation() {
 
     // Check rotary encoder
     // In BrightnessScreen ADJUSTING mode: rotation adjusts brightness
     // Otherwise: rotation switches screens (endless loop)
-    int8_t dir = encoder.getDirection();
-    if (dir != 0) {
-        if (screenMgr.isBrightnessActive() && brightnessUI.isAdjusting()) {
-            brightnessUI.handleRotation(dir);
-        } else {
-            if (dir > 0) {
-                screenMgr.switchNext();     // clockwise
-            } else {
-                screenMgr.switchPrevious(); // counter-clockwise
-            }
-        }
-    }
+    int8_t dir = _encoder.getDirection();
+    if (dir != 0) 
+        if (_screenMgr.isBrightnessActive() && _brightnessUI.isAdjusting()) _brightnessUI.handleRotation(dir);
+        else if (dir > 0) _screenMgr.switchNext(); 
+        else _screenMgr.switchPrevious();
+}
 
+// Handle knob button press
+void CrowPanelApplication::handleKnobButtonPress() {
+ 
     // Check knob button press
-    if (encoder.getButtonPressed()) {
-        if (screenMgr.isCompassActive()) {
-            // CompassScreen: toggle heading mode (T/M)
-            compassUI.toggleHeadingMode();
-        } else if (screenMgr.isAttitudeActive()) {
-            // AttitudeScreen: handle level operation
-            attitudeUI.handleButtonPress();
-        } else if (screenMgr.isBrightnessActive()) {
-            // BrightnessScreen: toggle adjustment mode
-            brightnessUI.handleButtonPress();
-        }
+    if (_encoder.getButtonPressed()) {
+        // CompassScreen: toggle heading mode (T/M)
+        if (_screenMgr.isCompassActive()) _compassUI.toggleHeadingMode();
+        // AttitudeScreen: handle level operation
+        else if (_screenMgr.isAttitudeActive()) _attitudeUI.handleButtonPress();
+        // BrightnessScreen: toggle adjustment mode
+        else if (_screenMgr.isBrightnessActive()) _brightnessUI.handleButtonPress();
     }
+}
+
+// Handle UI update
+void CrowPanelApplication::handleUIUpdate() {
 
     // Update state machines (check for timeouts)
-    if (screenMgr.isAttitudeActive()) {
-        attitudeUI.updateLevelState();
-    }
-    if (screenMgr.isBrightnessActive()) {
-        brightnessUI.updateState();
-    }
+    if (_screenMgr.isAttitudeActive()) _attitudeUI.updateLevelState();
+    if (_screenMgr.isBrightnessActive()) _brightnessUI.updateState();
 
     // UI update
     static uint32_t last_ui_update = 0;
@@ -208,22 +214,19 @@ void loop() {
     if (now - last_ui_update >= UI_UPDATE_INTERVAL_MS) {
         last_ui_update = now;
 
-        bool is_connected = receiver.isConnected(CONNECTION_TIMEOUT_MS);
+        bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
 
         // Get the latest data
-        if (receiver.hasNewData() || is_connected) {
-            HeadingData data = receiver.getData();
-            float pps = receiver.getPacketsPerSecond();
+        if (_receiver.hasNewData() || is_connected) {
+            HeadingData data = _receiver.getData();
+            float pps = _receiver.getPacketsPerSecond();
 
             // Measure the runtime of UI update
             uint32_t ui_start = micros();
 
             // Update screen (BrightnessScreen has no compass data to display)
-            if (screenMgr.isCompassActive()) {
-                compassUI.update(data, is_connected, pps);
-            } else if (screenMgr.isAttitudeActive()) {
-                attitudeUI.update(data, is_connected, pps);
-            }
+            if (_screenMgr.isCompassActive()) _compassUI.update(data, is_connected, pps);
+            else if (_screenMgr.isAttitudeActive()) _attitudeUI.update(data, is_connected, pps);
 
             // Calculate UI update runtime
             uint32_t ui_elapsed = micros() - ui_start;
@@ -234,26 +237,25 @@ void loop() {
             }
         }
         else {
-            // No data show disconnected
+            // No data show disconnected indication of the screen
             static bool was_connected = false;
 
             if (was_connected && !is_connected) {
-                if (screenMgr.isCompassActive()) {
-                    compassUI.showDisconnected();
-                } else if (screenMgr.isAttitudeActive()) {
-                    attitudeUI.showDisconnected();
-                }
-                // BrightnessScreen: no connection indicator
+                if (_screenMgr.isCompassActive()) _compassUI.showDisconnected();
+                else if (screenMgr.isAttitudeActive()) _attitudeUI.showDisconnected();
             }
             was_connected = is_connected;
         }
     }
+}
 
-    // Print diagnostics to Serial
+// Print diagnostics to Serial
+void CrowPanelApplication::handleDiagnostics() {
+
     if (now - diag_last_print >= DIAG_PRINT_INTERVAL_MS) {
         diag_last_print = now;
 
-        float pps = receiver.getPacketsPerSecond();
+        float pps = _receiver.getPacketsPerSecond();
         float avg_ui_time = (diag_ui_updates > 0) ?
             (float)diag_ui_update_time_total / diag_ui_updates / 1000.0f : 0;
 
@@ -270,9 +272,9 @@ void loop() {
         Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
             (unsigned long)esp_get_free_heap_size(),
             (unsigned long)esp_get_minimum_free_heap_size(),
-            (unsigned long)uxTaskGetStackHighWaterMark(NULL),  // Current task (loop)
-            (unsigned long)uxTaskGetStackHighWaterMark(encoder.getEncoderTaskHandle()),
-            (unsigned long)uxTaskGetStackHighWaterMark(encoder.getButtonTaskHandle()));
+            (unsigned long)uxTaskGetStackHighWaterMark(NULL),
+            (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getEncoderTaskHandle()),
+            (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getButtonTaskHandle()));
 
         // Reset counters
         diag_ui_updates = 0;
