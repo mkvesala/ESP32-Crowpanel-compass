@@ -80,7 +80,7 @@ void CrowPanelApplication::loop() {
 
     this->handleKnobRotation();
 
-    this->handleKnobPress();
+    this->handleKnobButtonPress();
 
     this->handleUIUpdate();
 
@@ -183,10 +183,14 @@ void CrowPanelApplication::handleKnobRotation() {
     // In BrightnessScreen ADJUSTING mode: rotation adjusts brightness
     // Otherwise: rotation switches screens (endless loop)
     int8_t dir = _encoder.getDirection();
-    if (dir != 0) 
-        if (_screenMgr.isBrightnessActive() && _brightnessUI.isAdjusting()) _brightnessUI.handleRotation(dir);
-        else if (dir > 0) _screenMgr.switchNext(); 
-        else _screenMgr.switchPrevious();
+    if (dir != 0) {
+        if (_screenMgr.isBrightnessActive() && _brightnessUI.isAdjusting()) {
+             _brightnessUI.handleRotation(dir);
+        } else {
+            if (dir > 0) _screenMgr.switchNext(); 
+            else _screenMgr.switchPrevious();
+        }
+    }
 }
 
 // Handle knob button press
