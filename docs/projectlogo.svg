@@ -51,9 +51,6 @@
   <circle cx="100" cy="100" r="5" fill="#4a90d9"/>
   <circle cx="100" cy="100" r="2.5" fill="#0a0f16"/>
 
-  <!-- Heading value label on screen -->
-  <text x="100" y="130" text-anchor="middle" font-family="monospace" font-size="13"
-        font-weight="bold" fill="#ffffff" letter-spacing="1">247°</text>
 
   <!-- Device: rotary knob (bottom) -->
   <circle cx="100" cy="195" r="8" fill="#1c2128" stroke="#30363d" stroke-width="2"/>
