@@ -69,7 +69,7 @@
   <text x="210" y="122" font-family="monospace" font-size="11"
         fill="#8b949e">Marine instrument display</text>
   <text x="210" y="138" font-family="monospace" font-size="11"
-        fill="#8b949e">ESP-NOW · LVGL · ESP32-S3</text>
+        fill="#8b949e">ESP32-S3 · LVGL · ESP-NOW</text>
 
   <!-- Badges row -->
   <!-- Compass badge -->
@@ -86,11 +86,6 @@
   <rect x="210" y="173" width="76" height="18" rx="4" fill="#1e3a5f"/>
   <text x="248" y="186" text-anchor="middle" font-family="monospace" font-size="10"
         fill="#4a90d9">Brightness</text>
-
-  <!-- ESP-NOW badge -->
-  <rect x="292" y="173" width="68" height="18" rx="4" fill="#1e2a1e"/>
-  <text x="326" y="186" text-anchor="middle" font-family="monospace" font-size="10"
-        fill="#3fb950">ESP-NOW</text>
 
 </svg>
 
