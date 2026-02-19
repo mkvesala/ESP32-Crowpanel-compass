@@ -1,6 +1,6 @@
 # Claude Session Context - ESP32 CrowPanel Compass
 
-**Date:** 2026-02-17 (updated)
+**Date:** 2026-02-19 (updated)
 **Project:** ESP32-Crowpanel-compass
 **Hardware:** Elecrow CrowPanel 2.1" HMI (ESP32-S3, 480x480 IPS, Rotary Knob)
 
@@ -24,29 +24,32 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 
 | Feature | Files |
 |---------|-------|
-| Knob button toggles T/M heading mode | RotaryEncoder, CompassUI, .ino |
+| Knob button toggles T/M heading mode | RotaryEncoder, CompassUI, CrowPanelApplication |
 | HeadingData simplified (no valid flags) | HeadingData.h |
 | PanelConnected: black=connected, red=disconnected | CompassUI.cpp |
 | WiFi removed from CrowPanel (ESP-NOW only) | ESPNowReceiver |
-| ESP-NOW channel 6 (matches router) | .ino |
-| Attitude Level feature (full end-to-end) | AttitudeUI, ESPNowReceiver, ScreenManager, .ino |
-| BrightnessScreen (backlight adjustment, NVS persist) | BrightnessUI, ScreenManager, .ino |
+| ESP-NOW channel 6 (matches router) | CrowPanelApplication |
+| Attitude Level feature (full end-to-end) | AttitudeUI, ESPNowReceiver, ScreenManager |
+| BrightnessScreen (backlight adjustment, NVS persist) | BrightnessUI, ScreenManager |
 | Compass rose rotation threshold 0.5° | CompassUI |
-| Diagnostics: PPS, UI timing, LVGL timing, heap, stack | .ino |
+| Diagnostics: PPS, UI timing, LVGL timing, heap, stack | CrowPanelApplication |
 | Leveling dialog text wrapping fixed | AttitudeUI.cpp |
 | ESPNowReceiver simplified (direct static callback, no _instance pointer) | ESPNowReceiver.h/.cpp |
 | Serial.print cleanup (only [DIAG] lines remain) | All own files |
-| `#define` → `static constexpr` in .ino | .ino |
+| `#define` → `static constexpr` | All own .h files, CrowPanelApplication |
 | `COLOR_CONNECTED/DISCONNECTED` → `static constexpr uint32_t` in CompassUI | CompassUI.h/.cpp |
 | `showWaiting()` moved to private in CompassUI and AttitudeUI | CompassUI.h, AttitudeUI.h |
 | `isShowingTrueHeading()` removed from CompassUI (unused) | CompassUI.h |
 | `getLevelState()` removed from AttitudeUI (unused) | AttitudeUI.h |
-| AttitudeUI takes ESPNowReceiver& in constructor (was method param) | AttitudeUI.h/.cpp, .ino |
+| AttitudeUI takes ESPNowReceiver& in constructor (was method param) | AttitudeUI.h/.cpp |
 | AttitudeUI::showDisconnected() now calls showWaiting() (was empty) | AttitudeUI.cpp |
-| LV_COLOR_16_SWAP preprocessor check simplified | .ino |
+| LV_COLOR_16_SWAP preprocessor check simplified | CrowPanelApplication |
 | ScreenManager takes UI refs in constructor, unified `switchTo(Screen, Direction)` | ScreenManager.h/.cpp |
 | ScreenManager `switchNext`/`switchPrevious` refactored to use `nextScreen()`/`previousScreen()` helpers | ScreenManager.cpp |
 | BrightnessUI header cleaned up (doxygen → banner comments, `<Preferences.h>` include added) | BrightnessUI.h |
+| CrowPanelApplication: app-luokka, omistaa kaikki instanssit | CrowPanelApplication.h/.cpp |
+| RotaryEncoder: PCF8574& konstruktorissa (ei enää begin-parametri) | RotaryEncoder.h/.cpp |
+| .ino minimoitu: vain `app`, `setup()`, `loop()` | ESP32-Crowpanel-compass.ino |
 
 ### Attitude Level Feature
 
@@ -102,10 +105,13 @@ Three diagnostic lines printed every 5 seconds:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Main Loop                                │
+│               ESP32-Crowpanel-compass.ino                   │
+│         CrowPanelApplication app  →  app.begin/loop()       │
 ├─────────────────────────────────────────────────────────────┤
+│                  CrowPanelApplication                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │RotaryEncoder │  │ESPNowReceiver│  │ScreenManager │      │
+│  │ (_pcf8574&)  │  │              │  │              │      │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
 │         │                 │                  │              │
 │         ▼                 ▼                  ▼              │
@@ -114,9 +120,12 @@ Three diagnostic lines printed every 5 seconds:
 │  └────────────────────────────────────────────────┘        │
 │         │                                    │              │
 │         ▼                                    ▼              │
-│  ┌──────────────┐                    ┌──────────────┐      │
-│  │  CompassUI   │                    │  AttitudeUI  │      │
-│  └──────────────┘                    └──────────────┘      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  CompassUI   │  │  AttitudeUI  │  │ BrightnessUI │      │
+│  │              │  │ (_receiver&) │  │              │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                                                             │
+│  Hardware: PCF8574, Arduino_ESP32RGBPanel, ST7701_RGBPanel  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -237,6 +246,20 @@ struct LevelResponse {
 ### PCF8574 GPIO Expander
 - **CRITICAL:** pinMode() must be called BEFORE pcf8574.begin()
 - P5 = Rotary encoder button (INPUT_PULLUP)
+- PCF8574 alustus tapahtuu `CrowPanelApplication::initPcfAndResetLines()`:ssa
+
+### CrowPanelApplication Design
+- Omistaa kaikki instanssit jäsenmuuttujina (ei globaaleja .ino:ssa)
+- `_bus` ja `_gfx` stackissa — konstruktori-init listassa, `_gfx(&_bus, ...)`
+- `s_gfx` staattinen apuosoitin vain LVGL flush-callbackia varten, asetetaan `initLvgl()`:ssa
+- `diag_*`-laskurit tavallisia instanssimuuttujia (alustetaan `= 0` headerissa, C++11)
+- `buf1` ja `draw_buf` instanssimuuttujia (ei staattisia)
+- Loop jaettu yksityisiin metodeihin: `handleLvglTick`, `handleKnobRotation`, `handleKnobButtonPress`, `handleUIUpdate`, `handleDiagnostics`
+
+### RotaryEncoder Refaktorointi
+- `PCF8574&` konstruktoriparametrina (ei enää `begin(PCF8574&)`)
+- `_pcf8574` tallennetaan viitteenä (ei osoittimena)
+- `processButton()`-null-check poistettu (viite on aina validi)
 
 ### Code Style Preferences
 - Prefer `static constexpr` over `#define` for constants (used in all own .h files and .ino)
@@ -250,7 +273,7 @@ struct LevelResponse {
 - **ScreenManager:** `CompassUI&`, `AttitudeUI&`, `BrightnessUI&` passed via constructor
   - Used by `onLeavingCurrentScreen()`: calls `_attitudeUI.cancelLevelOperation()`, `_brightnessUI.cancelAdjustment()`
   - `_compassUI` stored for future use (no cleanup needed currently)
-- Global instantiation order matters in .ino: `receiver` → `compassUI` → `attitudeUI(receiver)` → `brightnessUI` → `screenMgr(compassUI, attitudeUI, brightnessUI)`
+- Instantiation order managed by `CrowPanelApplication` member declaration order in .h: `_bus` → `_gfx` → `_pcf8574` → `_receiver` → `_compassUI` → `_attitudeUI(_receiver)` → `_brightnessUI` → `_encoder(_pcf8574)` → `_screenMgr(_compassUI, _attitudeUI, _brightnessUI)`
 
 ### ScreenManager Internal Design
 - `switchNext()` / `switchPrevious()` are thin public methods that delegate to private `switchTo(Screen, Direction)`
@@ -276,13 +299,14 @@ struct LevelResponse {
 
 ```
 ESP32-Crowpanel-compass/
-├── ESP32-Crowpanel-compass.ino  # Main program
+├── ESP32-Crowpanel-compass.ino  # Main program (minimal: app, setup, loop)
+├── CrowPanelApplication.h/.cpp  # App orchestrator, owns all instances
 ├── HeadingData.h                # Data structures (incl. LevelCommand/Response)
 ├── ESPNowReceiver.h/.cpp        # ESP-NOW receiver + level command sender
 ├── CompassUI.h/.cpp             # Compass screen adapter
 ├── AttitudeUI.h/.cpp            # Attitude screen adapter + level state machine
 ├── BrightnessUI.h/.cpp          # Brightness screen adapter + adjustment state machine
-├── RotaryEncoder.h/.cpp         # Rotary encoder handler
+├── RotaryEncoder.h/.cpp         # Rotary encoder handler (PCF8574& in constructor)
 ├── ScreenManager.h/.cpp         # Screen management (3-screen carousel) + cleanup
 ├── CLAUDE_SESSION_CONTEXT.md    # This file
 ├── .gitignore
