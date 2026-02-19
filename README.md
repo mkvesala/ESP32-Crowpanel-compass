@@ -38,35 +38,38 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 **`ESPNowReceiver`:**
 - Responsible for: receiving `HeadingData` broadcasts and sending attitude leveling commands via ESP-NOW
-- Owned by: CrowPanelApplication
+- Owned by: `CrowPanelApplication`
 
 **`CompassUI`:**
-- Uses: `HeadingData
+- Uses: `HeadingData`
 - Responsible for: updating LVGL UI objects on the compass screen based on heading data
-- Owned by: CrowPanelApplication
+- Owned by: `CrowPanelApplication`
 
 **`AttitudeUI`:**
 - Uses: `HeadingData`, `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
-- Owned by: CrowPanelApplication
+- Owned by: `CrowPanelApplication`
 
 **`BrightnessUI`:**
 - Uses: `Preferences`
 - Responsible for: backlight brightness adjustment with NVS persistence, updating LVGL UI objects on the brightness screen
-- Owned by: CrowPanelApplication
+- Owned by: `CrowPanelApplication`
 
 **`RotaryEncoder`:**
 - Uses: `PCF8574`
 - Responsible for: reading rotary knob rotation and knob button press
-- Owned by: CrowPanelApplication
+- Owned by: `CrowPanelApplication`
 
 **`ScreenManager`:**
 - Uses: `CompassUI`, `AttitudeUI`, `BrightnessUI`
 - Responsible for: 3-screen carousel navigation with animated screen transitions
+- Owned by: `CrowPanelApplication`
 
 ## Features
 
 ### Compass screen
+
+<img src="docs/compassscreen.png" width="240">
 
 - Rotating compass rose image (240 x 240 px, rendered at 480 x 480 with LVGL scale)
 - Heading value label
@@ -76,6 +79,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 - Rotation threshold 0.5°: skips LVGL re-render when heading change is below threshold — reduces ~194 ms re-render cycles on stable heading
 
 ### Attitude screen
+
+<img src="docs/attitudescreen.png" width="240">
 
 - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
 - Pitch and roll value labels
@@ -87,6 +92,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
   4. Timeout or screen switch → return to idle
 
 ### Brightness screen
+
+<img src="docs/brightnessscreen.png" width="240">
 
 - Sun icon image and current brightness percentage label
 - Knob button press enters ADJUSTING mode: arc overlay appears
@@ -214,7 +221,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 |--------|--------------|----------|-------|
 | Compass (heading changing) | ~25 | ~200 ms | Bottleneck: compass rose software rotation |
 | Compass (stable heading) | 48-74 | 1-7 ms | 0.5° threshold prevents unnecessary re-renders |
-| Attitude (data flowing) | ~80 | 4-13 ms | Horizon line 680-4 is cheap to render |
+| Attitude (data flowing) | ~80 | 4-13 ms | Horizon line 680x4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | Nothing to render |
 
 Flash usage: ~36% (1,137,857 bytes of 3,145,728).
@@ -227,6 +234,8 @@ This device receives data only via ESP-NOW broadcast on a local WiFi channel. Th
 
 ## Credits
 
+Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowPanel-2.1inch-HMI-ESP32-Rotary-Display-480-480-IPS-Round-Touch-Knob-Screen).
+
 Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI
 - Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.6
@@ -237,3 +246,9 @@ Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CM
 No paid partnerships.
 
 Developed by Matti Vesala in collaboration with Claude. Claude was used for code review, bug finding and C++ design advice throughout the project.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted development.
+
+## Gallery
+
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/CrowPanel_2_1_HMI_mounting.stl" width="240">
