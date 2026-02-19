@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+
+  <!-- Background -->
+  <rect width="400" height="200" fill="#0d1117" rx="12"/>
+
+  <!-- Device: outer bezel ring -->
+  <circle cx="100" cy="100" r="88" fill="#1c2128" stroke="#30363d" stroke-width="3"/>
+
+  <!-- Device: inner screen (round display) -->
+  <circle cx="100" cy="100" r="72" fill="#0a0f16"/>
+
+  <!-- Device: screen glow -->
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#1e6ed4" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Compass rose: cardinal tick marks -->
+  <g stroke="#4a90d9" stroke-width="2" stroke-linecap="round">
+    <!-- N -->
+    <line x1="100" y1="38" x2="100" y2="48"/>
+    <!-- S -->
+    <line x1="100" y1="152" x2="100" y2="162"/>
+    <!-- E -->
+    <line x1="162" y1="100" x2="152" y2="100"/>
+    <!-- W -->
+    <line x1="38" y1="100" x2="48" y2="100"/>
+    <!-- Intercardinal ticks -->
+    <line x1="143" y1="57" x2="137" y2="63"/>
+    <line x1="57" y1="143" x2="63" y2="137"/>
+    <line x1="143" y1="143" x2="137" y2="137"/>
+    <line x1="57" y1="57" x2="63" y2="63"/>
+  </g>
+
+  <!-- Compass rose: N label -->
+  <text x="100" y="36" text-anchor="middle" font-family="monospace" font-size="10"
+        font-weight="bold" fill="#4a90d9">N</text>
+
+  <!-- Compass rose: 4-point star (diamond shape) -->
+  <!-- North point (blue) -->
+  <polygon points="100,58 106,95 100,88 94,95"
+           fill="#4a90d9"/>
+  <!-- South point (white) -->
+  <polygon points="100,142 106,105 100,112 94,105"
+           fill="#e0e0e0"/>
+  <!-- East point -->
+  <polygon points="142,100 105,94 112,100 105,106"
+           fill="#e0e0e0" opacity="0.5"/>
+  <!-- West point -->
+  <polygon points="58,100 95,94 88,100 95,106"
+           fill="#e0e0e0" opacity="0.5"/>
+
+  <!-- Center dot -->
+  <circle cx="100" cy="100" r="5" fill="#4a90d9"/>
+  <circle cx="100" cy="100" r="2.5" fill="#0a0f16"/>
+
+  <!-- Heading value label on screen -->
+  <text x="100" y="130" text-anchor="middle" font-family="monospace" font-size="13"
+        font-weight="bold" fill="#ffffff" letter-spacing="1">247°</text>
+
+  <!-- Device: rotary knob (bottom) -->
+  <circle cx="100" cy="195" r="8" fill="#1c2128" stroke="#30363d" stroke-width="2"/>
+  <circle cx="100" cy="195" r="3" fill="#4a90d9" opacity="0.7"/>
+
+  <!-- Text block: project name -->
+  <text x="210" y="68" font-family="monospace" font-size="20"
+        font-weight="bold" fill="#ffffff">ESP32 CrowPanel</text>
+  <text x="210" y="94" font-family="monospace" font-size="20"
+        font-weight="bold" fill="#4a90d9">Compass</text>
+
+  <!-- Divider line -->
+  <line x1="210" y1="105" x2="390" y2="105" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Subtitle lines -->
+  <text x="210" y="122" font-family="monospace" font-size="11"
+        fill="#8b949e">Marine instrument display</text>
+  <text x="210" y="138" font-family="monospace" font-size="11"
+        fill="#8b949e">ESP-NOW · LVGL · ESP32-S3</text>
+
+  <!-- Badges row -->
+  <!-- Compass badge -->
+  <rect x="210" y="150" width="68" height="18" rx="4" fill="#1e3a5f"/>
+  <text x="244" y="163" text-anchor="middle" font-family="monospace" font-size="10"
+        fill="#4a90d9">Compass</text>
+
+  <!-- Attitude badge -->
+  <rect x="284" y="150" width="58" height="18" rx="4" fill="#1e3a5f"/>
+  <text x="313" y="163" text-anchor="middle" font-family="monospace" font-size="10"
+        fill="#4a90d9">Attitude</text>
+
+  <!-- Brightness badge -->
+  <rect x="210" y="173" width="76" height="18" rx="4" fill="#1e3a5f"/>
+  <text x="248" y="186" text-anchor="middle" font-family="monospace" font-size="10"
+        fill="#4a90d9">Brightness</text>
+
+  <!-- ESP-NOW badge -->
+  <rect x="292" y="173" width="68" height="18" rx="4" fill="#1e2a1e"/>
+  <text x="326" y="186" text-anchor="middle" font-family="monospace" font-size="10"
+        fill="#3fb950">ESP-NOW</text>
+
+</svg>
+
