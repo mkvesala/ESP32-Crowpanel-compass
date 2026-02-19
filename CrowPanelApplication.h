@@ -64,8 +64,8 @@ private:
     static constexpr uint16_t SCREEN_HEIGHT = 480;
 
     // LVGL draw buffer (40 lines)
-    static lv_disp_draw_buf_t draw_buf;
-    static lv_color_t *buf1 = NULL;
+    lv_disp_draw_buf_t draw_buf;
+    lv_color_t *buf1 = NULL;
     static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 40;
 
     // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
@@ -75,13 +75,13 @@ private:
     static constexpr uint8_t DIAG_PRINT_INTERVAL_MS = 5000; 
 
     // Diagnostic counters
-    static uint32_t diag_ui_updates = 0;
-    static uint32_t diag_ui_update_time_total = 0;
-    static uint32_t diag_ui_update_time_max = 0;
-    static uint32_t diag_lvgl_time_total = 0;
-    static uint32_t diag_lvgl_time_max = 0;
-    static uint32_t diag_lvgl_calls = 0;
-    static uint32_t diag_last_print = 0;
+    uint32_t diag_ui_updates = 0;
+    uint32_t diag_ui_update_time_total = 0;
+    uint32_t diag_ui_update_time_max = 0;
+    uint32_t diag_lvgl_time_total = 0;
+    uint32_t diag_lvgl_time_max = 0;
+    uint32_t diag_lvgl_calls = 0;
+    uint32_t diag_last_print = 0;
 
     // Arduino_GFX bus + panel
     Arduino_ESP32RGBPanel _bus;
@@ -104,7 +104,7 @@ private:
     void initLvgl();
     void handleLvglTick();
     void handleKnobRotation();
-    void handleKnobPress();
+    void handleKnobButtonPress();
     void handleUIUpdate();
     void handleDiagnostics();
     

@@ -26,7 +26,7 @@ CrowPanelApplication::CrowPanelApplication():
         46, 3, 8, 18, 17,
         14, 13, 12, 11, 10, 9,
         5, 45, 48, 47, 21),
-    _gfx(_bus, GFX_NOT_DEFINED, 0,
+    _gfx(&_bus, GFX_NOT_DEFINED, 0,
         false, 480, 480,
         st7701_type5_init_operations, sizeof(st7701_type5_init_operations),
         true,
@@ -45,7 +45,7 @@ void CrowPanelApplication::begin() {
 
     this->initPcfAndResetLines();
 
-    this->initDisplay()
+    this->initDisplay();
 
     this->initBacklight(PWM_DUTY);
 
@@ -141,6 +141,9 @@ void CrowPanelApplication::initBacklight(uint8_t duty) {
 
 // LVGL init
 void CrowPanelApplication::initLvgl() {
+
+    // Set static gfx used by the static CB function
+    s_gfx = &_gfx;
     
     lv_init();
 
@@ -242,7 +245,7 @@ void CrowPanelApplication::handleUIUpdate() {
 
             if (was_connected && !is_connected) {
                 if (_screenMgr.isCompassActive()) _compassUI.showDisconnected();
-                else if (screenMgr.isAttitudeActive()) _attitudeUI.showDisconnected();
+                else if (_screenMgr.isAttitudeActive()) _attitudeUI.showDisconnected();
             }
             was_connected = is_connected;
         }
@@ -251,6 +254,8 @@ void CrowPanelApplication::handleUIUpdate() {
 
 // Print diagnostics to Serial
 void CrowPanelApplication::handleDiagnostics() {
+
+    uint32_t now = millis();
 
     if (now - diag_last_print >= DIAG_PRINT_INTERVAL_MS) {
         diag_last_print = now;
