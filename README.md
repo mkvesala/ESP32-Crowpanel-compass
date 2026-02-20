@@ -154,7 +154,7 @@ Key finding: compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-r
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `HeadingData.h` | Data structs: `HeadingData`, `LevelCommand`, `LevelResponse` |
+| `espnow_protocol.h` | Data structs: `HeadingData`, `LevelCommand`, `LevelResponse` |
 | `ESPNowReceiver.h/.cpp` | Class ESPNowReceiver — ESP-NOW receive and level command sender |
 | `CompassUI.h/.cpp` | Class CompassUI — compass screen adapter |
 | `AttitudeUI.h/.cpp` | Class AttitudeUI — attitude screen adapter + leveling state machine |
