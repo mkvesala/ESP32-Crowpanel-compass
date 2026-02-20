@@ -34,6 +34,10 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 ## Classes
 
+<img src="docs/uml_diagram.png" width="480">
+
+The classes on the UML class diagram are presented with their full public API. The private attributes only to demostrate the class relationships. The diagram includes the `ESPNowBroker` class of the CMPS14-ESP32-SignalK-gateway.
+
 **`CrowPanelApplication`:**
 - Owns: `Arduino_ESP32RGBPanel`, `Arduino_ST7701_RGBPanel`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
@@ -243,7 +247,9 @@ Developed and tested using:
 - Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.6
 - LVGL 8.3.11 and SquareLine Studio 1.6.0
 
-Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway).
+Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these projects relate:
+
+<img src="docs/full_uml_diagram.jpeg" width="480">
 
 No paid partnerships.
 
@@ -253,4 +259,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240">

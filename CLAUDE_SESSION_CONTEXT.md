@@ -50,6 +50,8 @@ MVP implementation of a marine instrument that receives ESP-NOW broadcast messag
 | CrowPanelApplication: app-luokka, omistaa kaikki instanssit | CrowPanelApplication.h/.cpp |
 | RotaryEncoder: PCF8574& konstruktorissa (ei enää begin-parametri) | RotaryEncoder.h/.cpp |
 | .ino minimoitu: vain `app`, `setup()`, `loop()` | ESP32-Crowpanel-compass.ino |
+| README.md luotu | README.md |
+| docs/projectlogo.svg luotu | docs/projectlogo.svg |
 
 ### Attitude Level Feature
 
@@ -260,6 +262,7 @@ struct LevelResponse {
 - `PCF8574&` konstruktoriparametrina (ei enää `begin(PCF8574&)`)
 - `_pcf8574` tallennetaan viitteenä (ei osoittimena)
 - `processButton()`-null-check poistettu (viite on aina validi)
+- `s_instance` staattinen osoitin säilytetty `.cpp`:ssä FreeRTOS-taskeja varten (ei poistettu)
 
 ### Code Style Preferences
 - Prefer `static constexpr` over `#define` for constants (used in all own .h files and .ino)
@@ -319,6 +322,8 @@ ESP32-Crowpanel-compass/
 ├── ui_img_*.c                   # Images
 ├── CMakeLists.txt               # SquareLine generated (not used by Arduino IDE)
 ├── filelist.txt                 # SquareLine generated (not used by Arduino IDE)
+├── README.md                    # Project documentation
+├── docs/projectlogo.svg         # Project logo (shown in README)
 ├── UI/                          # SquareLine project
 └── RotaryScreen_2_1/            # Elecrow demo (reference)
 ```
@@ -330,6 +335,9 @@ ESP32-Crowpanel-compass/
 - **Flash usage:** ~36% (1,137,857 bytes of 3,145,728)
 - **Compass rose:** 240×240 px, Scale=512, ~850 KB C-code
 - **Horizon line:** 680×4 px, 41 KB
+- **LVGL:** 8.3.11
+- **SquareLine Studio:** 1.6.0
+- **ESP32 board package:** 2.0.14 (newer versions incompatible with Elecrow example code)
 
 ---
 

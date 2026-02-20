@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <esp_now.h>
-#include "HeadingData.h"
+#include "espnow_protocol.h"
 
 // === C L A S S  E S P N O W R E C E I V E R ===
 //

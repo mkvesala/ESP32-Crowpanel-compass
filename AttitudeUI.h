@@ -4,17 +4,7 @@
 #include <lvgl.h>
 #include "ui.h"
 #include "ESPNowReceiver.h"
-#include "HeadingData.h"
-
-// === E N U M  C L A S S  L E V E L S T A T E ===
-
-enum class LevelState {
-    IDLE,           // Normal operation, dialog hidden
-    CONFIRM_WAIT,   // "Level? Press knob to confirm." visible, waiting for 2nd press
-    SENDING,        // "Leveling..." visible, waiting for response
-    SUCCESS,        // "Success!" visible briefly
-    FAILED          // "Failed!" visible briefly
-};
+#include "espnow_protocol.h"
 
 // === C L A S S  A T T I T U D E U I ===
 //
@@ -51,6 +41,15 @@ public:
     void cancelLevelOperation();
 
 private:
+
+    // State machine for AttitudeScreen
+    enum class LevelState {
+        IDLE,           // Normal operation, dialog hidden
+        CONFIRM_WAIT,   // "Level? Press knob to confirm." visible, waiting for 2nd press
+        SENDING,        // "Leveling..." visible, waiting for response
+        SUCCESS,        // "Success!" visible briefly
+        FAILED          // "Failed!" visible briefly
+    };
 
     ESPNowReceiver &_receiver;
 

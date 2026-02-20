@@ -18,12 +18,6 @@
 class ScreenManager {
 
 public:
-    
-    enum class Screen {
-        COMPASS,
-        ATTITUDE,
-        BRIGHTNESS
-    };
 
     ScreenManager(CompassUI &compassUI, AttitudeUI &attitudeUI, BrightnessUI &brightnessUI);
 
@@ -37,6 +31,16 @@ public:
 
 private:
 
+    // Animation direction
+    enum class Direction { CW, CCW };
+
+    // Current screen
+    enum class Screen {
+        COMPASS,
+        ATTITUDE,
+        BRIGHTNESS
+    };
+
     bool _initialized;
     Screen _current;
 
@@ -46,9 +50,6 @@ private:
 
     // Animation duration
     static constexpr uint32_t ANIM_DURATION_MS = 300;
-
-    // Animation direction (internal implementation detail)
-    enum class Direction { CW, CCW };
 
     // Carousel order helpers
     Screen nextScreen() const;

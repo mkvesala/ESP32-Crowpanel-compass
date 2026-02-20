@@ -72,7 +72,9 @@ void CrowPanelApplication::begin() {
 
 // Loop
 void CrowPanelApplication::loop() {
-
+    
+    const uint32_t now = millis();
+    
     this->handleLvglTick();
 
     // Update statistics
@@ -82,9 +84,9 @@ void CrowPanelApplication::loop() {
 
     this->handleKnobButtonPress();
 
-    this->handleUIUpdate();
+    this->handleUIUpdate(now);
 
-    this->handleDiagnostics();
+    this->handleDiagnostics(now);
 
 }
 
@@ -208,15 +210,11 @@ void CrowPanelApplication::handleKnobButtonPress() {
 }
 
 // Handle UI update
-void CrowPanelApplication::handleUIUpdate() {
+void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
 
     // Update state machines (check for timeouts)
     if (_screenMgr.isAttitudeActive()) _attitudeUI.updateLevelState();
     if (_screenMgr.isBrightnessActive()) _brightnessUI.updateState();
-
-    // UI update
-    static uint32_t last_ui_update = 0;
-    uint32_t now = millis();
 
     if (now - last_ui_update >= UI_UPDATE_INTERVAL_MS) {
         last_ui_update = now;
@@ -257,9 +255,7 @@ void CrowPanelApplication::handleUIUpdate() {
 }
 
 // Print diagnostics to Serial
-void CrowPanelApplication::handleDiagnostics() {
-
-    uint32_t now = millis();
+void CrowPanelApplication::handleDiagnostics(const uint32_t now) {
 
     if (now - diag_last_print >= DIAG_PRINT_INTERVAL_MS) {
         diag_last_print = now;
@@ -293,6 +289,4 @@ void CrowPanelApplication::handleDiagnostics() {
         diag_lvgl_time_max = 0;
         diag_lvgl_calls = 0;
     }
-    
-    delay(5);
 }

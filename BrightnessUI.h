@@ -5,13 +5,6 @@
 #include <Preferences.h>
 #include "ui.h"
 
-// === E N U M  C L A S S  B R I G H T N E S S S T A T E ===
-
-enum class BrightnessState {
-    IDLE,       // Display only, rotation switches screens
-    ADJUSTING   // Arc visible, rotation adjusts brightness
-};
-
 // === C L A S S  B R I G H T N E S S U I ===
 //
 // - Class BrightnessUI - responsible for:
@@ -45,7 +38,13 @@ public:
     bool isAdjusting() const { return _state == BrightnessState::ADJUSTING; }
 
 private:
-    
+
+    // State machine for BrightnessScreen
+    enum class BrightnessState {
+        IDLE,       // Display only, rotation switches screens
+        ADJUSTING   // Arc visible, rotation adjusts brightness
+    };
+
     // State
     BrightnessState _state;
     bool _initialized;
@@ -63,16 +62,16 @@ private:
     static constexpr uint32_t AUTOSAVE_TIMEOUT_MS = 3000;
 
     // Brightness adjustment (% change of one step of rotating the knob)
-    static constexpr int8_t BRIGHTNESS_STEP = 5;
+    static constexpr int8_t BRIGHTNESS_STEP = 2;
 
     // Boundaries for brightness adjustment
-    static constexpr int8_t MIN_BRIGHTNESS_PERCENT = 5;
+    static constexpr int8_t MIN_BRIGHTNESS_PERCENT = 2;
     static constexpr int8_t MAX_BRIGHTNESS_PERCENT = 100;
 
     // NVS namespace ja key, default brightness value
     static constexpr const char* NVS_NAMESPACE = "display";
     static constexpr const char* NVS_KEY_BRIGHTNESS = "brightness";
-    static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 78;  // ~200/255
+    static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 78;  // 200/255 pwm value
 
     // Helpers
     void setState(BrightnessState newState);

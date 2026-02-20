@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <lvgl.h>
-#include "HeadingData.h"
+#include "espnow_protocol.h"
 
 // === C L A S S  C O M P A S S U I ===
 //
