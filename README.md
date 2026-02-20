@@ -182,7 +182,7 @@ Key finding: compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-r
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
 4. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
-   <img src="docs/mountingrame.png" width="480">
+   <img src="docs/mountingframe.png" width="480">
 
 **No paid partnerships.**
 
