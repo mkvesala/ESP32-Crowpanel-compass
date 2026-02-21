@@ -93,18 +93,19 @@ Feature requests are welcome! Please:
 ## Testing checklist
 
 * [ ] ESP32 boots without errors
-* [ ] Crowpanel display turns on promptly, into "waiting for data" state
+* [ ] CrowPanel display turns on promptly, into "waiting for data" state
 * [ ] Compass data received, heading label and compass rose update correctly
-* [ ] Connected-indicator (the red dot on the compass screen) disappears
-* [ ] Heading mode toggle works when knob button pressed on compass screen
-* [ ] Screen carousel works fine with rotary knob
-* [ ] Attitude screen updates correctly
-* [ ] Attitude Leveling works promptly with knob press on attitude screen
-* [ ] Success-response received and displayed after leveling
-* [ ] Brightness screen updates correctly with value stored in NVS
-* [ ] Brightness adjustment works promptly on knob press/rotate
-* [ ] No memory leaks (monitor serial)
-* [ ] Diagnostics do not report bad bottlenecks (monitor serial).
+* [ ] Connected indicator (the red dot on CompassScreen) disappears when data flows
+* [ ] Heading mode toggle works when knob button pressed on CompassScreen (T/M)
+* [ ] Screen carousel works CW and CCW with rotary knob
+* [ ] AttitudeScreen updates pitch, roll and horizon line correctly
+* [ ] Attitude leveling two-press confirmation works on AttitudeScreen
+* [ ] Success response received and displayed after leveling
+* [ ] BrightnessScreen shows correct value (loaded from NVS) on boot
+* [ ] Brightness adjustment works on knob press/rotate, persists after reboot
+* [ ] Disconnected state shown correctly when ESP-NOW data stops
+* [ ] No memory leaks ([DIAG] heap free stable over time)
+* [ ] [DIAG] output does not report unexpected bottlenecks
 
 ## Development environment
 

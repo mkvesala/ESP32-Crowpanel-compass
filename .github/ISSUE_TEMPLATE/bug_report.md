@@ -19,28 +19,32 @@ A clear and concise description of what you expected to happen.
 
 **Environment:**
 - Arduino IDE version: [e.g. 2.3.6]
-- ESP32 board package: [e.g. 3.3.5]
-- ESP32 board: [e.g. SH-ESP32 Rev 2.2.1]
-- CMPS14 firmware: [e.g. v7]
+- ESP32 board package: [e.g. 2.0.14]
+- LVGL version: [e.g. 8.3.11]
+- SquareLine Studio: [e.g. 1.6.0]
 - Library versions:
-  - ArduinoWebsockets: [e.g. 0.5.4]
-  - ArduinoJson: [e.g. 7.4.2]
-  - LiquidCrystal_I2C: [e.g. 1.1.2]
+  - Arduino_GFX_Library: [e.g. version]
+  - PCF8574: [e.g. version]
 
 **Logs**
-Paste Serial monitor output or LCD messages here:
+Paste Serial monitor [DIAG] output here:
 ```
 (paste here)
 ```
 
 **Screenshots**
-If applicable, add screenshots (Web UI, LCD).
+If applicable, add screenshots of the CrowPanel display.
+
+**Which screen is affected?**
+- [ ] CompassScreen
+- [ ] AttitudeScreen
+- [ ] BrightnessScreen
+- [ ] All screens / startup
 
 **Hardware setup**
-- [ ] LCD connected
-- [ ] Logic level converter used
-- [ ] Power supply: [voltage/source]
+- [ ] CrowPanel 2.1" HMI connected via USB
+- [ ] CMPS14-ESP32-SignalK-gateway running and broadcasting
+- [ ] WiFi router on fixed channel 6
 
 **Additional context**
 Add any other context about the problem here.
-

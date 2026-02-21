@@ -11,9 +11,17 @@ A clear and concise description of what the problem is. Ex. I'm always frustrate
 **Describe the solution you'd like**
 A clear and concise description of what you want to happen.
 
+**Which part of the project does this affect?**
+- [ ] CompassScreen
+- [ ] AttitudeScreen
+- [ ] BrightnessScreen
+- [ ] New screen
+- [ ] ESP-NOW communication
+- [ ] RotaryEncoder / knob behavior
+- [ ] Other: ___________
+
 **Describe alternatives you've considered**
 A clear and concise description of any alternative solutions or features you've considered.
 
 **Additional context**
-Add any other context, code examples, or mockups about the feature request here.
-
+Add any other context, code examples, or UI mockups about the feature request here.
