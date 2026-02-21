@@ -75,7 +75,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Compass screen
 
-<img src="docs/compassscreen.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240">
 
 - Rotating compass rose image (240 x 240 px, rendered at 480 x 480 with LVGL scale)
 - Heading value label
@@ -86,7 +86,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Attitude screen
 
-<img src="docs/attitudescreen.png" width="240">
+<img src="docs/attitudescreen.png" width="240"> <img src="docs/attitudeui.jpeg" width="240">
 
 - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
 - Pitch and roll value labels
@@ -99,7 +99,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Brightness screen
 
-<img src="docs/brightnessscreen.png" width="240">
+<img src="docs/brightnessscreen.png" width="240"> <img src="docs/brightnessui.jpeg" width="240">
 
 - Sun icon image and current brightness percentage label
 - Knob button press enters ADJUSTING mode: arc overlay appears
@@ -263,4 +263,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
