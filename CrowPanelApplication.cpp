@@ -2,17 +2,20 @@
 
 // === S T A T I C ===
 
-// Static pointer to _gfx for lvgl callback function
-static Arduino_ST7701_RGBPanel* s_gfx = nullptr;
-
 // Static callback function for lvgl
 static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
+
+    auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data);
+    if (!gfx) {
+        lv_disp_flush_ready(disp);
+        return;
+    }
 
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
-    // s_gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-    s_gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
 
     lv_disp_flush_ready(disp);
 }
@@ -149,9 +152,6 @@ void CrowPanelApplication::initBacklight(uint8_t duty) {
 // LVGL init
 void CrowPanelApplication::initLvgl() {
 
-    // Set static gfx used by the static CB function
-    s_gfx = &_gfx;
-    
     lv_init();
 
     buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
@@ -166,6 +166,7 @@ void CrowPanelApplication::initLvgl() {
     disp_drv.ver_res = SCREEN_HEIGHT;
     disp_drv.flush_cb = lvglFlushCb;
     disp_drv.draw_buf = &draw_buf;
+    disp_drv.user_data = &_gfx;
     lv_disp_drv_register(&disp_drv);
 
 }
