@@ -25,6 +25,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `README.md` - Project documentation
 - `CHANGELOG.md` - This file
 - `docs/projectlogo.svg` - Project logo for README
+- `docs/CrowPanel_2_1_HMI_mounting.stl` - Mounting frame model for 3D printing
+- `docs/uml_diagram.png`- Class diagram
+- `docs/full_uml_diagram.jpeg` - Class diagram including CMPS14-ESP32-SignalK-gateway
+- `docs/*screen.png`- Screenshots of compass, attitude and brightness screens
+- `.github` - Directory containing pull request, bug report and feature request templates.
+- `CONTRIBUTING.md` - Guidelines to contribute to the project
 
 ### Changed
 
@@ -43,6 +49,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `CrowPanelApplication` member declaration order in `.h` controls C++ construction order:
   `_bus` → `_gfx` → `_pcf8574` → `_receiver` → `_compassUI` → `_attitudeUI` → `_brightnessUI` → `_encoder` → `_screenMgr`
 
+#### Enum classes refactored
+- `LevelState` - Now a private member of `AttitudeUI` class
+- `Direction` and `Screen` - Now privagte members of `ScreenManager` class
+- `BrightnessState` - Now a private member of `BrightnessUI` class
+
+#### HeadingData.h renamed
+- `HeadingData.h` renamed to `espnow_protocol.h` - Documented as `espnow.protocol` package on the UML class diagram
 ---
 
 ## [v0.2.0] - 2026-02-17
