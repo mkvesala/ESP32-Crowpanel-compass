@@ -103,9 +103,9 @@ The classes on the UML class diagram are presented with their full public API. T
 
 - Sun icon image and current brightness percentage label
 - Knob button press enters ADJUSTING mode: arc overlay appears
-- Knob rotation in ADJUSTING mode: ±5% brightness, updates arc, label and backlight in real-time
+- Knob rotation in ADJUSTING mode: ±2% brightness, updates arc, label and backlight in real-time
 - 3-second timeout after last rotation → saves to NVS and returns to idle
-- Brightness range: 5%–100% (5% minimum prevents screen going completely dark)
+- Brightness range: 2%–100% (2% minimum prevents screen going completely dark)
 - Default: 78% (~200/255)
 - Persistence: ESP32 Preferences (NVS), namespace `"display"`, key `"brightness"`
 - PWM: GPIO6, LEDC channel 0, 5 kHz, 8-bit
@@ -116,7 +116,7 @@ The classes on the UML class diagram are presented with their full public API. T
 |--------|--------------|-------------------|--------------------|
 | Compass | Toggle T/M heading mode | Switch screen | — |
 | Attitude | Trigger level confirmation dialog | Switch screen | — |
-| Brightness | Enter ADJUSTING mode | Switch screen | ±5% brightness (ADJUSTING mode only) |
+| Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
 - **Clockwise:** COMPASS → ATTITUDE → BRIGHTNESS → COMPASS → ...
@@ -251,7 +251,7 @@ Developed and tested using:
 - Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.6
 - LVGL 8.3.11 and SquareLine Studio 1.6.0
 
-Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these projects relate:
+Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these two projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
