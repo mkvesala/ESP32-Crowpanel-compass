@@ -51,11 +51,6 @@
   <circle cx="100" cy="100" r="5" fill="#4a90d9"/>
   <circle cx="100" cy="100" r="2.5" fill="#0a0f16"/>
 
-
-  <!-- Device: rotary knob (bottom) -->
-  <circle cx="100" cy="195" r="8" fill="#1c2128" stroke="#30363d" stroke-width="2"/>
-  <circle cx="100" cy="195" r="3" fill="#4a90d9" opacity="0.7"/>
-
   <!-- Text block: project name -->
   <text x="210" y="68" font-family="monospace" font-size="20"
         font-weight="bold" fill="#ffffff">ESP32 CrowPanel</text>
@@ -81,11 +76,6 @@
   <rect x="284" y="150" width="58" height="18" rx="4" fill="#1e3a5f"/>
   <text x="313" y="163" text-anchor="middle" font-family="monospace" font-size="10"
         fill="#4a90d9">Attitude</text>
-
-  <!-- Brightness badge -->
-  <rect x="210" y="173" width="76" height="18" rx="4" fill="#1e3a5f"/>
-  <text x="248" y="186" text-anchor="middle" font-family="monospace" font-size="10"
-        fill="#4a90d9">Brightness</text>
 
 </svg>
 
