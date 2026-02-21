@@ -75,17 +75,22 @@ void CrowPanelApplication::loop() {
     
     const uint32_t now = millis();
     
-    this->handleLvglTick();
+    // LVGL tick
+    this->handleLvglTick(now);
 
     // Update statistics
     _receiver.updateStats();
 
+    // Knob rotation
     this->handleKnobRotation();
 
+    // Button press
     this->handleKnobButtonPress();
 
+    // UI update
     this->handleUIUpdate(now);
 
+    // Diagnostics print
     this->handleDiagnostics(now);
 
 }
@@ -166,7 +171,10 @@ void CrowPanelApplication::initLvgl() {
 }
 
 // Diagnostics for lvgl draw
-void CrowPanelApplication::handleLvglTick() {
+void CrowPanelApplication::handleLvglTick(const uint32_t now) {
+
+    if (now - _last_lvgl_tick < LVGL_TICK_INTERVAL_MS) return;
+    _last_lvgl_tick = now;
     
     uint32_t lvgl_start = micros();
     lv_timer_handler();
@@ -216,77 +224,75 @@ void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
     if (_screenMgr.isAttitudeActive()) _attitudeUI.updateLevelState();
     if (_screenMgr.isBrightnessActive()) _brightnessUI.updateState();
 
-    if (now - last_ui_update >= UI_UPDATE_INTERVAL_MS) {
-        last_ui_update = now;
+    if (now - last_ui_update < UI_UPDATE_INTERVAL_MS) return;
+    last_ui_update = now;
 
-        bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
+    bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
 
-        // Get the latest data
-        if (_receiver.hasNewData() || is_connected) {
-            HeadingData data = _receiver.getData();
-            float pps = _receiver.getPacketsPerSecond();
+    // Get the latest data
+    if (_receiver.hasNewData() || is_connected) {
+        HeadingData data = _receiver.getData();
+        float pps = _receiver.getPacketsPerSecond();
 
-            // Measure the runtime of UI update
-            uint32_t ui_start = micros();
+        // Measure the runtime of UI update
+        uint32_t ui_start = micros();
 
-            // Update screen (BrightnessScreen has no compass data to display)
-            if (_screenMgr.isCompassActive()) _compassUI.update(data, is_connected, pps);
-            else if (_screenMgr.isAttitudeActive()) _attitudeUI.update(data, is_connected, pps);
+        // Update screen (BrightnessScreen has no compass data to display)
+        if (_screenMgr.isCompassActive()) _compassUI.update(data, is_connected, pps);
+        else if (_screenMgr.isAttitudeActive()) _attitudeUI.update(data, is_connected, pps);
 
-            // Calculate UI update runtime
-            uint32_t ui_elapsed = micros() - ui_start;
-            diag_ui_updates++;
-            diag_ui_update_time_total += ui_elapsed;
-            if (ui_elapsed > diag_ui_update_time_max) {
-                diag_ui_update_time_max = ui_elapsed;
-            }
+        // Calculate UI update runtime
+        uint32_t ui_elapsed = micros() - ui_start;
+        diag_ui_updates++;
+        diag_ui_update_time_total += ui_elapsed;
+        if (ui_elapsed > diag_ui_update_time_max) {
+            diag_ui_update_time_max = ui_elapsed;
         }
-        else {
-            // No data show disconnected indication of the screen
-            static bool was_connected = false;
+    }
+    else {
+        // No data show disconnected indication of the screen
+        static bool was_connected = false;
 
-            if (was_connected && !is_connected) {
-                if (_screenMgr.isCompassActive()) _compassUI.showDisconnected();
-                else if (_screenMgr.isAttitudeActive()) _attitudeUI.showDisconnected();
-            }
-            was_connected = is_connected;
+        if (was_connected && !is_connected) {
+            if (_screenMgr.isCompassActive()) _compassUI.showDisconnected();
+            else if (_screenMgr.isAttitudeActive()) _attitudeUI.showDisconnected();
         }
+        was_connected = is_connected;
     }
 }
 
 // Print diagnostics to Serial
 void CrowPanelApplication::handleDiagnostics(const uint32_t now) {
 
-    if (now - diag_last_print >= DIAG_PRINT_INTERVAL_MS) {
-        diag_last_print = now;
+    if (now - diag_last_print < DIAG_PRINT_INTERVAL_MS) return;
+    diag_last_print = now;
 
-        float pps = _receiver.getPacketsPerSecond();
-        float avg_ui_time = (diag_ui_updates > 0) ?
-            (float)diag_ui_update_time_total / diag_ui_updates / 1000.0f : 0;
+    float pps = _receiver.getPacketsPerSecond();
+    float avg_ui_time = (diag_ui_updates > 0) ?
+        (float)diag_ui_update_time_total / diag_ui_updates / 1000.0f : 0;
 
-        float avg_lvgl_time = (diag_lvgl_calls > 0) ?
-            (float)diag_lvgl_time_total / diag_lvgl_calls / 1000.0f : 0;
+    float avg_lvgl_time = (diag_lvgl_calls > 0) ?
+        (float)diag_lvgl_time_total / diag_lvgl_calls / 1000.0f : 0;
 
-        Serial.printf("[DIAG] PPS: %.1f | UI updates: %lu | UI avg: %.2f ms | UI max: %.2f ms\n",
-            pps, diag_ui_updates, avg_ui_time, diag_ui_update_time_max / 1000.0f);
+    Serial.printf("[DIAG] PPS: %.1f | UI updates: %lu | UI avg: %.2f ms | UI max: %.2f ms\n",
+        pps, diag_ui_updates, avg_ui_time, diag_ui_update_time_max / 1000.0f);
 
-        Serial.printf("[DIAG] LVGL calls: %lu | avg: %.2f ms | max: %.2f ms\n",
-            (unsigned long)diag_lvgl_calls, avg_lvgl_time, diag_lvgl_time_max / 1000.0f);
+    Serial.printf("[DIAG] LVGL calls: %lu | avg: %.2f ms | max: %.2f ms\n",
+        (unsigned long)diag_lvgl_calls, avg_lvgl_time, diag_lvgl_time_max / 1000.0f);
 
-        // Memory and stack diagnostics
-        Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
-            (unsigned long)esp_get_free_heap_size(),
-            (unsigned long)esp_get_minimum_free_heap_size(),
-            (unsigned long)uxTaskGetStackHighWaterMark(NULL),
-            (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getEncoderTaskHandle()),
-            (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getButtonTaskHandle()));
+    // Memory and stack diagnostics
+    Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
+        (unsigned long)esp_get_free_heap_size(),
+        (unsigned long)esp_get_minimum_free_heap_size(),
+        (unsigned long)uxTaskGetStackHighWaterMark(NULL),
+        (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getEncoderTaskHandle()),
+        (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getButtonTaskHandle()));
 
-        // Reset counters
-        diag_ui_updates = 0;
-        diag_ui_update_time_total = 0;
-        diag_ui_update_time_max = 0;
-        diag_lvgl_time_total = 0;
-        diag_lvgl_time_max = 0;
-        diag_lvgl_calls = 0;
-    }
+    // Reset counters
+    diag_ui_updates = 0;
+    diag_ui_update_time_total = 0;
+    diag_ui_update_time_max = 0;
+    diag_lvgl_time_total = 0;
+    diag_lvgl_time_max = 0;
+    diag_lvgl_calls = 0;
 }

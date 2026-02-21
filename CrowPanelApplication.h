@@ -68,8 +68,12 @@ private:
     lv_color_t *buf1 = NULL;
     static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 40;
 
+    // LVGL frequency in loop
+    uint32_t _last_lvgl_tick = 0;
+    static constexpr uint32_t LVGL_TICK_INTERVAL_MS = 5;
+
     // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
-    static constexpr uint8_t UI_UPDATE_INTERVAL_MS = 59;
+    static constexpr uint32_t UI_UPDATE_INTERVAL_MS = 59;
     uint32_t last_ui_update = 0;
 
     // Diagnostics and debug interval 5 secs
@@ -103,7 +107,7 @@ private:
     void initBacklight(uint8_t duty);
     void initDisplay();
     void initLvgl();
-    void handleLvglTick();
+    void handleLvglTick(const uint32_t now);
     void handleKnobRotation();
     void handleKnobButtonPress();
     void handleUIUpdate(const uint32_t now);
