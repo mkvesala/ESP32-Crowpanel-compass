@@ -75,7 +75,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Compass screen
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240">
+<img src="docs/compassscreen.png" height="240"> <img src="docs/compassui.jpeg" height="240">
 
 - Rotating compass rose image (240×240 px source, rendered at 480×480 with LVGL zoom=512, no alpha, antialias off)
 - Heading value label
@@ -86,7 +86,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Attitude screen
 
-<img src="docs/attitudescreen.png" width="240"> <img src="docs/attitudeui.jpeg" width="240">
+<img src="docs/attitudescreen.png" height="240"> <img src="docs/attitudeui.jpeg" height="240">
 
 - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
 - Pitch and roll value labels
@@ -99,7 +99,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Brightness screen
 
-<img src="docs/brightnessscreen.png" width="240"> <img src="docs/brightnessui.jpeg" width="240">
+<img src="docs/brightnessscreen.png" height="240"> <img src="docs/brightnessui.jpeg" height="240">
 
 - Sun icon image and current brightness percentage label
 - Knob button press enters ADJUSTING mode: arc overlay appears
