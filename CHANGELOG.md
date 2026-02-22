@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Combined result: LVGL avg ~200 ms → ~30 ms, max ~206 ms → ~99 ms (measured on CompassScreen with heading changing at ~19 Hz)
 
 ### Performance
-- Compass rose rotation render time reduced by ~5× vs. v0.3.0 baseline
+- Compass rose rotation render time max reduced by 2× vs. v0.3.0 baseline
 
 ---
 
