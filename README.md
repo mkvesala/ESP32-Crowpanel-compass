@@ -126,7 +126,7 @@ Screen carousel order:
 
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway):
 - `HeadingDelta` struct: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` (equal to what SignalK server gets from the gateway)
-- `HeadingDelta` converted into `HeadingData`, an nternal data struct for CrowPanel implementation
+- `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
 **Sends** attitude leveling command as broadcast:
 - `LevelCommand` struct: 4-byte magic `"LVLC"` + 4 reserved bytes
