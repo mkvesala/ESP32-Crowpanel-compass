@@ -253,7 +253,7 @@ struct LevelResponse {
 ### CrowPanelApplication Design
 - Omistaa kaikki instanssit jäsenmuuttujina (ei globaaleja .ino:ssa)
 - `_bus` ja `_gfx` stackissa — konstruktori-init listassa, `_gfx(&_bus, ...)`
-- `s_gfx` staattinen apuosoitin vain LVGL flush-callbackia varten, asetetaan `initLvgl()`:ssa
+- LVGL flush-callback saa `_gfx`-osoittimen `disp->user_data`:sta (`disp_drv.user_data = &_gfx` asetetaan `initLvgl()`:ssa, callback ottaa talteen `auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data)`)
 - `diag_*`-laskurit tavallisia instanssimuuttujia (alustetaan `= 0` headerissa, C++11)
 - `buf1` ja `draw_buf` instanssimuuttujia (ei staattisia)
 - Loop jaettu yksityisiin metodeihin: `handleLvglTick`, `handleKnobRotation`, `handleKnobButtonPress`, `handleUIUpdate`, `handleDiagnostics`

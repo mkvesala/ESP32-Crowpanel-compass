@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.0] - 2026-02-22
+
+### Changed
+
+#### CrowPanelApplication refactoring
+
+- `s_gfx` static file-scope pointer removed — LVGL flush callback now receives `_gfx` via `disp_drv.user_data`:
+  - `initLvgl()`: `disp_drv.user_data = &_gfx;`
+  - `lvglFlushCb()`: `auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data);`
+- `handleLvglTick()` now uses a `_last_lvgl_tick` timer guard (`LVGL_TICK_INTERVAL_MS = 5 ms`), consistent with the pattern used in `handleUIUpdate()` and `handleDiagnostics()`
+- All loop sub-methods (`handleLvglTick`, `handleKnobRotation`, `handleKnobButtonPress`, `handleUIUpdate`, `handleDiagnostics`) now use a uniform timer-check style
+
+---
+
 ## [v0.3.0] - 2026-02-21
 
 ### Added
@@ -181,6 +195,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v0.4.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.1.0
