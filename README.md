@@ -142,9 +142,9 @@ Screen carousel order:
 
 Three lines printed to Serial every 5 seconds:
 ```
-[DIAG] PPS: 18.4 | UI updates: 25 | UI avg: 0.57 ms | UI max: 0.72 ms
-[DIAG] LVGL calls: 25 | avg: 201.57 ms | max: 206.75 ms
-[DIAG] Heap free: 8133839 | min: 8128811 | Stack loop: 4844 | enc: 1312 | btn: 728
+[DIAG] PPS: 18.3 | UI updates: 52 | UI avg: 0.55 ms | UI max: 0.74 ms
+[DIAG] LVGL calls: 151 | avg: 30.17 ms | max: 99.39 ms
+[DIAG] Heap free: 8133183 | min: 8128023 | Stack loop: 5468 | enc: 1268 | btn: 768
 ```
 
 Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max.
