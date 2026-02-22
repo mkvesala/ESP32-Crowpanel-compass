@@ -15,6 +15,8 @@ CompassUI::CompassUI()
 // Initialize
 void CompassUI::begin() {
     if (_initialized) return;
+    // Rotating compass rose is expensive, remove antialiasing to make it cheaper
+    lv_img_set_antialias(ui_ImageCompassRose, false);
     _initialized = true;
     this->showWaiting();
 }

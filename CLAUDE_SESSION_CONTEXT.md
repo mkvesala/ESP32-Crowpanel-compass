@@ -99,7 +99,13 @@ Three diagnostic lines printed every 5 seconds:
 - **Heap free/min:** Current and all-time minimum free heap (leak detection)
 - **Stack loop/enc/btn:** Stack high water marks for main loop, encoder task, button task
 
-**Key finding:** Compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-render per frame (480×480 px). This is the main performance bottleneck on CompassScreen. No practical alternative exists on this hardware (no GPU, no hardware rotation support in GC9A01 display controller).
+**Key finding:** Compass rose `lv_img_set_angle()` is the main performance bottleneck on CompassScreen. No practical alternative exists on this hardware (no GPU, no hardware rotation support in GC9A01 display controller).
+
+**Optimizations applied (v0.4.0):** avg ~200 ms → ~30 ms, max ~206 ms → ~99 ms:
+- Image format `LV_IMG_CF_TRUE_COLOR` (RGB565, 2 bytes/px) — alpha channel removed
+- Image 240×240 px with `lv_img_set_zoom(512)` — LVGL rotation operates on ¼ of the pixels vs. 480×480
+- `lv_img_set_antialias(ui_ImageCompassRose, false)` in `CompassUI::begin()` — nearest-neighbor, no interpolation
+- CompassScreen UI hierarchy flattened (intermediate containers removed)
 
 ---
 
@@ -138,13 +144,11 @@ Three diagnostic lines printed every 5 seconds:
 ### CompassScreen
 ```
 ui_CompassScreen
-├── ui_PanelTop (white background)
-│   ├── ui_PanelCompassRose
-│   │   └── ui_ImageCompassRose (240×240, Scale=512)
-│   ├── ui_PanelArrow + ui_ImageArrow
-│   ├── ui_PanelHeading + ui_LabelHeading
-│   ├── ui_PanelHeadingMode + ui_LabelHeadingMode (T/M toggle)
-│   └── ui_PanelConnected (black=connected, red=disconnected)
+├── ui_ImageCompassRose (240×240, Scale=512)
+├── ui_ImageArrow
+├── ui_LabelHeading
+├── ui_LabelHeadingMode (T/M toggle)
+└── ui_PanelConnected (black=connected, red=disconnected)
 ```
 
 ### AttitudeScreen
@@ -244,6 +248,7 @@ struct LevelResponse {
 - 256 = 100% (original size)
 - Formula: (target_size / original_size) × 256
 - Example: 480/240 × 256 = 512
+- **Current compass rose:** 240×240 px source, zoom=512 renders at 480×480 — rotation runs on ¼ pixels
 
 ### PCF8574 GPIO Expander
 - **CRITICAL:** pinMode() must be called BEFORE pcf8574.begin()
@@ -333,7 +338,7 @@ ESP32-Crowpanel-compass/
 ## Build Info
 
 - **Flash usage:** ~36% (1,137,857 bytes of 3,145,728)
-- **Compass rose:** 240×240 px, Scale=512, ~850 KB C-code
+- **Compass rose:** 240×240 px, zoom=512 (renders at 480×480), `LV_IMG_CF_TRUE_COLOR` (no alpha), antialias off
 - **Horizon line:** 680×4 px, 41 KB
 - **LVGL:** 8.3.11
 - **SquareLine Studio:** 1.6.0
@@ -343,9 +348,13 @@ ESP32-Crowpanel-compass/
 
 ## Performance Characteristics
 
-| Screen | UI updates/5s | LVGL avg | Notes |
-|--------|--------------|----------|-------|
-| CompassScreen (heading changing) | ~25 | ~200 ms | Bottleneck: compass rose software rotation |
-| CompassScreen (stable heading) | 48–74 | 1–7 ms | Threshold prevents unnecessary re-renders |
-| AttitudeScreen (data flowing) | ~80 | 4–13 ms | Horizon line 680×4 is cheap to render |
-| AttitudeScreen (stable) | ~83 | <1 ms | Nothing to render |
+| Config | UI updates/5s | LVGL avg | LVGL max | Notes |
+|--------|--------------|----------|----------|-------|
+| v0.3.0 baseline | ~25 | ~200 ms | ~206 ms | 240×240 Scale=512, alpha, antialias ON |
+| v0.4.0 current  | ~52 | ~30 ms | ~99 ms | 240×240 zoom=512, no alpha, antialias OFF ✅ |
+| Test 1: antialias ON  | ~28 | ~64–77 ms | ~195 ms | 480×480, no alpha, antialias ON |
+| Test 2: 240×240 Scale=512, antialias ON | ~31–33 | ~38–55 ms | ~180 ms | 240×240, no alpha, antialias ON |
+| Test 3: 240×240 Scale=512, antialias OFF | ~52 | ~30 ms | ~99 ms | 240×240, no alpha, antialias OFF ✅ best |
+| CompassScreen (stable heading) | 48–74 | 1–7 ms | — | Threshold prevents unnecessary re-renders |
+| AttitudeScreen (data flowing) | ~80 | 4–13 ms | — | Horizon line 680×4 is cheap to render |
+| AttitudeScreen (stable) | ~83 | <1 ms | — | Nothing to render |

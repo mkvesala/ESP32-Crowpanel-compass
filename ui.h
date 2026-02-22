@@ -27,7 +27,7 @@ extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
 extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
-LV_IMG_DECLARE( ui_img_45664948);   // assets/Compass-8.png
+LV_IMG_DECLARE( ui_img_1776051799);   // assets/Compass-12.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
 LV_IMG_DECLARE( ui_img_horizonline_png);   // assets/horizonline.png
 LV_IMG_DECLARE( ui_img_578347518);   // assets/icon_light_brightness@3x.png

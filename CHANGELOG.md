@@ -16,6 +16,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `handleLvglTick()` now uses a `_last_lvgl_tick` timer guard (`LVGL_TICK_INTERVAL_MS = 5 ms`), consistent with the pattern used in `handleUIUpdate()` and `handleDiagnostics()`
 - All loop sub-methods (`handleLvglTick`, `handleKnobRotation`, `handleKnobButtonPress`, `handleUIUpdate`, `handleDiagnostics`) now use a uniform timer-check style
 
+#### CompassScreen UI hierarchy flattened
+- Intermediate container/panel elements removed: `ui_PanelTop`, `ui_PanelCompassRose`, `ui_PanelArrow`, `ui_PanelHeading`, `ui_PanelHeadingMode`
+- `ui_ImageCompassRose`, `ui_ImageArrow`, `ui_LabelHeading`, `ui_LabelHeadingMode`, `ui_PanelConnected` now direct children of `ui_CompassScreen`
+- AttitudeScreen and BrightnessScreen hierarchy unchanged
+
+#### Compass rose image optimizations
+- Image format changed from `LV_IMG_CF_TRUE_COLOR_ALPHA` (3 bytes/px) to `LV_IMG_CF_TRUE_COLOR` (RGB565, 2 bytes/px) — alpha channel removed
+- Image resolution 240×240 px with `lv_img_set_zoom(512)` — renders at 480×480, LVGL rotation operates on ¼ of the pixels vs. a native 480×480 source image
+- `lv_img_set_antialias(ui_ImageCompassRose, false)` added to `CompassUI::begin()` — nearest-neighbor scaling, no per-pixel interpolation during rotation
+- Combined result: LVGL avg ~200 ms → ~30 ms, max ~206 ms → ~99 ms (measured on CompassScreen with heading changing at ~19 Hz)
+
+### Performance
+- Compass rose rotation render time reduced by ~5× vs. v0.3.0 baseline
+
 ---
 
 ## [v0.3.0] - 2026-02-21

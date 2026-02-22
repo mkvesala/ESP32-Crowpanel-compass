@@ -77,12 +77,12 @@ The classes on the UML class diagram are presented with their full public API. T
 
 <img src="docs/compassscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240">
 
-- Rotating compass rose image (240 x 240 px, rendered at 480 x 480 with LVGL scale)
+- Rotating compass rose image (240×240 px source, rendered at 480×480 with LVGL zoom=512, no alpha, antialias off)
 - Heading value label
 - True/Magnetic heading mode toggle with knob button press
 - T/M mode indicator label
 - *Connected* indicator panel (black = connected, red = disconnected)
-- Rotation threshold 0.5°: skips LVGL re-render when heading change is below threshold — reduces ~194 ms re-render cycles on stable heading
+- Rotation threshold 0.5°: skips LVGL re-render when heading change is below threshold
 
 ### Attitude screen
 
@@ -147,7 +147,7 @@ Three lines printed to Serial every 5 seconds:
 [DIAG] Heap free: 8133839 | min: 8128811 | Stack loop: 4844 | enc: 1312 | btn: 728
 ```
 
-Key finding: compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-render per frame (480 x 480 px). This is the main performance bottleneck on the compass screen. No practical alternative exists on this hardware (no GPU, no hardware rotation support in the display controller).
+Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max.
 
 ## Project structure
 
@@ -227,12 +227,12 @@ Key finding: compass rose `lv_img_set_angle()` causes ~194 ms LVGL software re-r
 
 Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
-| Screen | UI updates/5s | LVGL avg | Notes |
-|--------|--------------|----------|-------|
-| Compass (heading changing) | ~25 | ~200 ms | Bottleneck: compass rose software rotation |
-| Compass (stable heading) | 48-74 | 1-7 ms | 0.5° threshold prevents unnecessary re-renders |
-| Attitude (data flowing) | ~80 | 4-13 ms | Horizon line 680x4 px is cheap to render |
-| Attitude (stable) | ~83 | <1 ms | Nothing to render |
+| Screen | UI updates/5s | LVGL avg | LVGL max | Notes |
+|--------|--------------|----------|----------|-------|
+| Compass (heading changing) | ~52 | ~30 ms | ~99 ms | 240×240 zoom=512, no alpha, antialias off |
+| Compass (stable heading) | 48–74 | 1–7 ms | — | 0.5° threshold prevents unnecessary re-renders |
+| Attitude (data flowing) | ~80 | 4–13 ms | — | Horizon line 680×4 px is cheap to render |
+| Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
 Flash usage: ~36% (1,137,857 bytes of 3,145,728).
 

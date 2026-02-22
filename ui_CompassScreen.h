@@ -14,14 +14,9 @@ extern "C" {
 extern void ui_CompassScreen_screen_init(void);
 extern void ui_CompassScreen_screen_destroy(void);
 extern lv_obj_t *ui_CompassScreen;
-extern lv_obj_t *ui_PanelTop;
-extern lv_obj_t *ui_PanelCompassRose;
 extern lv_obj_t *ui_ImageCompassRose;
-extern lv_obj_t *ui_PanelArrow;
 extern lv_obj_t *ui_ImageArrow;
-extern lv_obj_t *ui_PanelHeading;
 extern lv_obj_t *ui_LabelHeading;
-extern lv_obj_t *ui_PanelHeadingMode;
 extern lv_obj_t *ui_LabelHeadingMode;
 extern lv_obj_t *ui_PanelConnected;
 // CUSTOM VARIABLES
