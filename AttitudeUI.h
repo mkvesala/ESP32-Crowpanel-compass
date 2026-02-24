@@ -34,7 +34,7 @@ public:
     AttitudeUI(ESPNowReceiver &receiver);
 
     void begin();
-    void update(const HeadingData& data, bool connected, float packetsPerSec);
+    void update(const HeadingData& data, bool connected);
     void showDisconnected();
     bool handleButtonPress();
     void updateLevelState();
@@ -71,11 +71,11 @@ private:
     bool _initialized;
 
     // Level state machine
-    LevelState _levelState;
-    uint32_t _stateStartTime;
+    LevelState _level_state;
+    uint32_t _state_start_time;
 
     // Level dialog update
-    void setLevelState(LevelState newState);
+    void setLevelState(LevelState new_state);
     void updateLevelDialog();
 
     // Timeouts (ms)

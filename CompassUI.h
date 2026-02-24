@@ -22,7 +22,7 @@ public:
     CompassUI();
 
     void begin();
-    void update(const HeadingData& data, bool connected, float packetsPerSec);
+    void update(const HeadingData& data, bool connected);
     void showDisconnected();
     void toggleHeadingMode();
 
@@ -36,7 +36,6 @@ private:
     void setConnectionIndicator(bool connected);
 
     // Compass rose rotation threshold (0.5° = 5 in x10 units)
-    // Reduces heavy LVGL re-renders when heading changes are small
     static constexpr uint16_t ROTATION_THRESHOLD_X10 = 5;
     
     // Colors for "connected" panel on UI, "the red dot"

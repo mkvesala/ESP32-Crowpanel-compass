@@ -2,6 +2,10 @@
 
 // === S T A T I C ===
 
+static uint32_t s_flush_total = 0;
+static uint32_t s_flush_max = 0;
+static uint32_t s_flush_calls = 0;
+
 // Static callback function for lvgl
 static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
 
@@ -10,12 +14,18 @@ static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* 
         lv_disp_flush_ready(disp);
         return;
     }
+    uint32_t t0 = micros();
 
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
     // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+
+    uint32_t ft = micros() - t0;
+    s_flush_total += ft;
+    s_flush_calls++;
+    if (ft > s_flush_max) s_flush_max = ft;
 
     lv_disp_flush_ready(disp);
 }
@@ -154,18 +164,18 @@ void CrowPanelApplication::initLvgl() {
 
     lv_init();
 
-    buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
-    if (!buf1) {
+    _buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    if (!_buf1) {
         while (1) delay(1000);  // Halt
     }
-    lv_disp_draw_buf_init(&draw_buf, buf1, NULL, BUF_PIXELS);
+    lv_disp_draw_buf_init(&_draw_buf, _buf1, NULL, BUF_PIXELS);
 
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = SCREEN_WIDTH;
     disp_drv.ver_res = SCREEN_HEIGHT;
     disp_drv.flush_cb = lvglFlushCb;
-    disp_drv.draw_buf = &draw_buf;
+    disp_drv.draw_buf = &_draw_buf;
     disp_drv.user_data = &_gfx;
     lv_disp_drv_register(&disp_drv);
 
@@ -181,9 +191,9 @@ void CrowPanelApplication::handleLvglTick(const uint32_t now) {
     lv_timer_handler();
     uint32_t lvgl_elapsed = micros() - lvgl_start;
 
-    diag_lvgl_time_total += lvgl_elapsed;
-    if (lvgl_elapsed > diag_lvgl_time_max) diag_lvgl_time_max = lvgl_elapsed;
-    diag_lvgl_calls++;
+    _diag_lvgl_time_total += lvgl_elapsed;
+    if (lvgl_elapsed > _diag_lvgl_time_max) _diag_lvgl_time_max = lvgl_elapsed;
+    _diag_lvgl_calls++;
 
 }
 
@@ -225,29 +235,28 @@ void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
     if (_screenMgr.isAttitudeActive()) _attitudeUI.updateLevelState();
     if (_screenMgr.isBrightnessActive()) _brightnessUI.updateState();
 
-    if (now - last_ui_update < UI_UPDATE_INTERVAL_MS) return;
-    last_ui_update = now;
+    if (now - _last_ui_update < UI_UPDATE_INTERVAL_MS) return;
+    _last_ui_update = now;
 
     bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
 
     // Get the latest data
     if (_receiver.hasNewData() || is_connected) {
         HeadingData data = _receiver.getData();
-        float pps = _receiver.getPacketsPerSecond();
 
         // Measure the runtime of UI update
         uint32_t ui_start = micros();
 
         // Update screen (BrightnessScreen has no compass data to display)
-        if (_screenMgr.isCompassActive()) _compassUI.update(data, is_connected, pps);
-        else if (_screenMgr.isAttitudeActive()) _attitudeUI.update(data, is_connected, pps);
+        if (_screenMgr.isCompassActive()) _compassUI.update(data, is_connected);
+        else if (_screenMgr.isAttitudeActive()) _attitudeUI.update(data, is_connected);
 
         // Calculate UI update runtime
         uint32_t ui_elapsed = micros() - ui_start;
-        diag_ui_updates++;
-        diag_ui_update_time_total += ui_elapsed;
-        if (ui_elapsed > diag_ui_update_time_max) {
-            diag_ui_update_time_max = ui_elapsed;
+        _diag_ui_updates++;
+        _diag_ui_update_time_total += ui_elapsed;
+        if (ui_elapsed > _diag_ui_update_time_max) {
+            _diag_ui_update_time_max = ui_elapsed;
         }
     }
     else {
@@ -265,21 +274,27 @@ void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
 // Print diagnostics to Serial
 void CrowPanelApplication::handleDiagnostics(const uint32_t now) {
 
-    if (now - diag_last_print < DIAG_PRINT_INTERVAL_MS) return;
-    diag_last_print = now;
+    if (now - _diag_last_print < DIAG_PRINT_INTERVAL_MS) return;
+    _diag_last_print = now;
 
     float pps = _receiver.getPacketsPerSecond();
-    float avg_ui_time = (diag_ui_updates > 0) ?
-        (float)diag_ui_update_time_total / diag_ui_updates / 1000.0f : 0;
+    float avg_ui_time = (_diag_ui_updates > 0) ?
+        (float)_diag_ui_update_time_total / _diag_ui_updates / 1000.0f : 0;
 
-    float avg_lvgl_time = (diag_lvgl_calls > 0) ?
-        (float)diag_lvgl_time_total / diag_lvgl_calls / 1000.0f : 0;
+    float avg_lvgl_time = (_diag_lvgl_calls > 0) ?
+        (float)_diag_lvgl_time_total / _diag_lvgl_calls / 1000.0f : 0;
 
     Serial.printf("[DIAG] PPS: %.1f | UI updates: %lu | UI avg: %.2f ms | UI max: %.2f ms\n",
-        pps, diag_ui_updates, avg_ui_time, diag_ui_update_time_max / 1000.0f);
+        pps, _diag_ui_updates, avg_ui_time, _diag_ui_update_time_max / 1000.0f);
+
+    float avg_flush_time = (s_flush_calls > 0) ?
+        (float)s_flush_total / s_flush_calls / 1000.0f : 0;
 
     Serial.printf("[DIAG] LVGL calls: %lu | avg: %.2f ms | max: %.2f ms\n",
-        (unsigned long)diag_lvgl_calls, avg_lvgl_time, diag_lvgl_time_max / 1000.0f);
+        (unsigned long)_diag_lvgl_calls, avg_lvgl_time, _diag_lvgl_time_max / 1000.0f);
+
+    Serial.printf("[DIAG] Flush calls: %lu | avg: %.2f ms | max: %.2f ms\n",
+        (unsigned long)s_flush_calls, avg_flush_time, s_flush_max / 1000.0f);
 
     // Memory and stack diagnostics
     Serial.printf("[DIAG] Heap free: %lu | min: %lu | Stack loop: %lu | enc: %lu | btn: %lu\n",
@@ -290,10 +305,13 @@ void CrowPanelApplication::handleDiagnostics(const uint32_t now) {
         (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getButtonTaskHandle()));
 
     // Reset counters
-    diag_ui_updates = 0;
-    diag_ui_update_time_total = 0;
-    diag_ui_update_time_max = 0;
-    diag_lvgl_time_total = 0;
-    diag_lvgl_time_max = 0;
-    diag_lvgl_calls = 0;
+    _diag_ui_updates = 0;
+    _diag_ui_update_time_total = 0;
+    _diag_ui_update_time_max = 0;
+    _diag_lvgl_time_total = 0;
+    _diag_lvgl_time_max = 0;
+    _diag_lvgl_calls = 0;
+    s_flush_total = 0;
+    s_flush_max = 0;
+    s_flush_calls = 0;
 }

@@ -30,7 +30,7 @@ public:
 
     BrightnessUI();
 
-    void begin(int pwmChannel);
+    void begin(int pwm_channel);
     void handleButtonPress();
     void handleRotation(int8_t direction);
     void updateState();
@@ -50,13 +50,13 @@ private:
     bool _initialized;
 
     // Brightness %
-    int8_t _brightnessPercent;
+    int8_t _brightness_percent;
 
     // Hardware
-    int _pwmChannel;
+    int _pwm_channel;
 
     // Timing
-    uint32_t _lastRotationTime;
+    uint32_t _last_rotation_time;
 
     // Auto-save timeout
     static constexpr uint32_t AUTOSAVE_TIMEOUT_MS = 3000;
@@ -74,7 +74,7 @@ private:
     static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 78;  // 200/255 pwm value
 
     // Helpers
-    void setState(BrightnessState newState);
+    void setState(BrightnessState new_state);
     void updateUI();
     void applyBrightness();
     void saveBrightness();

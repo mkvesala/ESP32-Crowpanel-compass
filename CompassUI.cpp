@@ -22,7 +22,7 @@ void CompassUI::begin() {
 }
 
 // Update UI with latest compass data
-void CompassUI::update(const HeadingData& data, bool connected, float packetsPerSec) {
+void CompassUI::update(const HeadingData& data, bool connected) {
     if (!_initialized) return;
 
     bool is_true = _use_true_heading;

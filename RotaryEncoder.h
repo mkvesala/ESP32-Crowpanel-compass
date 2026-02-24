@@ -32,8 +32,8 @@ public:
     int8_t getDirection();
     bool getButtonPressed();
 
-    TaskHandle_t getEncoderTaskHandle() const { return _encoderTaskHandle; }
-    TaskHandle_t getButtonTaskHandle() const { return _buttonTaskHandle; }
+    TaskHandle_t getEncoderTaskHandle() const { return _encoder_task_handle; }
+    TaskHandle_t getButtonTaskHandle() const { return _button_task_handle; }
 
 private:
 
@@ -50,21 +50,24 @@ private:
     static constexpr uint32_t DEBOUNCE_MS = 50;
 
     // Rotary state
-    volatile int8_t _direction;      // -1, 0, +1
-    volatile int32_t _counter;       // Kumulatiivinen laskuri
-    volatile uint8_t _lastStateCLK;  // Edellinen CLK-tila
+    volatile int8_t _direction; 
+    volatile int32_t _counter;
+    volatile uint8_t _last_state_clk; 
 
     // Button state
-    volatile bool _buttonPressed;    // Painallus havaittu (kulutettava)
-    volatile bool _lastButtonState;  // Edellinen tila (debounce)
-    volatile uint32_t _lastButtonTime; // Viimeinen muutos (debounce)
+    volatile bool _button_pressed; 
+    volatile bool _last_button_state; 
+    volatile uint32_t _last_button_time;
 
     // PCF8574 instance
     PCF8574 &_pcf8574;
 
+    // Static pointer for FreeRTOS tasks
+    inline static RotaryEncoder *s_instance = nullptr;
+
     // FreeRTOS
-    TaskHandle_t _encoderTaskHandle;
-    TaskHandle_t _buttonTaskHandle;
+    TaskHandle_t _encoder_task_handle;
+    TaskHandle_t _button_task_handle;
     portMUX_TYPE _spinlock;
 
     bool _initialized;

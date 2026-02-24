@@ -6,18 +6,18 @@
 BrightnessUI::BrightnessUI()
     : _state(BrightnessState::IDLE)
     , _initialized(false)
-    , _brightnessPercent(DEFAULT_BRIGHTNESS_PERCENT)
-    , _pwmChannel(0)
-    , _lastRotationTime(0) {}
+    , _brightness_percent(DEFAULT_BRIGHTNESS_PERCENT)
+    , _pwm_channel(0)
+    , _last_rotation_time(0) {}
 
 // Initialize
-void BrightnessUI::begin(int pwmChannel) {
+void BrightnessUI::begin(int pwm_channel) {
     if (_initialized) return;
 
-    _pwmChannel = pwmChannel;
+    _pwm_channel = pwm_channel;
 
     // Load saved brightness from NVS
-    _brightnessPercent = this->loadBrightness();
+    _brightness_percent = this->loadBrightness();
 
     // Set HW brightness and update UI
     this->applyBrightness();
@@ -47,20 +47,20 @@ void BrightnessUI::handleRotation(int8_t direction) {
     if (_state != BrightnessState::ADJUSTING) return;
 
     // Adjust brightness with one BRIGHTNESS_STEP
-    int16_t newPercent = _brightnessPercent + (direction * BRIGHTNESS_STEP);
+    int16_t new_percent = _brightness_percent + (direction * BRIGHTNESS_STEP);
 
     // Limit to boundaries
-    if (newPercent < MIN_BRIGHTNESS_PERCENT) newPercent = MIN_BRIGHTNESS_PERCENT;
-    if (newPercent > MAX_BRIGHTNESS_PERCENT) newPercent = MAX_BRIGHTNESS_PERCENT;
+    if (new_percent < MIN_BRIGHTNESS_PERCENT) new_percent = MIN_BRIGHTNESS_PERCENT;
+    if (new_percent > MAX_BRIGHTNESS_PERCENT) new_percent = MAX_BRIGHTNESS_PERCENT;
 
-    _brightnessPercent = (int8_t)newPercent;
+    _brightness_percent = (int8_t)new_percent;
 
     // Upodate HW, UI arc element and UI label element real time
     this->applyBrightness();
     this->updateUI();
 
     // Reset auto-save timer
-    _lastRotationTime = millis();
+    _last_rotation_time = millis();
 }
 
 // Check the auto-save timer and update state accordingly
@@ -68,7 +68,7 @@ void BrightnessUI::updateState() {
     if (!_initialized) return;
     if (_state != BrightnessState::ADJUSTING) return;
 
-    if (millis() - _lastRotationTime >= AUTOSAVE_TIMEOUT_MS) {
+    if (millis() - _last_rotation_time >= AUTOSAVE_TIMEOUT_MS) {
         this->saveBrightness(); // Save to NVS
         this->setState(BrightnessState::IDLE); // Back to IDLE
     }
@@ -85,17 +85,17 @@ void BrightnessUI::cancelAdjustment() {
 // === P R I V A T E ===
 
 // Manage the state machine
-void BrightnessUI::setState(BrightnessState newState) {
-    _state = newState;
+void BrightnessUI::setState(BrightnessState new_state) {
+    _state = new_state;
 
-    switch (newState) {
+    switch (new_state) {
         case BrightnessState::IDLE:
             lv_obj_add_flag(ui_ContainerAdjustment, LV_OBJ_FLAG_HIDDEN);
             break;
 
         case BrightnessState::ADJUSTING:
             lv_obj_clear_flag(ui_ContainerAdjustment, LV_OBJ_FLAG_HIDDEN);
-            _lastRotationTime = millis();
+            _last_rotation_time = millis();
             break;
     }
 }
@@ -103,17 +103,17 @@ void BrightnessUI::setState(BrightnessState newState) {
 // Update UI arc and label elements
 void BrightnessUI::updateUI() {
     // Update arc to show brightness %
-    lv_arc_set_value(ui_ArcAdjustment, _brightnessPercent);
+    lv_arc_set_value(ui_ArcAdjustment, _brightness_percent);
 
     // Update label text with brightness %
     char buf[8];
-    snprintf(buf, sizeof(buf), "%d%%", _brightnessPercent);
+    snprintf(buf, sizeof(buf), "%d%%", _brightness_percent);
     lv_label_set_text(ui_LabelBrightnessValue, buf);
 }
 
 // Set HW backlight brightness
 void BrightnessUI::applyBrightness() {
-    ledcWrite(_pwmChannel, this->percentToPwm(_brightnessPercent));
+    ledcWrite(_pwm_channel, this->percentToPwm(_brightness_percent));
 }
 
 // Translate % to pwm value
@@ -126,7 +126,7 @@ uint8_t BrightnessUI::percentToPwm(int8_t percent) {
 void BrightnessUI::saveBrightness() {
     Preferences prefs;
     prefs.begin(NVS_NAMESPACE, false);
-    prefs.putChar(NVS_KEY_BRIGHTNESS, _brightnessPercent);
+    prefs.putChar(NVS_KEY_BRIGHTNESS, _brightness_percent);
     prefs.end();
 }
 

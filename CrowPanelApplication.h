@@ -64,9 +64,9 @@ private:
     static constexpr uint16_t SCREEN_HEIGHT = 480;
 
     // LVGL draw buffer (40 lines)
-    lv_disp_draw_buf_t draw_buf;
-    lv_color_t *buf1 = NULL;
-    static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 40;
+    lv_disp_draw_buf_t _draw_buf;
+    lv_color_t *_buf1 = nullptr;
+    static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 120;
 
     // LVGL frequency in loop
     uint32_t _last_lvgl_tick = 0;
@@ -74,19 +74,19 @@ private:
 
     // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
     static constexpr uint32_t UI_UPDATE_INTERVAL_MS = 59;
-    uint32_t last_ui_update = 0;
+    uint32_t _last_ui_update = 0;
 
     // Diagnostics and debug interval 5 secs
     static constexpr uint32_t DIAG_PRINT_INTERVAL_MS = 5000; 
 
     // Diagnostic counters
-    uint32_t diag_ui_updates = 0;
-    uint32_t diag_ui_update_time_total = 0;
-    uint32_t diag_ui_update_time_max = 0;
-    uint32_t diag_lvgl_time_total = 0;
-    uint32_t diag_lvgl_time_max = 0;
-    uint32_t diag_lvgl_calls = 0;
-    uint32_t diag_last_print = 0;
+    uint32_t _diag_ui_updates = 0;
+    uint32_t _diag_ui_update_time_total = 0;
+    uint32_t _diag_ui_update_time_max = 0;
+    uint32_t _diag_lvgl_time_total = 0;
+    uint32_t _diag_lvgl_time_max = 0;
+    uint32_t _diag_lvgl_calls = 0;
+    uint32_t _diag_last_print = 0;
 
     // Arduino_GFX bus + panel
     Arduino_ESP32RGBPanel _bus;

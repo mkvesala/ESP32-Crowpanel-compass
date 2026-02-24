@@ -10,8 +10,8 @@ AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF)
     , _initialized(false)
-    , _levelState(LevelState::IDLE)
-    , _stateStartTime(0) {}
+    , _level_state(LevelState::IDLE)
+    , _state_start_time(0) {}
 
 // Initialize
 void AttitudeUI::begin() {
@@ -24,15 +24,19 @@ void AttitudeUI::begin() {
     // Set ContainerLevelingDialog hidden
     lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
 
-    _levelState = LevelState::IDLE;
+    _level_state = LevelState::IDLE;
     _initialized = true;
 
     this->showWaiting();
 }
 
 // Update attitude screen with the compass data
-void AttitudeUI::update(const HeadingData& data, bool connected, float packetsPerSec) {
+void AttitudeUI::update(const HeadingData& data, bool connected) {
     if (!_initialized) return;
+    if (!connected) {
+        this->showDisconnected();
+        return;
+    }
 
     // Update horizon location and rotation
     this->updateHorizon(data.pitch_x10, data.roll_x10);
@@ -52,7 +56,7 @@ void AttitudeUI::showDisconnected() {
 bool AttitudeUI::handleButtonPress() {
     if (!_initialized) return false;
 
-    switch (_levelState) {
+    switch (_level_state) {
         case LevelState::IDLE:
             // First press: show confirmation dialog
             this->setLevelState(LevelState::CONFIRM_WAIT);
@@ -79,11 +83,11 @@ bool AttitudeUI::handleButtonPress() {
 // Level state machine - update level state
 void AttitudeUI::updateLevelState() {
     if (!_initialized) return;
-    if (_levelState == LevelState::IDLE) return;
+    if (_level_state == LevelState::IDLE) return;
 
-    uint32_t elapsed = millis() - _stateStartTime;
+    uint32_t elapsed = millis() - _state_start_time;
 
-    switch (_levelState) {
+    switch (_level_state) {
         case LevelState::CONFIRM_WAIT:
             if (elapsed >= CONFIRM_TIMEOUT_MS) {
                 this->setLevelState(LevelState::IDLE);
@@ -119,7 +123,7 @@ void AttitudeUI::updateLevelState() {
 
 // Level state machine - cancel operation and go to idle
 void AttitudeUI::cancelLevelOperation() {
-    if (_levelState != LevelState::IDLE) {
+    if (_level_state != LevelState::IDLE) {
         this->setLevelState(LevelState::IDLE);
     }
 }
@@ -189,7 +193,7 @@ void AttitudeUI::updateRollLabel(int16_t roll_deg) {
 
 // Level state machine - update UI label element for dialog
 void AttitudeUI::updateLevelDialog() {
-    switch (_levelState) {
+    switch (_level_state) {
         case LevelState::IDLE:
             lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
             break;
@@ -221,8 +225,8 @@ void AttitudeUI::updateLevelDialog() {
 }
 
 // Level state machine - set new state
-void AttitudeUI::setLevelState(LevelState newState) {
-    _levelState = newState;
-    _stateStartTime = millis();
+void AttitudeUI::setLevelState(LevelState new_state) {
+    _level_state = new_state;
+    _state_start_time = millis();
     this->updateLevelDialog();
 }
