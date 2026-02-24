@@ -7,10 +7,7 @@
 CompassUI::CompassUI()
     : _last_heading_x10(0xFFFF)
     , _last_heading_deg(0xFFFF)
-    , _last_is_true(false)
-    , _last_connected(false)
-    , _use_true_heading(true)
-    , _initialized(false) {}
+    , _use_true_heading(true) {}
 
 // Initialize
 void CompassUI::begin() {

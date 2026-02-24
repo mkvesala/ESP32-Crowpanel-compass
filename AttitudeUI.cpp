@@ -8,10 +8,7 @@ AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
     , _last_pitch_x10(0x7FFF)
     , _last_roll_x10(0x7FFF)
     , _last_pitch_deg(0x7FFF)
-    , _last_roll_deg(0x7FFF)
-    , _initialized(false)
-    , _level_state(LevelState::IDLE)
-    , _state_start_time(0) {}
+    , _last_roll_deg(0x7FFF) {}
 
 // Initialize
 void AttitudeUI::begin() {

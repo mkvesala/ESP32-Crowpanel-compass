@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0] - 2026-02-24
+
+### Changed
+
+#### Naming conventions unified across all classes
+- All private member variables renamed to `_snake_case` (previously mixed camelCase and underscore styles)
+- All static variables renamed to `s_snake_case`
+- All local variables renamed to `snake_case`
+
+#### Member initialization style unified (C++11 in-class initializers)
+- Trivial defaults (`false`, `0`, `nullptr`, enum defaults) moved from constructor member init lists to in-class initializers in header files
+- Constructor member init lists now contain only: reference members (mandatory), struct-initialized members (`portMUX_INITIALIZER_UNLOCKED`), and semantically non-trivial defaults (sentinel values such as `0xFFFF`, `0x7FFF`; `_last_button_state(true)` for INPUT_PULLUP idle state; `_use_true_heading(true)`)
+- Affected classes: `CompassUI`, `AttitudeUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`, `ESPNowReceiver`
+
+#### Static member declarations moved to headers (C++17 inline static)
+- `ESPNowReceiver`: `s_mux`, `s_latest_data`, `s_has_new_data`, `s_last_rx_millis`, `s_packet_count`, `s_level_response_received`, `s_level_response_success`, `BROADCAST_ADDR` declared and initialized as `inline static` in header
+- `RotaryEncoder`: `s_instance` declared as `inline static` in header
+- Eliminates separate `.cpp` definitions previously required for static members
+
+#### `BROADCAST_ADDR` changed to `inline static constexpr`
+- Was a static array defined in `.cpp`; now `inline static constexpr uint8_t BROADCAST_ADDR[6]` in `ESPNowReceiver.h`
+
+#### `update()` signature simplified
+- `pps` parameter removed from `CompassUI::update()` and `AttitudeUI::update()` — was unused in both implementations
+
+#### `AttitudeUI::update()` handles disconnected state internally
+- `if (!connected) { this->showDisconnected(); return; }` added at top of `update()`
+- Disconnected handling no longer requires separate call path from `CrowPanelApplication`
+
+#### Flush diagnostics added to `handleDiagnostics()`
+- `s_flush_total`, `s_flush_max`, `s_flush_calls` file-scope static variables measure `draw16bitRGBBitmap` duration in `lvglFlushCb()`
+- Fourth `[DIAG]` line added: `Flush calls | avg | max`
+- Flush counters reset alongside other diagnostic counters each print cycle
+- Redundant `flush_avg` running-average variable removed
+
+#### `nullptr` replacing `NULL` for pointer initialization
+- `_buf1 = nullptr` and `s_instance = nullptr` — type-safe null pointer constant
+
+---
+
 ## [v0.4.0] - 2026-02-22
 
 ### Changed
@@ -209,6 +249,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v1.0.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v1.0.0
 [v0.4.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.3.0
 [v0.2.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.2.0

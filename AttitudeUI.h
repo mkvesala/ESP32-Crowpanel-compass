@@ -68,11 +68,11 @@ private:
     int16_t _last_pitch_deg;
     int16_t _last_roll_deg;
 
-    bool _initialized;
+    bool _initialized = false;
 
     // Level state machine
-    LevelState _level_state;
-    uint32_t _state_start_time;
+    LevelState _level_state = LevelState::IDLE;
+    uint32_t _state_start_time = 0;
 
     // Level dialog update
     void setLevelState(LevelState new_state);

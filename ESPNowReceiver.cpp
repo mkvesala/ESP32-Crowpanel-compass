@@ -3,12 +3,7 @@
 // === P U B L I C ===
 
 // Constructor
-ESPNowReceiver::ESPNowReceiver()
-    : _channel(1)
-    , _packets_per_second(0.0f)
-    , _last_stats_millis(0)
-    , _last_packet_count(0)
-    , _initialized(false) {}
+ESPNowReceiver::ESPNowReceiver() {}
 
 // Initialization
 bool ESPNowReceiver::begin(uint8_t channel) {

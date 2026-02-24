@@ -50,14 +50,14 @@ private:
     static constexpr uint32_t DEBOUNCE_MS = 50;
 
     // Rotary state
-    volatile int8_t _direction; 
-    volatile int32_t _counter;
-    volatile uint8_t _last_state_clk; 
+    volatile int8_t _direction = 0;
+    volatile int32_t _counter = 0;
+    volatile uint8_t _last_state_clk = 0;
 
     // Button state
-    volatile bool _button_pressed; 
-    volatile bool _last_button_state; 
-    volatile uint32_t _last_button_time;
+    volatile bool _button_pressed = false;
+    volatile bool _last_button_state;
+    volatile uint32_t _last_button_time = 0;
 
     // PCF8574 instance
     PCF8574 &_pcf8574;
@@ -66,10 +66,10 @@ private:
     inline static RotaryEncoder *s_instance = nullptr;
 
     // FreeRTOS
-    TaskHandle_t _encoder_task_handle;
-    TaskHandle_t _button_task_handle;
+    TaskHandle_t _encoder_task_handle = nullptr;
+    TaskHandle_t _button_task_handle = nullptr;
     portMUX_TYPE _spinlock;
 
-    bool _initialized;
+    bool _initialized = false;
     
 };

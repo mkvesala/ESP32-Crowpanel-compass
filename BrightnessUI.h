@@ -46,17 +46,17 @@ private:
     };
 
     // State
-    BrightnessState _state;
-    bool _initialized;
+    BrightnessState _state = BrightnessState::IDLE;
+    bool _initialized = false;
 
     // Brightness %
-    int8_t _brightness_percent;
+    int8_t _brightness_percent = DEFAULT_BRIGHTNESS_PERCENT;
 
     // Hardware
-    int _pwm_channel;
+    int _pwm_channel = 0;
 
     // Timing
-    uint32_t _last_rotation_time;
+    uint32_t _last_rotation_time = 0;
 
     // Auto-save timeout
     static constexpr uint32_t AUTOSAVE_TIMEOUT_MS = 3000;
@@ -79,7 +79,5 @@ private:
     void applyBrightness();
     void saveBrightness();
     int8_t loadBrightness();
-
-    // % to pwm value
-    static uint8_t percentToPwm(int8_t percent);
+    uint8_t percentToPwm(int8_t percent);
 };

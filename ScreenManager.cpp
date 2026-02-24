@@ -6,9 +6,7 @@
 ScreenManager::ScreenManager(CompassUI &compassUI, AttitudeUI &attitudeUI, BrightnessUI &brightnessUI)
     : _compassUI(compassUI)
     , _attitudeUI(attitudeUI)
-    , _brightnessUI(brightnessUI)
-    , _current(Screen::COMPASS)
-    , _initialized(false) {}
+    , _brightnessUI(brightnessUI) {}
 
 // Initialize (placeholder for heavier initialization)
 void ScreenManager::begin() {

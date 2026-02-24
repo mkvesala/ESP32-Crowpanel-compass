@@ -45,12 +45,12 @@ private:
     // Cached values
     uint16_t _last_heading_x10;
     uint16_t _last_heading_deg;
-    bool     _last_is_true;
-    bool     _last_connected;
+    bool     _last_is_true  = false;
+    bool     _last_connected = false;
 
     // true = True heading, false = Magnetic heading
     bool _use_true_heading;
 
-    bool _initialized;
+    bool _initialized = false;
     
 };

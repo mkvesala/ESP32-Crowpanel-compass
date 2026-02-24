@@ -3,12 +3,7 @@
 // === P U B L I C ===
 
 // Constructor
-BrightnessUI::BrightnessUI()
-    : _state(BrightnessState::IDLE)
-    , _initialized(false)
-    , _brightness_percent(DEFAULT_BRIGHTNESS_PERCENT)
-    , _pwm_channel(0)
-    , _last_rotation_time(0) {}
+BrightnessUI::BrightnessUI() {}
 
 // Initialize
 void BrightnessUI::begin(int pwm_channel) {

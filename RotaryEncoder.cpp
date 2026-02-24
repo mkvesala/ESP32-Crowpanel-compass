@@ -5,16 +5,8 @@
 // Constructor
 RotaryEncoder::RotaryEncoder(PCF8574 &pcf)
     : _pcf8574(pcf)
-    , _direction(0)
-    , _counter(0)
-    , _last_state_clk(0)
-    , _button_pressed(false)
     , _last_button_state(true)
-    , _last_button_time(0)
-    , _encoder_task_handle(nullptr)
-    , _button_task_handle(nullptr)
-    , _spinlock(portMUX_INITIALIZER_UNLOCKED)
-    , _initialized(false) {}
+    , _spinlock(portMUX_INITIALIZER_UNLOCKED) {}
 
 // Initialize
 void RotaryEncoder::begin() {

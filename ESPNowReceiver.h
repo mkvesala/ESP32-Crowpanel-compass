@@ -53,11 +53,11 @@ private:
     inline static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     // Instance data
-    uint8_t _channel;
-    float _packets_per_second;
-    uint32_t _last_stats_millis;
-    uint32_t _last_packet_count;
-    bool _initialized;
+    uint8_t _channel = 1;
+    float _packets_per_second = 0.0f;
+    uint32_t _last_stats_millis = 0;
+    uint32_t _last_packet_count = 0;
+    bool _initialized = false;
     
 };
 

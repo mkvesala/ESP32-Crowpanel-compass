@@ -41,8 +41,8 @@ private:
         BRIGHTNESS
     };
 
-    bool _initialized;
-    Screen _current;
+    bool _initialized = false;
+    Screen _current = Screen::COMPASS;
 
     CompassUI &_compassUI;
     AttitudeUI &_attitudeUI;

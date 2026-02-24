@@ -87,15 +87,17 @@ Reduces heavy LVGL re-renders: compass rose software rotation takes ~194 ms on E
 
 ### Diagnostics
 
-Three diagnostic lines printed every 5 seconds:
+Four diagnostic lines printed every 5 seconds:
 ```
-[DIAG] PPS: 18.4 | UI updates: 25 | UI avg: 0.57 ms | UI max: 0.72 ms
-[DIAG] LVGL calls: 25 | avg: 201.57 ms | max: 206.75 ms
-[DIAG] Heap free: 8133839 | min: 8128811 | Stack loop: 4844 | enc: 1312 | btn: 728
+[DIAG] PPS: 18.3 | UI updates: 52 | UI avg: 0.55 ms | UI max: 0.74 ms
+[DIAG] LVGL calls: 151 | avg: 30.17 ms | max: 99.39 ms
+[DIAG] Flush calls: 151 | avg: X.XX ms | max: X.XX ms
+[DIAG] Heap free: 8133183 | min: 8128023 | Stack loop: 5468 | enc: 1268 | btn: 768
 ```
 
 - **UI updates:** How many times UI draw code ran in 5s window
 - **LVGL calls/avg/max:** `lv_timer_handler()` call count and duration — reveals rendering bottleneck
+- **Flush calls/avg/max:** `lvglFlushCb` call count and `draw16bitRGBBitmap` duration — flush portion of LVGL time
 - **Heap free/min:** Current and all-time minimum free heap (leak detection)
 - **Stack loop/enc/btn:** Stack high water marks for main loop, encoder task, button task
 
@@ -259,8 +261,10 @@ struct LevelResponse {
 - Omistaa kaikki instanssit jäsenmuuttujina (ei globaaleja .ino:ssa)
 - `_bus` ja `_gfx` stackissa — konstruktori-init listassa, `_gfx(&_bus, ...)`
 - LVGL flush-callback saa `_gfx`-osoittimen `disp->user_data`:sta (`disp_drv.user_data = &_gfx` asetetaan `initLvgl()`:ssa, callback ottaa talteen `auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data)`)
-- `diag_*`-laskurit tavallisia instanssimuuttujia (alustetaan `= 0` headerissa, C++11)
-- `buf1` ja `draw_buf` instanssimuuttujia (ei staattisia)
+- `_diag_*`-laskurit instanssimuuttujia (alustetaan `= 0` headerissa, C++11), etuliite `_`
+- `s_flush_total/max/calls` tiedostotason static-muuttujia `.cpp`:ssä — näkyvät `handleDiagnostics()`:lle saman käännösyksikön kautta, nollataan diagnostiikkaprintissä
+- `_buf1` ja `_draw_buf` instanssimuuttujia (ei staattisia), etuliite `_`
+- `BUF_PIXELS = SCREEN_WIDTH * 120` (120 riviä)
 - Loop jaettu yksityisiin metodeihin: `handleLvglTick`, `handleKnobRotation`, `handleKnobButtonPress`, `handleUIUpdate`, `handleDiagnostics`
 
 ### RotaryEncoder Refaktorointi
