@@ -181,12 +181,15 @@ void CrowPanelApplication::initLvgl() {
 
 }
 
-// Diagnostics for lvgl draw
+// Advance LVGL tick and run timer handler
 void CrowPanelApplication::handleLvglTick(const uint32_t now) {
 
     if (now - _last_lvgl_tick < LVGL_TICK_INTERVAL_MS) return;
+    uint32_t elapsed = now - _last_lvgl_tick;
     _last_lvgl_tick = now;
-    
+
+    lv_tick_inc(elapsed);
+
     uint32_t lvgl_start = micros();
     lv_timer_handler();
     uint32_t lvgl_elapsed = micros() - lvgl_start;

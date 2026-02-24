@@ -42,6 +42,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #### `nullptr` replacing `NULL` for pointer initialization
 - `_buf1 = nullptr` and `s_instance = nullptr` — type-safe null pointer constant
 
+#### LVGL tick advance added to `handleLvglTick()`
+- `lv_tick_inc(elapsed)` now called with actual elapsed milliseconds before `lv_timer_handler()`
+- `LV_TICK_CUSTOM` is `0` (default) — LVGL's internal `sys_time` counter requires explicit `lv_tick_inc()` calls to advance; without this, all LVGL internal timers (animations, screen transition timing, etc.) were frozen at 0
+- `elapsed = now - _last_lvgl_tick` calculated before updating `_last_lvgl_tick` to capture the true interval
+- `handleLvglTick()` comment updated: "Advance LVGL tick and run timer handler"
+
 ---
 
 ## [v0.4.0] - 2026-02-22
