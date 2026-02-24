@@ -142,9 +142,10 @@ Screen carousel order:
 
 Three lines printed to Serial every 5 seconds:
 ```
-[DIAG] PPS: 18.3 | UI updates: 52 | UI avg: 0.55 ms | UI max: 0.74 ms
-[DIAG] LVGL calls: 151 | avg: 30.17 ms | max: 99.39 ms
-[DIAG] Heap free: 8133183 | min: 8128023 | Stack loop: 5468 | enc: 1268 | btn: 768
+[DIAG] PPS: 18.5 | UI updates: 52 | UI avg: 0.51 ms | UI max: 0.75 ms
+[DIAG] LVGL calls: 158 | avg: 28.60 ms | max: 99.34 ms
+[DIAG] Flush calls: 554 | avg: 1.66 ms | max: 1.94 ms
+[DIAG] Heap free: 8133175 | min: 8128015 | Stack loop: 5468 | enc: 1268 | btn: 720
 ```
 
 Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max.
@@ -170,6 +171,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `ui_font_*.c` | Custom fonts |
 | `ui_img_*.c` | Images (compass rose, horizon line, sun icon) |
 | `UI/` | SquareLine Studio project |
+| `docs/`| Other documents |
 
 ## Hardware
 
