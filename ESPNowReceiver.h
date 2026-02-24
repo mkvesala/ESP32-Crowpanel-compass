@@ -11,9 +11,9 @@
 // - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication
 //
 // - Provides public API to manage inbound compass data and outbound attitude leveling command
-// - Init: receiver.begin(channel)
-// - Loop: if (receiver.hasNewData()) HeadingData data = receiver.getData();
-// - Level: receiver.sendLevelCommand(); if (receiver.hasLevelResponse()) bool ok = receiver.getLevelResult();
+// - Init: _receiver.begin(channel)
+// - Loop: if (_receiver.hasNewData()) HeadingData data = _receiver.getData();
+// - Level: _receiver.sendLevelCommand(); if (_receiver.hasLevelResponse()) bool ok = _receiver.getLevelResult();
 // - Owned by: CrowPanelApplication
 
 class ESPNowReceiver {
@@ -23,12 +23,12 @@ public:
     ESPNowReceiver();
 
     bool begin(uint8_t channel = 1);
-    bool hasNewData();
+    bool hasNewData() const;
     HeadingData getData();
     bool isConnected(uint32_t timeout_ms = 500) const;
     void updateStats();
     bool sendLevelCommand();
-    bool hasLevelResponse();
+    bool hasLevelResponse() const;
     bool getLevelResult();
 
     float getPacketsPerSecond() const { return _packets_per_second; }

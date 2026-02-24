@@ -50,7 +50,7 @@ void RotaryEncoder::begin() {
     _initialized = true;
 }
 
-// Return rotation direction -1 = CCW, 0 = neutral, +1 = CW
+// Return rotation direction -1 = CCW, 0 = neutral, +1 = CW and reset to 0
 int8_t RotaryEncoder::getDirection() {
     int8_t dir;
     portENTER_CRITICAL(&_spinlock);
@@ -60,7 +60,7 @@ int8_t RotaryEncoder::getDirection() {
     return dir;
 }
 
-// Return true when knob button pressed
+// Return true when knob button pressed and reset to false
 bool RotaryEncoder::getButtonPressed() {
     bool pressed;
     portENTER_CRITICAL(&_spinlock);

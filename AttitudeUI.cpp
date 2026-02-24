@@ -43,7 +43,7 @@ void AttitudeUI::update(const HeadingData& data, bool connected) {
     this->updateRollLabel(data.getRollDeg());
 }
 
-// Do nothing
+// Show waiting layout if disconnected
 void AttitudeUI::showDisconnected() {
     if (!_initialized) return;
     this->showWaiting();

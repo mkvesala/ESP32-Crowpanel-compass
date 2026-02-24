@@ -32,6 +32,12 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 2. I wanted to learn LVGL and SquareLine Studio for touch-screen UI development
 3. I continued learning ESP32 C++ patterns and FreeRTOS from the companion compass project
 
+## Release history
+
+| Release | Comment |
+|---------|---------|
+| v1.0.0 | Latest release. First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
+
 ## Classes
 
 <img src="docs/uml_diagram.png" width="480">

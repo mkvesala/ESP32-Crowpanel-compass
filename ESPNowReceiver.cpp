@@ -31,7 +31,7 @@ bool ESPNowReceiver::begin(uint8_t channel) {
 }
 
 // Returns true if new packet available, otherwise false
-bool ESPNowReceiver::hasNewData() {
+bool ESPNowReceiver::hasNewData() const {
     bool result;
     portENTER_CRITICAL(&s_mux);
     result = s_has_new_data;
@@ -111,7 +111,7 @@ bool ESPNowReceiver::sendLevelCommand() {
 }
 
 // Check for attitude leveling command response
-bool ESPNowReceiver::hasLevelResponse() {
+bool ESPNowReceiver::hasLevelResponse() const {
     bool result;
     portENTER_CRITICAL(&s_mux);
     result = s_level_response_received;
