@@ -77,14 +77,15 @@ Feature requests are welcome! Please:
    if (condition) return;
    ```
 4. Naming:
-   - Classes `PascalCase`
+   - Classes, structs, enum classes `PascalCase`
    - Functions/methods `camelCase`
-   - Variables `camelCase` or `snake_case` - be consistent
+   - Variables `snake_case`
+   - Private members `_snake_case``
+   - Static variables `s_snake_case`
    - Constants `UPPER_SNAKE_CASE`
    - Timers: use `_ms`, `_MS`, `_us` to indicate the units for example `NEXT_TRY_MS`
-   - Private members starting with `_underscore`
 5. Use `//` in single line comments
-6. Avoid `#DEFINE` macros, use `const` and `static constexpr` where appropriate
+6. Avoid `#DEFINE` macros, use compile time `static constexpr` constants when possible
 7. Avoid String variables
 8. Use `delay()` in loop task *only* when absolutely necessary
 9. Minimize dynamic memory allocation - prefer stack allocation

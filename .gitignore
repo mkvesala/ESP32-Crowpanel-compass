@@ -1,6 +1,15 @@
 # Secrets - WiFi credentials etc.
 secrets.h
 
+# Claude
+.claude/
+CLAUDE_SESSION_CONTEXT.md
+
+# SquareLine
+UI/squareline_project/backup/
+UI/squareline_project/cache/
+ui_files/
+
 # Build artifacts
 build/
 .pio/
