@@ -154,7 +154,7 @@ Three lines printed to Serial every 5 seconds:
 [DIAG] Heap free: 8056051 | min: 8048775 | Stack loop: 5184 | enc: 1268 | btn: 720
 ```
 
-Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max.
+Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max and further down to ~91 ms with v1.0.0.
 
 ## Project structure
 
