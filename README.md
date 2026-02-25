@@ -154,7 +154,7 @@ Three lines printed to Serial every 5 seconds:
 [DIAG] Heap free: 8056051 | min: 8048775 | Stack loop: 5184 | enc: 1268 | btn: 720
 ```
 
-Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max and further down to ~91 ms with v1.0.0.
+Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max and further down to ~91 ms with larger draw buffer and adaptive LVGL tick scheduling of v1.0.0.
 
 ## Project structure
 
@@ -227,8 +227,9 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 
 ## Todo
 
+- investigate how to upgrade onto the latest versions of esp32 board package and LVGL library
 - Consider replacing SquareLine Studio with hand-written LVGL to reduce generated code complexity
-- Evaluate hardware rotation alternatives to reduce the ~194 ms compass rose re-render cost or replace PNG image object with other UI object types
+- Evaluate hardware rotation alternatives to reduce the compass rose re-render cost or replace PNG image object with other UI object types
 - Add screens for other ESP-NOW senders' data, like weather, engine, batteries...
 
 ## Debug
@@ -237,7 +238,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 | Screen | UI updates/5s | LVGL avg | LVGL max | Notes |
 |--------|--------------|----------|----------|-------|
-| Compass (heading changing) | ~52 | ~37 ms | ~91 ms | 240×240 zoom=512, no alpha, antialias off |
+| Compass (heading changing) | ~52 | ~37 ms | ~91 ms | 240×240 zoom=512, no alpha, antialias off, draw buffer 120 lines, adaptive LVGL tick scheduling |
 | Compass (stable heading) | 48–74 | 1–7 ms | — | 0.5° threshold prevents unnecessary re-renders |
 | Attitude (data flowing) | ~80 | 4–13 ms | — | Horizon line 680×4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
