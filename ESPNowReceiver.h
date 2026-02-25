@@ -39,7 +39,7 @@ private:
     static void onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len);
 
     // Static data storage for ESP-NOW
-    inline static portMUX_TYPE s_mux = portMUX_INITIALIZER_UNLOCKED;
+    inline static portMUX_TYPE s_spinlock = portMUX_INITIALIZER_UNLOCKED;
     inline static HeadingData s_latest_data = {};
     inline static volatile bool s_has_new_data = false;
     inline static volatile uint32_t s_last_rx_millis = 0;

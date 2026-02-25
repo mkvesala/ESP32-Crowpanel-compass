@@ -63,14 +63,16 @@ private:
     static constexpr uint16_t SCREEN_WIDTH  = 480;
     static constexpr uint16_t SCREEN_HEIGHT = 480;
 
-    // LVGL draw buffer (40 lines)
+    // LVGL draw buffer (120 lines)
     lv_disp_draw_buf_t _draw_buf;
     lv_color_t *_buf1 = nullptr;
     static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 120;
 
-    // LVGL frequency in loop
+    // LVGL tick (adaptive, driven by lv_timer_handler() return value)
     uint32_t _last_lvgl_tick = 0;
-    static constexpr uint32_t LVGL_TICK_INTERVAL_MS = 5;
+    uint32_t _next_lvgl_interval_ms = 5;
+    static constexpr uint32_t LVGL_TICK_MIN_MS = 1;
+    static constexpr uint32_t LVGL_TICK_MAX_MS = 20;
 
     // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
     static constexpr uint32_t UI_UPDATE_INTERVAL_MS = 59;

@@ -148,10 +148,10 @@ Screen carousel order:
 
 Three lines printed to Serial every 5 seconds:
 ```
-[DIAG] PPS: 18.5 | UI updates: 52 | UI avg: 0.51 ms | UI max: 0.75 ms
-[DIAG] LVGL calls: 158 | avg: 28.60 ms | max: 99.34 ms
-[DIAG] Flush calls: 554 | avg: 1.66 ms | max: 1.94 ms
-[DIAG] Heap free: 8133175 | min: 8128015 | Stack loop: 5468 | enc: 1268 | btn: 720
+[DIAG] PPS: 18.5 | UI updates: 52 | UI avg: 0.54 ms | UI max: 0.87 ms
+[DIAG] LVGL calls: 112 | avg: 36.99 ms | max: 91.14 ms
+[DIAG] Flush calls: 186 | avg: 4.57 ms | max: 4.91 ms
+[DIAG] Heap free: 8056051 | min: 8048775 | Stack loop: 5184 | enc: 1268 | btn: 720
 ```
 
 Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max.
@@ -237,12 +237,12 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 | Screen | UI updates/5s | LVGL avg | LVGL max | Notes |
 |--------|--------------|----------|----------|-------|
-| Compass (heading changing) | ~52 | ~30 ms | ~99 ms | 240×240 zoom=512, no alpha, antialias off |
+| Compass (heading changing) | ~52 | ~37 ms | ~91 ms | 240×240 zoom=512, no alpha, antialias off |
 | Compass (stable heading) | 48–74 | 1–7 ms | — | 0.5° threshold prevents unnecessary re-renders |
 | Attitude (data flowing) | ~80 | 4–13 ms | — | Horizon line 680×4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
-Flash usage: ~36% (1,137,857 bytes of 3,145,728).
+Flash usage: ~35% (1,126,561 bytes of 3,145,728).
 
 ## Security
 

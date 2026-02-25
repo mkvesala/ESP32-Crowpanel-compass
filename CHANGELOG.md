@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.0.0] - 2026-02-24
+## [v1.0.0] - 2026-02-25
 
 ### Changed
 
@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Affected classes: `CompassUI`, `AttitudeUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`, `ESPNowReceiver`
 
 #### Static member declarations moved to headers (C++17 inline static)
-- `ESPNowReceiver`: `s_mux`, `s_latest_data`, `s_has_new_data`, `s_last_rx_millis`, `s_packet_count`, `s_level_response_received`, `s_level_response_success`, `BROADCAST_ADDR` declared and initialized as `inline static` in header
+- `ESPNowReceiver`: `s_spinlock` (renamed, earlier `_mux`), `s_latest_data`, `s_has_new_data`, `s_last_rx_millis`, `s_packet_count`, `s_level_response_received`, `s_level_response_success`, `BROADCAST_ADDR` declared and initialized as `inline static` in header
 - `RotaryEncoder`: `s_instance` declared as `inline static` in header
 - Eliminates separate `.cpp` definitions previously required for static members
 
@@ -42,11 +42,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #### `nullptr` replacing `NULL` for pointer initialization
 - `_buf1 = nullptr` and `s_instance = nullptr` — type-safe null pointer constant
 
-#### LVGL tick advance added to `handleLvglTick()`
-- `lv_tick_inc(elapsed)` now called with actual elapsed milliseconds before `lv_timer_handler()`
-- `LV_TICK_CUSTOM` is `0` (default) — LVGL's internal `sys_time` counter requires explicit `lv_tick_inc()` calls to advance; without this, all LVGL internal timers (animations, screen transition timing, etc.) were frozen at 0
-- `elapsed = now - _last_lvgl_tick` calculated before updating `_last_lvgl_tick` to capture the true interval
-- `handleLvglTick()` comment updated: "Advance LVGL tick and run timer handler"
+#### Adaptive LVGL tick scheduling
+- `lv_conf.h` has `LV_TICK_CUSTOM = 1` — LVGL reads time directly from `millis()` via `LV_TICK_CUSTOM_SYS_TIME_EXPR = (millis())`, thus, `lv_tick_inc()` not required here
+- `lv_timer_handler()` return value (`uint32_t next_ms`) now drives the next call interval instead of a fixed 5 ms constant
+- Return value represents milliseconds until the next LVGL internal timer is due to fire
+- Clamped to `[LVGL_TICK_MIN_MS = 1, LVGL_TICK_MAX_MS = 20]`: `LV_NO_TIMER_READY` (0xFFFFFFFF) and other large values clamp to 20 ms; zero or sub-1 ms values (e.g. render bottleneck, concurrent-call guard returning 1) clamp to 1 ms
+- `static constexpr uint32_t LVGL_TICK_INTERVAL_MS = 5` removed; replaced by `uint32_t _next_lvgl_interval_ms = 5` instance member and two constexprs `LVGL_TICK_MIN_MS` / `LVGL_TICK_MAX_MS`
+- During screen transitions (~300 ms animation): LVGL requests short intervals → stays at or below 20 ms ceiling, animations unaffected
+- During idle / stable heading: LVGL reports ~30 ms (default `LV_DISP_DEF_REFR_PERIOD`) → clamped to 20 ms, reducing redundant `lv_timer_handler()` calls
+
+#### LVGL draw buffer enlarged
+- `BUF_PIXELS` increased from `SCREEN_WIDTH * 40` to `SCREEN_WIDTH * 120` (40 → 120 lines)
+- Fewer `lvglFlushCb` calls per frame — more pixels transferred per DMA burst
+- LVGL max render time reduced: ~99 ms → ~91 ms (measured on CompassScreen with active heading)
+
+### Performance
+- Measured on CompassScreen with heading active (~19 Hz): LVGL calls ~102–112/5s (was 151), avg 37–42 ms, max 91 ms, flush avg 4.6 ms
 
 ---
 

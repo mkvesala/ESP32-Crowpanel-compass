@@ -33,28 +33,28 @@ bool ESPNowReceiver::begin(uint8_t channel) {
 // Returns true if new packet available, otherwise false
 bool ESPNowReceiver::hasNewData() const {
     bool result;
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     result = s_has_new_data;
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
     return result;
 }
 
 // Returns the latest data packet received via ESP-NOW
 HeadingData ESPNowReceiver::getData() {
     HeadingData data;
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     data = s_latest_data;
     s_has_new_data = false;
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
     return data;
 }
 
 // Returns true if timeout not reached, otherwise false
 bool ESPNowReceiver::isConnected(uint32_t timeout_ms) const {
     uint32_t last_rx;
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     last_rx = s_last_rx_millis;
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
 
     if (last_rx == 0) return false;
 
@@ -68,9 +68,9 @@ void ESPNowReceiver::updateStats() {
 
     if (elapsed >= 1000) {
         uint32_t count;
-        portENTER_CRITICAL(&s_mux);
+        portENTER_CRITICAL(&s_spinlock);
         count = s_packet_count;
-        portEXIT_CRITICAL(&s_mux);
+        portEXIT_CRITICAL(&s_spinlock);
 
         uint32_t delta_count = count - _last_packet_count;
         _packets_per_second = (float)delta_count * 1000.0f / (float)elapsed;
@@ -100,10 +100,10 @@ bool ESPNowReceiver::sendLevelCommand() {
     memset(cmd.reserved, 0, 4);
 
     // Clear previous response
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     s_level_response_received = false;
     s_level_response_success = false;
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
 
     esp_err_t result = esp_now_send(BROADCAST_ADDR, (uint8_t*)&cmd, sizeof(cmd));
 
@@ -113,19 +113,19 @@ bool ESPNowReceiver::sendLevelCommand() {
 // Check for attitude leveling command response
 bool ESPNowReceiver::hasLevelResponse() const {
     bool result;
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     result = s_level_response_received;
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
     return result;
 }
 
 // Check for success of the attitude leveling command
 bool ESPNowReceiver::getLevelResult() {
     bool success;
-    portENTER_CRITICAL(&s_mux);
+    portENTER_CRITICAL(&s_spinlock);
     success = s_level_response_success;
     s_level_response_received = false; 
-    portEXIT_CRITICAL(&s_mux);
+    portEXIT_CRITICAL(&s_spinlock);
     return success;
 }
 
@@ -140,12 +140,12 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
 
         HeadingData converted = convertDeltaToData(delta);
 
-        portENTER_CRITICAL(&s_mux);
+        portENTER_CRITICAL(&s_spinlock);
         s_latest_data = converted;
         s_has_new_data = true;
         s_last_rx_millis = millis();
         s_packet_count++;
-        portEXIT_CRITICAL(&s_mux);
+        portEXIT_CRITICAL(&s_spinlock);
     }
     // Check for LevelResponse
     else if (data_len == sizeof(LevelResponse)) {
@@ -153,10 +153,10 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
         memcpy(&resp, data, sizeof(LevelResponse));
 
         if (memcmp(resp.magic, "LVLR", 4) == 0) {
-            portENTER_CRITICAL(&s_mux);
+            portENTER_CRITICAL(&s_spinlock);
             s_level_response_received = true;
             s_level_response_success = (resp.success == 1);
-            portEXIT_CRITICAL(&s_mux);
+            portEXIT_CRITICAL(&s_spinlock);
         }
     }
 }
