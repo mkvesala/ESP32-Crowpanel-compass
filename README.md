@@ -17,8 +17,8 @@ Three screens selectable with the rotary knob:
 Developed and tested on:
 - [Elecrow CrowPanel 2.1" HMI ESP32 Rotary Display](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
 - [ESP32 board package](https://github.com/espressif/arduino-esp32) (2.0.14)
-- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.6)
-- [LVGL](https://lvgl.io/) (8.3.11)
+- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.7)
+- [LVGL](https://lvgl.io/) (8.3.6)
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
@@ -197,10 +197,10 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 
 ## Software
 
-1. Arduino IDE 2.3.6
+1. Arduino IDE 2.3.7
 2. Espressif Systems esp32 board package 2.0.14
 3. Additional libraries:
-   - [LVGL](https://lvgl.io/) 8.3.11
+   - [LVGL](https://lvgl.io/) 8.3.6
    - [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) (by Moon On Our Nation)
    - [PCF8574](https://github.com/RobTillaart/PCF8574) (by Rob Tillaart)
 4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
@@ -256,8 +256,8 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI
-- Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.6
-- LVGL 8.3.11 and SquareLine Studio 1.6.0
+- Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.7
+- LVGL 8.3.6 and SquareLine Studio 1.6.0
 
 Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these two projects relate:
 
