@@ -87,7 +87,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - Heading value label
 - True/Magnetic heading mode toggle with knob button press
 - T/M mode indicator label
-- *Connected* indicator panel (black = connected, red = disconnected)
+- Connected indicator panel (black = connected, red = disconnected)
 - Rotation threshold 0.5°: skips LVGL re-render when heading change is below threshold
 
 ### Attitude screen
@@ -227,10 +227,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 
 ## Todo
 
-- investigate how to upgrade onto the latest versions of esp32 board package and LVGL library
-- Consider replacing SquareLine Studio with hand-written LVGL to reduce generated code complexity
-- Evaluate hardware rotation alternatives to reduce the compass rose re-render cost or replace PNG image object with other UI object types
-- Add screens for other ESP-NOW senders' data, like weather, engine, batteries...
+Check [open issues](https://github.com/mkvesala/ESP32-Crowpanel-compass/issues).
 
 ## Debug
 
