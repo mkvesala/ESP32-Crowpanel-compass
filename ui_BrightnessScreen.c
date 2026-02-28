@@ -37,7 +37,7 @@ lv_obj_set_style_border_color(ui_PanelBrightness, lv_color_hex(0x000000), LV_PAR
 lv_obj_set_style_border_opa(ui_PanelBrightness, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ImageBrightness = lv_img_create(ui_PanelBrightness);
-lv_img_set_src(ui_ImageBrightness, &ui_img_578347518);
+lv_img_set_src(ui_ImageBrightness, &ui_img_sun3_png);
 lv_obj_set_width( ui_ImageBrightness, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_ImageBrightness, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_align( ui_ImageBrightness, LV_ALIGN_CENTER );

@@ -9,7 +9,7 @@ Projekti laajenee yksittäisestä kompassinäytöstä monifunktionäytöksi, jos
 class IScreenUI {
 public:
     virtual ~IScreenUI() = default;
-    virtual void begin()                   = 0;
+    virtual void begin()                    = 0;
     virtual lv_obj_t* getLvglScreen() const = 0;
     virtual void onEnter()  {}   // kutsutaan kun näyttö tulee aktiiviseksi
     virtual void onLeave()  {}   // cleanup (peruuta dialogi, tallenna asetus jne.)
@@ -18,19 +18,20 @@ public:
     virtual void onRotation(int8_t dir) {}
     virtual bool interceptsRotation() const { return false; }
 };
-``` 
+```
 
 Periaate: pull-malli — jokainen näyttö hakee itse datansa omalta vastaanottimeltaan `update()`-kutsun sisällä. CrowPanelApplication ei enää tiedä eri näytöistä mitään.
 
+---
+
 ### `CompassUI` — muutokset
 `CompassUI.h/.cpp`
-- Lisää `ESPNowReceiver&` konstruktoriparametriksi (tallennetaan `_receiver` -viitteenä)
+- Lisää `ESPNowReceiver&` konstruktoriparametriksi (tallennetaan `_receiver`-viitteenä)
 - Toteuta `IScreenUI`
 - `getLvglScreen()` → `return ui_CompassScreen`
 - `onButtonPress()` → kutsuu `toggleHeadingMode()`
 - Uusi `update()` (ei parametreja): hakee `_receiver.isConnected()` + `_receiver.hasNewData()` + `_receiver.getData()` sisäisesti, renderöi
-- `showDisconnected()` pysyy privaten `update()` sisällä (ei enää julkinen kutsu)
-
+- `showDisconnected()` pysyy privaten `update()`-sisällä (ei enää julkinen kutsu)
 
 ```cpp
 // Uusi julkinen rajapinta (muutos nykyisestä)
@@ -41,9 +42,10 @@ public:
     lv_obj_t* getLvglScreen() const override { return ui_CompassScreen; }
     void update()                   override;   // pull-malli
     void onButtonPress()            override;   // toggleHeadingMode()
-    // toggleHeadingMode() pysyy julkisena jos tarvitaan (voidaan tehdä privaatiksi)
 };
 ```
+
+---
 
 ### `AttitudeUI` — muutokset
 `AttitudeUI.h/.cpp`
@@ -51,9 +53,8 @@ public:
 - Toteuta `IScreenUI`
 - `getLvglScreen()` → `return ui_AttitudeScreen`
 - `onLeave()` → kutsuu `cancelLevelOperation()`
-- `onButtonPress()` → `handleButtonPress` (nykyinen logiikka)
+- `onButtonPress()` → `handleButtonPress()` (nykyinen logiikka)
 - `update()`: yhdistää nykyiset `update(data, connected)` + `updateLevelState()` yhteen kutsumatta enää erikseen
-
 
 ```cpp
 class AttitudeUI : public IScreenUI {
@@ -69,8 +70,12 @@ public:
 
 Poistuu julkisesta rajapinnasta: `updateLevelState()`, `cancelLevelOperation()` (→ private), `showDisconnected()` (→ private/internal).
 
+---
+
 ### `BrightnessUI` — muutokset
 `BrightnessUI.h/.cpp`
+- Siirrä `pwm_channel` konstruktoriparametriksi (tallennetaan `_pwm_channel`-jäsenmuuttujaan)
+  — yhdenmukainen `AttitudeUI(ESPNowReceiver&)` -mallin kanssa, välttää kaksoissignatuuriongelma
 - Toteuta `IScreenUI`
 - `getLvglScreen()` → return `ui_BrightnessScreen`
 - `onButtonPress()` → `handleButtonPress()` (nykyinen)
@@ -82,24 +87,24 @@ Poistuu julkisesta rajapinnasta: `updateLevelState()`, `cancelLevelOperation()` 
 ```cpp
 class BrightnessUI : public IScreenUI {
 public:
-    BrightnessUI();
-    void begin(int pwm_channel)      /* ei IScreenUI-signatuuria, pysyy overloaded */;
-    void begin()                     override { /* delegoi begin(0) tai lataa NVS-kanava */ }
+    explicit BrightnessUI(int pwm_channel);
+    void begin()                     override;   // käyttää _pwm_channel-jäsenmuuttujaa
     lv_obj_t* getLvglScreen()  const override { return ui_BrightnessScreen; }
     void update()                    override;   // updateState()
     void onButtonPress()             override;
     void onRotation(int8_t dir)      override;
-    bool interceptsRotation() const  override;
+    bool interceptsRotation()  const override;
     void onLeave()                   override;   // cancelAdjustment()
 };
 ```
 
-Huom: `begin(int pwm_channel)` on edelleen kutsuttava erikseen, tai PWM-kanava voidaan tallentaa konstruktoriparametriksi ennen `begin()` kutsua.
+`CrowPanelApplication.h`:ssa jäsenmuuttuja: `BrightnessUI _brightnessUI{PWM_CHANNEL};`
+
+---
 
 ### `ScreenManager` — suuri muutos
-Poistetaan: kaikki tyypitetyt viitteet (`CompassUI&, AttitudeUI&, BrightnessUI&`), `enum class Screen`, `switch` -lausekkeet karousellissa, `isCompassActive()` jne.
+Poistetaan: kaikki tyypitetyt viitteet (`CompassUI&, AttitudeUI&, BrightnessUI&`), `enum class Screen`, `switch`-lausekkeet karousellissa, `isCompassActive()` jne.
 Tilalle:
-
 
 ```cpp
 // ScreenManager.h
@@ -110,7 +115,7 @@ public:
     ScreenManager() = default;
 
     void addScreen(IScreenUI* screen);      // kutsutaan ennen begin()
-    void begin();
+    void begin();                           // lataa ensimmäisen näytön, asettaa _initialized
     void switchNext();
     void switchPrevious();
     IScreenUI* getCurrentScreen() const;
@@ -129,19 +134,32 @@ private:
 };
 ```
 
-Karuselli — triviaali indeksilogiikka:
-
+**Karouselli** — triviaali indeksilogiikka:
 
 ```cpp
-uint8_t nextIdx()     const { return (_current + 1)                    % _screen_count; }
-uint8_t previousIdx() const { return (_current + _screen_count - 1)   % _screen_count; }
+uint8_t nextIdx()     const { return (_current + 1)                  % _screen_count; }
+uint8_t previousIdx() const { return (_current + _screen_count - 1) % _screen_count; }
 ```
 
+**Guard tyhjää listaa varten** — `switchNext` ja `switchPrevious` palauttavat heti jos näyttöjä on 0 tai 1:
+
+```cpp
+void ScreenManager::switchNext() {
+    if (_screen_count <= 1) return;
+    switchTo(nextIdx(), Direction::CW);
+}
+void ScreenManager::switchPrevious() {
+    if (_screen_count <= 1) return;
+    switchTo(previousIdx(), Direction::CCW);
+}
+```
+
+**`switchTo()`:**
 
 ```cpp
 void ScreenManager::switchTo(uint8_t index, Direction dir) {
     if (!_initialized || index == _current) return;
-    onLeavingCurrentScreen();               // onLeave() aktiivisella näytöllä
+    onLeavingCurrentScreen();               // kutsuu _screens[_current]->onLeave()
     _current = index;
     lv_obj_t* target = _screens[index]->getLvglScreen();
     auto anim = (dir == Direction::CW)
@@ -152,25 +170,44 @@ void ScreenManager::switchTo(uint8_t index, Direction dir) {
 }
 ```
 
+**`begin()` — vain ScreenManagerin oma alustus:**
+
+```cpp
+void ScreenManager::begin() {
+    if (_screen_count == 0) return;
+    _initialized = true;
+    lv_scr_load(_screens[0]->getLvglScreen());  // lataa ensimmäinen näyttö animaatiotta
+    _screens[0]->onEnter();
+}
+```
+
+ScreenManager::begin() EI kutsu yksittäisten näyttöjen `begin()`-metodia. CrowPanelApplication
+vastaa jokaisen UI-luokan `begin()`-kutsusta erikseen ennen `addScreen()`-rekisteröintiä.
+
+---
+
 ### `CrowPanelApplication` — yksinkertaistuu merkittävästi
 `CrowPanelApplication.h` — muutokset jäsenmuuttujiin:
 - `CompassUI _compassUI` → `CompassUI _compassUI{_receiver}` (receiver konstruktorissa)
+- `BrightnessUI _brightnessUI` → `BrightnessUI _brightnessUI{PWM_CHANNEL}`
 - `ScreenManager _screenMgr` → ei enää parametreja konstruktorissa
-- `CrowPanelApplication.cpp` — `begin()` lisää rekisteröinnin:
 
+`CrowPanelApplication.cpp` — `begin()` kutsuu jokaisen UI:n `begin()` ensin, sitten rekisteröi:
 
 ```cpp
 void CrowPanelApplication::begin() {
-    // ... olemassa olevat init-kutsut ...
+    // ... olemassa olevat init-kutsut (pcf, backlight, display, lvgl, receiver) ...
+    _compassUI.begin();
+    _attitudeUI.begin();
+    _brightnessUI.begin();              // käyttää _pwm_channel-jäsenmuuttujaa
     _screenMgr.addScreen(&_compassUI);
     _screenMgr.addScreen(&_attitudeUI);
     _screenMgr.addScreen(&_brightnessUI);
-    _screenMgr.begin();
+    _screenMgr.begin();                 // lataa ensimmäisen näytön
 }
 ```
 
 `handleKnobRotation()` — ennen: 10 riviä, jälkeen:
-
 
 ```cpp
 void CrowPanelApplication::handleKnobRotation() {
@@ -184,7 +221,6 @@ void CrowPanelApplication::handleKnobRotation() {
 
 `handleKnobButtonPress()` — ennen: 10 riviä, jälkeen:
 
-
 ```cpp
 void CrowPanelApplication::handleKnobButtonPress() {
     if (_encoder.getButtonPressed())
@@ -193,7 +229,6 @@ void CrowPanelApplication::handleKnobButtonPress() {
 ```
 
 `handleUIUpdate()` — ennen: hakee dataa + reitittelee, jälkeen:
-
 
 ```cpp
 void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
@@ -206,22 +241,65 @@ void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
 }
 ```
 
+**Huom — `_receiver.updateStats()` (PPS-laskuri):** Nykyisessä koodissa kutsutaan
+`handleUIUpdate()`-metodista. Pull-mallissa UI-luokat eivät kutsu `updateStats()`. Siirretään
+kutsu `handleDiagnostics()`-metodiin — PPS päivitetään juuri ennen diagnostiikkatulosteen
+kirjoittamista, mikä on riittävä tarkkuus.
+
 Poistetaan: `isCompassActive(), isAttitudeActive(), isBrightnessActive()` kaikki käyttökohdat.
+
+---
 
 ### Uuden näytön lisääminen Vaiheen 1 jälkeen
 Lisäys vaatii vain nämä muutokset:
-1. Luo `BatteryUI.h/.cpp` : `public IScreenUI` (toteuta `begin, getLvglScreen, update`, …)
-2. Lisää `BatteryUI _batteryUI;` jäsenmuuttuja `CrowPanelApplication.h` :iin
-3. Lisää `_screenMgr.addScreen(&_batteryUI);` `begin()` :iin
-4. SquareLine Studio: lisää `ui_BatteryScreen` -näyttöobjekti
+1. Luo `BatteryUI.h/.cpp : public IScreenUI` (toteuta `begin, getLvglScreen, update`, …)
+2. Lisää `BatteryUI _batteryUI{...};` jäsenmuuttuja `CrowPanelApplication.h`:iin
+3. Kutsu `_batteryUI.begin()` + `_screenMgr.addScreen(&_batteryUI)` `begin()`:iin
+4. SquareLine Studio: lisää `ui_BatteryScreen`-näyttöobjekti
 
-Karuselliin ei kosketa.
+Karouselliin ei kosketa.
+
+---
 
 ## Vaihe 2 — Multi-Sender ESP-NOW (toteutetaan myöhemmin)
 
-Toteutetaan multi-sender käärimällä varsinainen ESP-NOW paketti kehykseen, jonka header kertoo paketin tyypin ja jonka varsinainen payload sisältää itse datan (esim `HeadingDelta`).
+Toteutetaan multi-sender käärimällä varsinainen ESP-NOW paketti kehykseen, jonka header
+kertoo paketin tyypin ja jonka varsinainen payload sisältää itse datan (esim. `HeadingDelta`).
 
-Suuntaa antava sample code (`espnow_protocol.h`):
+**HUOM — koordinoitu muutos:** Vaihe 2 vaatii samanaikaisen päivityksen sekä CrowPaneliin
+että CMPS14-ESP32-SignalK-gateway -lähettimeen. Lähettimen on lähetettävä kaikki paketit
+uudessa `EspNowPacket<T>`-muodossa, ja sen on osattava vastaanottaa `EspNowPacket<LevelCommand>`.
+
+---
+
+### Protokollarakenne
+
+**EspNowHeader** — 8 tavua, kiinteä:
+
+```
+offset  0: magic       (uint32_t, 4 tavua) — tunnistaa omat paketit muiden ESP-NOW-laitteiden paketeilta
+offset  4: msg_type    (uint8_t,  1 tavu)  — EspNowMsgType
+offset  5: payload_len (uint8_t,  1 tavu)  — max 250 (ESP-NOW raja), uint8_t riittää
+offset  6: reserved    (uint8_t[2])        — täyttö: payload alkaa offsetista 8, floatit 4-tavun rajalla ✓
+```
+
+Header on 8 tavua → `HeadingDelta`-floatit alkavat offsetista 8 (4-tavun rajalla).
+Headerissa käytetään `uint8_t payload_len` (ei `uint16_t`) koska ESP-NOW-paketin maksimikoko
+on 250 tavua — `uint8_t` riittää eikä aiheuta alignment-ongelmia.
+
+**Pakettikoot (ESP-NOW max 250 tavua):**
+
+| Paketti | Koko |
+|---------|------|
+| `EspNowPacket<HeadingDelta>` | 8 + 16 = 24 tavua |
+| `EspNowPacket<BatteryDelta>` | 8 + 20 = 28 tavua |
+| `EspNowPacket<WeatherDelta>` | 8 + 12 = 20 tavua |
+| `EspNowPacket<LevelCommand>` | 8 + 8  = 16 tavua |
+| `EspNowPacket<LevelResponse>`| 8 + 8  = 16 tavua |
+
+---
+
+### Päivitetty `espnow_protocol.h`
 
 ```cpp
 #pragma once
@@ -230,14 +308,14 @@ Suuntaa antava sample code (`espnow_protocol.h`):
 #include <cstring>
 
 // =======================
-// Protocol header
+// Protocol constants
 // =======================
 
-// Optional vakiot, turhaa overheadia tässä vaiheessa?
-// static constexpr uint32_t ESPNOW_MAGIC = 0x45534E57; // 'E''S''N''W'
-// static constexpr uint8_t  ESPNOW_PROTO_VERSION = 1;
+// Magic tunnistaa omat paketit muiden ESP-NOW-laitteiden paketeilta
+// (merimittaristossa voi olla useita ESP-NOW-laitteita: Victron, autopilootti jne.)
+static constexpr uint32_t ESPNOW_MAGIC = 0x45534E57; // 'E''S''N''W'
 
-// Viestityypit (lisäätään tätä listaa kun tulee uusia antureita)
+// Viestityypit (lisätään listaa kun tulee uusia antureita)
 enum class EspNowMsgType : uint8_t {
     HEADING_DELTA   = 1,
     BATTERY_DELTA   = 2,
@@ -246,14 +324,18 @@ enum class EspNowMsgType : uint8_t {
     LEVEL_RESPONSE  = 11,
 };
 
-// Yleinen header kaikkien viestien eteen
-// Pidetään pienenä ja kiinteänä
+// =======================
+// Protocol header
+// =======================
+
+// Kiinteä 8-tavun header kaikkien viestien eteen.
+// uint8_t payload_len: ESP-NOW max payload 250 t, uint8_t riittää.
+// reserved[2]: täyttö → header 8 tavua, payload alkaa 4-tavun rajalla (floatit tasattu).
 struct EspNowHeader {
-    // uint32_t magic;      // ESPNOW_MAGIC - OPTIONAL
-    // uint8_t  version;    // ESPNOW_PROTO_VERSION - OPTIONAL
-    uint8_t  msg_type;      // EspNowMsgType
-    uint16_t payload_len;   // payloadin pituus tavuina
-    // uint16_t seq;        // lähettäjän oma juokseva laskuri - OPTIONAL, turhaa overheadia tässä vaiheessa?
+    uint32_t magic;           // ESPNOW_MAGIC
+    uint8_t  msg_type;        // EspNowMsgType
+    uint8_t  payload_len;     // payloadin pituus tavuina (max 250)
+    uint8_t  reserved[2];     // täyttö, aseta nollaksi
 } __attribute__((packed));
 
 // =======================
@@ -271,10 +353,10 @@ struct HeadingDelta {
 // --- Battery delta (float) ---
 struct BatteryDelta {
     float house_voltage;   // volts
-    float house_current;   // amps, voi olla negatiivinen = lataus / purku
+    float house_current;   // amps, negatiivinen = lataus
     float house_power;     // watts
     float house_soc;       // percent
-    float start_voltage;   // volts, starttiakkku
+    float start_voltage;   // volts, starttiaakku
 };
 
 // --- Weather delta (float) ---
@@ -286,19 +368,19 @@ struct WeatherDelta {
 
 // --- Level command ---
 struct LevelCommand {
-    uint8_t magic[4];     // "LVLC"
+    uint8_t magic[4];     // "LVLC" — redundantti Vaiheessa 2 (msg_type hoitaa tunnistuksen)
     uint8_t reserved[4];
 };
 
 // --- Level response ---
 struct LevelResponse {
-    uint8_t magic[4];     // "LVLR"
+    uint8_t magic[4];     // "LVLR" — redundantti Vaiheessa 2 (msg_type hoitaa tunnistuksen)
     uint8_t success;
     uint8_t reserved[3];
 };
 
 // =======================
-// Packet wrappers (header + payload)
+// Packet wrapper (header + payload)
 // =======================
 
 template <typename TPayload>
@@ -311,12 +393,12 @@ struct EspNowPacket {
 // Helpers
 // =======================
 
-inline void initHeader(EspNowHeader& h, EspNowMsgType type, uint16_t payload_len) {
-    // h.magic = ESPNOW_MAGIC;
-    // h.version = ESPNOW_PROTO_VERSION;
-    h.msg_type = static_cast<uint8_t>(type);
+inline void initHeader(EspNowHeader& h, EspNowMsgType type, uint8_t payload_len) {
+    h.magic       = ESPNOW_MAGIC;
+    h.msg_type    = static_cast<uint8_t>(type);
     h.payload_len = payload_len;
-    // h.seq = seq;
+    h.reserved[0] = 0;
+    h.reserved[1] = 0;
 }
 
 // =======================
@@ -332,10 +414,10 @@ struct HeadingData {
     HeadingData()
         : heading_mag_x10(0), heading_true_x10(0), pitch_x10(0), roll_x10(0) {}
 
-    uint16_t getHeadingMagDeg() const { return heading_mag_x10 / 10; }
+    uint16_t getHeadingMagDeg()  const { return heading_mag_x10 / 10; }
     uint16_t getHeadingTrueDeg() const { return heading_true_x10 / 10; }
-    int16_t  getPitchDeg() const { return pitch_x10 / 10; }
-    int16_t  getRollDeg() const { return roll_x10 / 10; }
+    int16_t  getPitchDeg()       const { return pitch_x10 / 10; }
+    int16_t  getRollDeg()        const { return roll_x10 / 10; }
 };
 
 inline HeadingData convertDeltaToData(const HeadingDelta& delta) {
@@ -351,7 +433,9 @@ inline HeadingData convertDeltaToData(const HeadingDelta& delta) {
 }
 ```
 
-Suuntaa antava sample code lähetyspäähän (tässä: kompassi):
+---
+
+### Sample: lähetyspää (kompassi, CMPS14)
 
 ```cpp
 #include "espnow_protocol.h"
@@ -360,58 +444,57 @@ void sendHeadingDelta(const HeadingDelta& d) {
     EspNowPacket<HeadingDelta> pkt;
     initHeader(pkt.hdr, EspNowMsgType::HEADING_DELTA, sizeof(HeadingDelta));
     pkt.payload = d;
-
     esp_now_send(BROADCAST_ADDR, (uint8_t*)&pkt, sizeof(pkt));
 }
 ```
 
-Suuntaa antava sample code vastaanottopäähän (CrowPanel):
+---
+
+### Sample: vastaanottopää (CrowPanel, `ESPNowReceiver::onDataRecv`)
 
 ```cpp
-#include "espnow_protocol.h"
-
-void onEspNowRecv(const uint8_t* mac, const uint8_t* data, int len) {
+void ESPNowReceiver::onDataRecv(const uint8_t* mac, const uint8_t* data, int len) {
+    // 1. Riittävä pituus headerille
     if (len < (int)sizeof(EspNowHeader)) return;
 
     const EspNowHeader* h = (const EspNowHeader*)data;
-    // if (h->magic != ESPNOW_MAGIC) return;
-    // if (h->version != ESPNOW_PROTO_VERSION) return;
 
-    const uint8_t* payload = data + sizeof(EspNowHeader);
-    int payload_len = len - (int)sizeof(EspNowHeader);
+    // 2. Magic-tarkistus — hylkää muiden ESP-NOW-laitteiden paketit
+    if (h->magic != ESPNOW_MAGIC) return;
 
-    if (h->payload_len != payload_len) {
-        // voi olla myös: if (payload_len < h->payload_len) jne
-        return;
-    }
+    // 3. Kehyksen eheystarkistus
+    const uint8_t* payload     = data + sizeof(EspNowHeader);
+    int            payload_len = len  - (int)sizeof(EspNowHeader);
+    if (h->payload_len != (uint8_t)payload_len) return;
 
-    switch ((EspNowMsgType)h->msg_type) {
+    // 4. Reititys viestityypin mukaan
+    switch (static_cast<EspNowMsgType>(h->msg_type)) {
 
         case EspNowMsgType::HEADING_DELTA: {
             if (h->payload_len != sizeof(HeadingDelta)) return;
             const HeadingDelta* d = (const HeadingDelta*)payload;
-
             HeadingData hd = convertDeltaToData(*d);
-            // do whatever you do
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_data  = hd;
+            s_has_new_data = true;
+            s_last_rx_millis = millis();
+            s_packet_count++;
+            portEXIT_CRITICAL(&s_spinlock);
         } break;
 
-        case EspNowMsgType::BATTERIES_DELTA: {
-            if (h->payload_len != sizeof(BatteriesDelta)) return;
-            const BatteriesDelta* b = (const BatteriesDelta*)payload;
-
-            // do whatever you do
-        } break;
-
-        case EspNowMsgType::LEVEL_COMMAND: {
-            if (h->payload_len != sizeof(LevelCommand)) return;
-            const LevelCommand* cmd = (const LevelCommand*)payload;
-            // käsittele komento
+        case EspNowMsgType::BATTERY_DELTA: {
+            if (h->payload_len != sizeof(BatteryDelta)) return;
+            // const BatteryDelta* b = (const BatteryDelta*)payload;
+            // TODO: tallenna s_latest_battery_data (Vaihe 2)
         } break;
 
         case EspNowMsgType::LEVEL_RESPONSE: {
             if (h->payload_len != sizeof(LevelResponse)) return;
             const LevelResponse* resp = (const LevelResponse*)payload;
-            // käsittele vastaus
+            portENTER_CRITICAL(&s_spinlock);
+            s_level_response_received = true;
+            s_level_response_success  = (resp->success == 1);
+            portEXIT_CRITICAL(&s_spinlock);
         } break;
 
         default:
@@ -420,32 +503,51 @@ void onEspNowRecv(const uint8_t* mac, const uint8_t* data, int len) {
 }
 ```
 
+---
+
 ## Yhteenveto muutettavista tiedostoista
 
 ### Vaihe 1
 
 | Tiedosto | Muutos |
 |----------|--------|
-| `IScreenUI.h`	| UUSI — abstrakti kantaluokka |
-| `ScreenManager.h/.cpp` | Suuri refaktorointi — array + index, poistaa switch + typedref |
-| `CompassUI.h/.cpp` | Lisää `ESPNowReceiver&`, toteuttaa `IScreenUI`, pull-malli |
-| `AttitudeUI.h/.cpp` |	Toteuttaa `IScreenUI`, yhdistää `update` + `levelState`, `onLeave` |
-| `BrightnessUI.h/.cpp` |	Toteuttaa `IScreenUI`, `interceptsRotation, onLeave` |
-| `CrowPanelApplication.h/.cpp` |	`addScreen` -rekisteröinti, yksinkertaistetut handle*-metodit |
-| `ESPNowReceiver.h/.cpp` |	Ei muutoksia Vaiheessa 1 | 
+| `IScreenUI.h` | UUSI — abstrakti kantaluokka |
+| `ScreenManager.h/.cpp` | Suuri refaktorointi — array + index, poistaa switch + tyypitetyt viitteet |
+| `CompassUI.h/.cpp` | Lisää `ESPNowReceiver&` konstruktoriparametriksi, toteuttaa `IScreenUI`, pull-malli |
+| `AttitudeUI.h/.cpp` | Toteuttaa `IScreenUI`, yhdistää `update` + `levelState`, lisää `onLeave` |
+| `BrightnessUI.h/.cpp` | Siirrä `pwm_channel` konstruktoriparametriksi, toteuttaa `IScreenUI` |
+| `CrowPanelApplication.h/.cpp` | `addScreen`-rekisteröinti, yksinkertaistetut `handle*`-metodit, PPS → `handleDiagnostics` |
+| `ESPNowReceiver.h/.cpp` | Ei muutoksia Vaiheessa 1 |
 | `RotaryEncoder.h/.cpp` | Ei muutoksia |
 
 ### Vaihe 2
 
+| Tiedosto | Muutos |
+|----------|--------|
+| `espnow_protocol.h` | Suuri muutos: `EspNowHeader`, `ESPNOW_MAGIC`, `EspNowMsgType`, `EspNowPacket<T>`, `initHeader()` |
+| `ESPNowReceiver.cpp` | `onDataRecv()`: header-pohjainen dispatch `switch(msg_type)` korvaa size-pohjaisen erottelun; `sendLevelCommand()`: lähettää `EspNowPacket<LevelCommand>` |
+| `CrowPanelApplication.h/.cpp` | Ei muutoksia (ESPNowReceiver-rajapinta pysyy samana) |
+| `CompassUI.h/.cpp` | Ei muutoksia (käyttää edelleen `HeadingData`) |
+| `AttitudeUI.h/.cpp` | Ei muutoksia |
+| `BrightnessUI.h/.cpp` | Ei muutoksia |
+| CMPS14 sender | Lähettää `EspNowPacket<HeadingDelta>` ja `EspNowPacket<LevelResponse>`; parsii `EspNowPacket<LevelCommand>` |
+
+---
+
 ## Verifikaatio
+
 ### Vaihe 1 — toiminnallisuuden tarkistus
-1. Käännös — kääntyykö kaikki ilman varoituksia
-2. Perustoiminta — kompassiruusu pyörii, pitch/roll päivittyy, kirkkaus toimii
-3. Karouselli — CW/CCW navigointi kaikissa suunnissa
-4. Napin toiminnot — T/M-vaihto, tasausdialogi, kirkkaussäätö
-5. Diagnostiikka — [DIAG]-rivit tulostuvat 5s välein (UI updates, LVGL avg/max)
-6. Yhteyden katkeaminen — disconnected-tila näkyy kun lähettäjä sammutetaan
-7. Uuden näytön lisäys — lisää tyhjä `TestUI : public IScreenUI`, rekisteröi, varmista että karouselli toimii 4 näytöllä ilman muita muutoksia
+1. **Käännös** — kääntyykö kaikki ilman varoituksia
+2. **Perustoiminta** — kompassiruusu pyörii, pitch/roll päivittyy, kirkkaus toimii
+3. **Karouselli** — CW/CCW navigointi kaikissa suunnissa
+4. **Napin toiminnot** — T/M-vaihto, tasausdialogi, kirkkaussäätö
+5. **Diagnostiikka** — `[DIAG]`-rivit tulostuvat 5 s välein (PPS, UI updates, LVGL avg/max)
+6. **Yhteyden katkeaminen** — disconnected-tila näkyy kun lähettäjä sammutetaan
+7. **Uuden näytön lisäys** — lisää tyhjä `TestUI : public IScreenUI`, rekisteröi, varmista että karouselli toimii 4 näytöllä ilman muita muutoksia
 
 ### Vaihe 2 — multi-sender tarkistus
-
+1. **Magic-suodatus** — lähetä testi-paketti ilman ESPNOW_MAGICia → ei vaikutusta UI:hin
+2. **Tuntematon msg_type** — lähetä paketti tuntemattomalla tyypillä → `default:`-haara, ei kaatu
+3. **HeadingDelta** — kompassidata saapuu uudessa `EspNowPacket<HeadingDelta>`-muodossa, näyttö toimii
+4. **LevelCommand/Response** — tasaustoiminto toimii end-to-end uudella kehysmuodolla
+5. **Pakettikoot** — varmista `sizeof(EspNowPacket<HeadingDelta>) == 24` jne. `static_assert`:lla

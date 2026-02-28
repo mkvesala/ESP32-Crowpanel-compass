@@ -1,0 +1,14 @@
+{
+  "codename": "FontHeading96b",
+  "ttf_path": "/assets/ArchivoBlack-Regular.ttf",
+  "bin_path": "/assets/ui_font_FontHeading96b.bin",
+  "c_path": "/assets/ui_font_FontHeading96b.c",
+  "cfg_path": "/assets/ui_font_FontHeading96b.fcfg",
+  "size": 96,
+  "bpp": 4,
+  "letters": 0,
+  "ranges": [],
+  "symbols": "1234567890-°+ChPa.,%↓↑",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}

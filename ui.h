@@ -19,6 +19,7 @@ extern "C" {
 #include "ui_CompassScreen.h"
 #include "ui_AttitudeScreen.h"
 #include "ui_BrightnessScreen.h"
+#include "ui_WeatherScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
@@ -30,7 +31,10 @@ extern lv_obj_t *ui____initial_actions0;
 LV_IMG_DECLARE( ui_img_1776051799);   // assets/Compass-12.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
 LV_IMG_DECLARE( ui_img_horizonline_png);   // assets/horizonline.png
-LV_IMG_DECLARE( ui_img_578347518);   // assets/icon_light_brightness@3x.png
+LV_IMG_DECLARE( ui_img_sun3_png);   // assets/sun3.png
+LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png
+LV_IMG_DECLARE( ui_img_air2_png);   // assets/air2.png
+LV_IMG_DECLARE( ui_img_humidity2_png);   // assets/humidity2.png
 
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);
