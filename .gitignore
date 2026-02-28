@@ -4,6 +4,7 @@ secrets.h
 # Claude
 .claude/
 CLAUDE_SESSION_CONTEXT.md
+REFACTORING_PLAN.md
 
 # SquareLine
 UI/squareline_project/backup/
