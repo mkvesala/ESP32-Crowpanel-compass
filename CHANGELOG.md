@@ -91,6 +91,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - UI update time now correctly measures only pull-model overhead (data fetch + threshold check): avg 0.54 ms, max 0.80 ms
 - LVGL max (~164 ms) now reflects the full compass rose rendering cost; previously this was split between UI time (`lv_obj_update_layout()` ~91 ms) and LVGL time; total rendering budget is unchanged
 
+### UI
+- Sun icon on the brightness screen changed - [Sun icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/sun)
+- Level dialog Success! message timeout increased from 1500 ms to 2000 ms
+
 ### Developer Notes
 
 #### ESP-NOW wire protocol (v2.0.0)
