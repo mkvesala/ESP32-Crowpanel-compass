@@ -302,8 +302,11 @@ This device receives data only via ESP-NOW broadcast on a local WiFi channel. Th
 Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowPanel-2.1inch-HMI-ESP32-Rotary-Display-480-480-IPS-Round-Touch-Knob-Screen).
 
 [Humidity icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/humidity)
+
 [Temperature icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/temperature)
+
 [Sun icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/sun)
+
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
 Developed and tested using:
