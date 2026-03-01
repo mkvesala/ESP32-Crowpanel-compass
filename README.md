@@ -62,25 +62,25 @@ The classes on the UML class diagram are presented with their full public API. T
 - Abstract base class for UI adapter class implementations
 
 **`CompassUI`:**
-- Implements: `IScreenUI`
+- Inherits: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the compass screen based on heading data
 - Owned by: `CrowPanelApplication`
 
 **`AttitudeUI`:**
-- Implements: `IScreenUI`
+- Inherits: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
 - Owned by: `CrowPanelApplication`
 
 **`BrightnessUI`:**
-- Implements: `IScreenUI`
+- Inherits: `IScreenUI`
 - Uses: `Preferences`
 - Responsible for: backlight brightness adjustment with NVS persistence, updating LVGL UI objects on the brightness screen
 - Owned by: `CrowPanelApplication`
 
 **`ScreenManager`:**
-- Uses: `IScreenUI*`
+- Depends on: `IScreenUI*`
 - Responsible for: Screen carousel management
 - Owned by: `CrowPanelApplication`
 
@@ -247,7 +247,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 |--------|--------------|----------|----------|-------|
 | Compass (heading changing) | ~52 | ~48 ms | ~160 ms | 240x240 zoom=512, no alpha, antialias off, draw buffer 120 lines, adaptive LVGL tick scheduling |
 | Compass (stable heading) | 48-74 | 1-7 ms | — | 0.5° threshold prevents unnecessary re-renders |
-| Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680-4 px is cheap to render |
+| Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680x4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
 Flash usage: ~40% (1,281,897 bytes of 3,145,728).
