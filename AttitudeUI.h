@@ -8,7 +8,7 @@
 // === C L A S S  A T T I T U D E U I ===
 //
 // - Class AttitudeUI - responsible for managing SquareLine generated UI elements on AttitudeScreen
-// - Implements (inherits): IScreenUI
+// - Realizes: IScreenUI
 // - Fetches data from ESPNowReceiver in update())
 // - Initialize: attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()

@@ -10,7 +10,7 @@
 // - Class BrightnessUI - responsible for:
 //  - Updating SquareLine generated UI elements on BrightnessScreen
 //  - Adjusting display backlight brightness with RotaryEncoder
-// - Implements (inherits): IScreenUI
+// - Realizes: IScreenUI
 // - Init: brightnessUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API (via IScreenUI) to:
@@ -31,12 +31,12 @@ public:
     explicit BrightnessUI(int pwm_channel);
 
     void begin() override;
-    lv_obj_t* getLvglScreen() const override;   // non-inline, defined in .cpp
-    void update() override;                     // delegates to updateState()
-    void onButtonPress() override;              // delegates to handleButtonPress()
-    void onRotation(int8_t dir) override;       // delegates to handleRotation(dir)
-    bool interceptsRotation() const override;   // true when ADJUSTING
-    void onLeave() override;                    // cancelAdjustment()
+    lv_obj_t* getLvglScreen() const override;
+    void update() override;
+    void onButtonPress() override;
+    void onRotation(int8_t dir) override; 
+    bool interceptsRotation() const override;
+    void onLeave() override;
 
 private:
 

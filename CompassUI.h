@@ -8,7 +8,7 @@
 // === C L A S S  C O M P A S S U I ===
 //
 // - Class CompassUI - responsible for managing SquareLine generated UI elements on CompassScreen
-// - Implements (inherits): IScreenUI
+// - Realizes: IScreenUI
 // - Fetches data from ESPNowReceiver in update())
 // - Initialize: compassUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()

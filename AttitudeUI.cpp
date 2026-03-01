@@ -11,12 +11,12 @@ AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF) {}
 
-// Implements getLvglScreen(): Return the LVGL screen object for this UI
+// Realizes getLvglScreen(): Return the LVGL screen object for this UI
 lv_obj_t* AttitudeUI::getLvglScreen() const {
     return ui_AttitudeScreen;
 }
 
-// Implements begin(): Initialize
+// Realizes begin(): Initialize
 void AttitudeUI::begin() {
     if (_initialized) return;
 
@@ -33,7 +33,7 @@ void AttitudeUI::begin() {
     this->showWaiting();
 }
 
-// Implements update(): fetch data from receiver and update UI
+// Realizes update(): fetch data from receiver and update UI
 void AttitudeUI::update() {
     if (!_initialized) return;
 
@@ -60,7 +60,7 @@ void AttitudeUI::update() {
     this->updateLevelState();
 }
 
-// Implements onButtonPress(): level state machine — handle knob press
+// Realizes onButtonPress(): level state machine — handle knob press
 void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
 
@@ -87,7 +87,7 @@ void AttitudeUI::onButtonPress() {
     }
 }
 
-// Implements onLeave(): cancel level operation when leaving screen
+// Realizes onLeave(): cancel level operation when leaving screen
 void AttitudeUI::onLeave() {
     this->cancelLevelOperation();
 }

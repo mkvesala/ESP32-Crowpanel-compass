@@ -10,12 +10,12 @@ CompassUI::CompassUI(ESPNowReceiver &receiver)
     , _last_heading_deg(0xFFFF)
     , _use_true_heading(true) {}
 
-// Implements getLvglScreen(): return the LVGL screen object for this UI
+// Realizes getLvglScreen(): return the LVGL screen object for this UI
 lv_obj_t* CompassUI::getLvglScreen() const {
     return ui_CompassScreen;
 }
 
-// Implements begin(): initialize
+// Realizes begin(): initialize
 void CompassUI::begin() {
     if (_initialized) return;
     // Rotating compass rose is expensive, remove antialiasing to make it cheaper
@@ -24,7 +24,7 @@ void CompassUI::begin() {
     this->showWaiting();
 }
 
-// Implements update(): fetch data from receiver and update UI
+// Realizes update(): fetch data from receiver and update UI
 void CompassUI::update() {
     if (!_initialized) return;
 
@@ -45,7 +45,7 @@ void CompassUI::update() {
     }
 }
 
-// Implements onButtonPress(): toggle TRUE/MAGNETIC heading mode
+// Realizes onButtonPress(): toggle TRUE/MAGNETIC heading mode
 void CompassUI::onButtonPress() {
     this->toggleHeadingMode();
 }

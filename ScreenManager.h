@@ -9,6 +9,7 @@
 // - Class ScreenManager - responsible for switching between screens
 // - Screens are registered via addScreen() before begin()
 // - Init: call addScreen() for each screen, then screenMgr.begin()
+// - Uses: IScreenUI*
 // - Provides public API to switch smoothly (LVGL animation) CW or CCW
 // - Carousel order matches registration order (modulo index arithmetic)
 // - Owned by: CrowPanelApplication
