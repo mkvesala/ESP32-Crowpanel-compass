@@ -17,6 +17,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+#### `espnow_protocol.h` — wrapped in `namespace EspNow`, framing protocol added
+- All contents wrapped in `namespace EspNow {}` — prevents name collision with application-level structs in other translation units (e.g. `CMPS14Processor::HeadingDelta` in the sender repo)
+- `ESPNowReceiver.h`: `using namespace EspNow;` added — all protocol types remain available unqualified within receiver code
+- **Added** `ESPNOW_MAGIC = 0x45534E57` — 4-byte magic (`'E''S''N''W'`) identifies own packets on a shared channel; packets from other ESP-NOW devices are silently discarded
+- **Added** `EspNowMsgType` — `enum class uint8_t`: `HEADING_DELTA=1`, `BATTERY_DELTA=2`, `WEATHER_DELTA=3`, `LEVEL_COMMAND=10`, `LEVEL_RESPONSE=11`
+- **Added** `EspNowHeader` — fixed 8-byte `__attribute__((packed))` struct: `magic` (uint32_t), `msg_type` (uint8_t), `payload_len` (uint8_t), `reserved[2]`; 4-byte aligned so float payloads remain naturally aligned
+- **Added** `EspNowPacket<TPayload>` — `__attribute__((packed))` template wrapping `EspNowHeader` + `TPayload`
+- **Added** `initHeader()` — inline helper to fill all `EspNowHeader` fields in one call
+- **Added** `BatteryDelta` — payload stub for future battery sender: `house_voltage`, `house_current`, `house_power`, `house_soc`, `start_voltage` (5 × float)
+- **Added** `WeatherDelta` — payload stub for future weather sender: `temperature_c`, `humidity_p`, `pressure_hpa` (3 × float)
+- Existing types (`HeadingDelta`, `HeadingData`, `LevelCommand`, `LevelResponse`, `convertDeltaToData`) unchanged; `LevelCommand`/`LevelResponse` magic fields now redundant (`msg_type` is the authoritative discriminator) but retained for now
+
+#### `ESPNowReceiver` — header-based dispatch, framed send
+- `onDataRecv()` rewritten: size-based type discrimination → `EspNowHeader`-based dispatch
+  - Minimum frame size guard: `data_len < sizeof(EspNowHeader)` → discard
+  - Magic validation: `hdr.magic != ESPNOW_MAGIC` → discard
+  - Frame integrity check: `data_len < sizeof(EspNowHeader) + hdr.payload_len` → discard
+  - `switch(static_cast<EspNowMsgType>(hdr.msg_type))` with `HEADING_DELTA` and `LEVEL_RESPONSE` cases; `default` silently ignores unknown types
+  - `LEVEL_RESPONSE`: `memcmp(resp.magic, "LVLR")` check removed — `msg_type` is now the authoritative discriminator
+- `sendLevelCommand()`: sends `EspNowPacket<LevelCommand>` (16 bytes) via `initHeader()` instead of bare `LevelCommand` (8 bytes)
+- **⚠ Breaking wire protocol change** — requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0
+
 #### `ScreenManager` — fully rewritten to index-based, type-erased carousel
 - **Removed:** typed constructor parameters `CompassUI&`, `AttitudeUI&`, `BrightnessUI&`; `enum class Screen`; `isCompassActive()`, `isAttitudeActive()`, `isBrightnessActive()`; all `switch`-based screen dispatching
 - **Added:** `addScreen(IScreenUI*)` — registers a screen before `begin()`; up to `MAX_SCREENS = 8` screens
@@ -68,6 +90,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Performance
 - UI update time now correctly measures only pull-model overhead (data fetch + threshold check): avg 0.54 ms, max 0.80 ms
 - LVGL max (~164 ms) now reflects the full compass rose rendering cost; previously this was split between UI time (`lv_obj_update_layout()` ~91 ms) and LVGL time; total rendering budget is unchanged
+
+### Developer Notes
+
+#### ESP-NOW wire protocol (v2.0.0)
+
+All packets now carry an 8-byte `EspNowHeader` prefix. Requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0.
+
+| Packet | v1.0.0 | v2.0.0 |
+|--------|--------|--------|
+| `HeadingDelta` | 16 B bare | 24 B (`EspNowHeader` + 16 B payload) |
+| `LevelCommand` | 8 B bare | 16 B (`EspNowHeader` + 8 B payload) |
+| `LevelResponse` | 8 B bare | 16 B (`EspNowHeader` + 8 B payload) |
+
+```cpp
+// Every packet on the wire
+struct EspNowHeader {       // 8 bytes, packed
+    uint32_t magic;         // 0x45534E57 ('E''S''N''W')
+    uint8_t  msg_type;      // EspNowMsgType enum
+    uint8_t  payload_len;   // sizeof(payload struct)
+    uint8_t  reserved[2];
+};
+
+template <typename TPayload>
+struct EspNowPacket { EspNowHeader hdr; TPayload payload; }; // packed
+```
 
 ---
 

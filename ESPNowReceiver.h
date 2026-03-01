@@ -6,6 +6,8 @@
 #include <esp_now.h>
 #include "espnow_protocol.h"
 
+using namespace ESPNow;
+
 // === C L A S S  E S P N O W R E C E I V E R ===
 //
 // - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication

@@ -36,7 +36,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. See [CHANGELOG](CHANGELOG.md) for details. |
+| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Updates ESP-NOW protocol with framed packets (`ESPNowHeader`). See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
 ## Classes
@@ -139,19 +139,58 @@ Screen carousel is scalable, new screens may be added.
 
 ### ESP-NOW communication
 
+All ESP-NOW packets are wrapped in the payload of `ESPNowHeader`. `ESPNOW_MAGIC = 0x45534E57' identifies the packets.
+
+```cpp
+struct ESPNowHeader {
+   uint32_t magic;           // ESPNOW_MAGIC
+   uint8_t  msg_type;        // ESPNowMsgType
+   uint8_t  payload_len;     // payload length in bytes (max 250)
+   uint8_t  reserved[2];     // padding, set to zero
+} __attribute__((packed));
+```
+
+`ESPNowMsgType` identifies the content delivered in the payload. New data sources can be plugged in by adding a new message type and the respective payload struct.
+
+Sample types:
+
+```cpp
+enum class ESPNowMsgType : uint8_t {
+   HEADING_DELTA   = 1,      // CMPS14-ESP32-SignalK-gateway
+   LEVEL_COMMAND   = 10,     // CMPS14-ESP32-SignalK-gateway
+   LEVEL_RESPONSE  = 11,     // CMPS14-ESP32-SignalK-gateway
+};
+```
+Sample payload:
+
+```cpp
+struct HeadingDelta {
+   float heading_rad;       // Magnetic heading (radians)
+   float heading_true_rad;  // True heading (radians)
+   float pitch_rad;         // Pitch (radians)
+   float roll_rad;          // Roll (radians)
+};
+```
+
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway):
-- `HeadingDelta` struct: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` (equal to what SignalK server gets from the gateway)
-- `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
+- `ESPNowPacket<HeadingDelta>`:
+  - 24 B packet, 8 B header + 16 B payload
+  - Payload: `HeadingDelta` struct ()`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
+  - `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
 **Sends** attitude leveling command as broadcast:
-- `LevelCommand` struct: 4-byte magic `"LVLC"` + 4 reserved bytes
+- `ESPNowPacket<LevelCommand>`:
+  - 16 B, 8 B header + 8 B payload
 
 **Receives** leveling response as unicast:
-- `LevelResponse` struct: 4-byte magic `"LVLR"` + 1-byte `success` (1 = ok, 0 = failed) + 3 reserved bytes
+- `ESPNowPacket<LevelResponse>`:
+  - 16 B, 8 B header + 8 B payload
 
 **Channel:** Both devices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This is because sending compass has to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
 **Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
+
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateqay v1.3.0 or newer.
 
 ### Diagnostics/debug
 
@@ -171,7 +210,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `espnow_protocol.h` | Data structs: `HeadingData`, `LevelCommand`, `LevelResponse` |
+| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `LevelCommand/Response` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
 | `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive and level command sender |
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, implements `IScreenUI` |
@@ -250,7 +289,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 | Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680x4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
-Flash usage: ~40% (1,281,897 bytes of 3,145,728).
+Flash usage: ~40% (1,281,941 bytes of 3,145,728).
 
 ## Security
 

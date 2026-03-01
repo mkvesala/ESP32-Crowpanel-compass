@@ -1,7 +1,5 @@
 #include "ESPNowReceiver.h"
 
-using namespace ESPNow;
-
 // === P U B L I C ===
 
 // Constructor
