@@ -94,18 +94,19 @@ bool ESPNowReceiver::sendLevelCommand() {
         }
     }
 
-    // Build and send command
-    LevelCommand cmd;
-    memcpy(cmd.magic, "LVLC", 4);
-    memset(cmd.reserved, 0, 4);
+    // Build framed packet
+    EspNowPacket<LevelCommand> pkt;
+    initHeader(pkt.hdr, EspNowMsgType::LEVEL_COMMAND, sizeof(LevelCommand));
+    memcpy(pkt.payload.magic, "LVLC", 4);
+    memset(pkt.payload.reserved, 0, 4);
 
     // Clear previous response
     portENTER_CRITICAL(&s_spinlock);
     s_level_response_received = false;
-    s_level_response_success = false;
+    s_level_response_success  = false;
     portEXIT_CRITICAL(&s_spinlock);
 
-    esp_err_t result = esp_now_send(BROADCAST_ADDR, (uint8_t*)&cmd, sizeof(cmd));
+    esp_err_t result = esp_now_send(BROADCAST_ADDR, (uint8_t*)&pkt, sizeof(pkt));
 
     return (result == ESP_OK);
 }
@@ -133,30 +134,50 @@ bool ESPNowReceiver::getLevelResult() {
 
 // Callback for data receive of ESP-NOW
 void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
-    // Check for HeadingDelta (compass data)
-    if (data_len == sizeof(HeadingDelta)) {
-        HeadingDelta delta;
-        memcpy(&delta, data, sizeof(HeadingDelta));
 
-        HeadingData converted = convertDeltaToData(delta);
+    // Minimum frame size check
+    if (data_len < (int)sizeof(EspNowHeader)) return;
 
-        portENTER_CRITICAL(&s_spinlock);
-        s_latest_data = converted;
-        s_has_new_data = true;
-        s_last_rx_millis = millis();
-        s_packet_count++;
-        portEXIT_CRITICAL(&s_spinlock);
-    }
-    // Check for LevelResponse
-    else if (data_len == sizeof(LevelResponse)) {
-        LevelResponse resp;
-        memcpy(&resp, data, sizeof(LevelResponse));
+    // Extract and validate header
+    EspNowHeader hdr;
+    memcpy(&hdr, data, sizeof(EspNowHeader));
 
-        if (memcmp(resp.magic, "LVLR", 4) == 0) {
+    if (hdr.magic != ESPNOW_MAGIC) return;
+
+    // Frame integrity: buffer must hold header + declared payload
+    if (data_len < (int)(sizeof(EspNowHeader) + hdr.payload_len)) return;
+
+    const uint8_t* payload = data + sizeof(EspNowHeader);
+
+    switch (static_cast<EspNowMsgType>(hdr.msg_type)) {
+
+        case EspNowMsgType::HEADING_DELTA: {
+            if (hdr.payload_len != sizeof(HeadingDelta)) return;
+            HeadingDelta delta;
+            memcpy(&delta, payload, sizeof(HeadingDelta));
+            HeadingData converted = convertDeltaToData(delta);
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_data    = converted;
+            s_has_new_data   = true;
+            s_last_rx_millis = millis();
+            s_packet_count++;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
+        case EspNowMsgType::LEVEL_RESPONSE: {
+            if (hdr.payload_len != sizeof(LevelResponse)) return;
+            LevelResponse resp;
+            memcpy(&resp, payload, sizeof(LevelResponse));
             portENTER_CRITICAL(&s_spinlock);
             s_level_response_received = true;
-            s_level_response_success = (resp.success == 1);
+            s_level_response_success  = (resp.success == 1);
             portEXIT_CRITICAL(&s_spinlock);
+            break;
         }
+
+        default:
+            // Unknown msg_type — ignore
+            break;
     }
 }
