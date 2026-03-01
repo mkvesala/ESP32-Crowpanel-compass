@@ -83,7 +83,7 @@ lv_obj_set_height( ui_ArcAdjustment, 460);
 lv_obj_set_align( ui_ArcAdjustment, LV_ALIGN_CENTER );
 lv_obj_clear_flag( ui_ArcAdjustment, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 lv_arc_set_value(ui_ArcAdjustment, 50);
-lv_obj_set_style_arc_color(ui_ArcAdjustment, lv_color_hex(0x0000FF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_arc_color(ui_ArcAdjustment, lv_color_hex(0x404040), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_arc_opa(ui_ArcAdjustment, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_arc_width(ui_ArcAdjustment, 20, LV_PART_MAIN| LV_STATE_DEFAULT);
 

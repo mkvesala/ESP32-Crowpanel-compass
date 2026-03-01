@@ -6648,9 +6648,9 @@
                             "flags": 4096,
                             "strtype": "_style/Arc_Color",
                             "intarray": [
-                              0,
-                              0,
-                              255,
+                              64,
+                              64,
+                              64,
                               255
                             ],
                             "InheritedType": 7
@@ -11156,7 +11156,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 942,
+    "backup_cnt": 943,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
