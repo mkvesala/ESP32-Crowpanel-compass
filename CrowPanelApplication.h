@@ -6,7 +6,6 @@
 #include <Arduino_GFX_Library.h>
 #include "PCF8574.h"
 #include "ui.h"
-#include "espnow_protocol.h"
 #include "ESPNowReceiver.h"
 #include "CompassUI.h"
 #include "AttitudeUI.h"
@@ -28,7 +27,7 @@ class CrowPanelApplication {
 
 public:
 
-    CrowPanelApplication();
+    explicit CrowPanelApplication();
 
     void begin();
     void loop();
@@ -37,9 +36,6 @@ private:
 
     // Channel must match compass WiFi AP channel
     static constexpr uint8_t ESP_NOW_CHANNEL = 6;
-
-    // Connection timeout if nothing received (ms)
-    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
 
     // I2C / PCF8574
     static constexpr uint8_t I2C_SDA_PIN = 38;

@@ -9,7 +9,7 @@
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives compass heading, pitch and roll via ESP-NOW from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass and displays the values on a round LVGL UI.
 
-Three screens selectable with the rotary knob:
+Different screens selectable with the rotary knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
 - **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
@@ -36,7 +36,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v1.0.0 | Latest release. First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
+| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. See [CHANGELOG](CHANGELOG.md) for details. |
+| v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
 ## Classes
 
@@ -52,29 +53,35 @@ The classes on the UML class diagram are presented with their full public API. T
 - Responsible for: receiving `HeadingData` broadcasts and sending attitude leveling commands via ESP-NOW
 - Owned by: `CrowPanelApplication`
 
-**`CompassUI`:**
-- Uses: `HeadingData`
-- Responsible for: updating LVGL UI objects on the compass screen based on heading data
-- Owned by: `CrowPanelApplication`
-
-**`AttitudeUI`:**
-- Uses: `HeadingData`, `ESPNowReceiver`
-- Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
-- Owned by: `CrowPanelApplication`
-
-**`BrightnessUI`:**
-- Uses: `Preferences`
-- Responsible for: backlight brightness adjustment with NVS persistence, updating LVGL UI objects on the brightness screen
-- Owned by: `CrowPanelApplication`
-
 **`RotaryEncoder`:**
 - Uses: `PCF8574`
 - Responsible for: reading rotary knob rotation and knob button press
 - Owned by: `CrowPanelApplication`
 
+**`IScreenUI`:**
+- Abstract base class for UI adapter class implementations
+
+**`CompassUI`:**
+- Implements: `IScreenUI`
+- Uses: `ESPNowReceiver`
+- Responsible for: updating LVGL UI objects on the compass screen based on heading data
+- Owned by: `CrowPanelApplication`
+
+**`AttitudeUI`:**
+- Implements: `IScreenUI`
+- Uses: `ESPNowReceiver`
+- Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
+- Owned by: `CrowPanelApplication`
+
+**`BrightnessUI`:**
+- Implements: `IScreenUI`
+- Uses: `Preferences`
+- Responsible for: backlight brightness adjustment with NVS persistence, updating LVGL UI objects on the brightness screen
+- Owned by: `CrowPanelApplication`
+
 **`ScreenManager`:**
-- Uses: `CompassUI`, `AttitudeUI`, `BrightnessUI`
-- Responsible for: 3-screen carousel navigation with animated screen transitions
+- Uses: `IScreenUI*`
+- Responsible for: Screen carousel management
 - Owned by: `CrowPanelApplication`
 
 ## Features
@@ -83,7 +90,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 <img src="docs/compassscreen.png" height="240"> <img src="docs/compassui.jpeg" height="240">
 
-- Rotating compass rose image (240×240 px source, rendered at 480×480 with LVGL zoom=512, no alpha, antialias off)
+- Rotating compass rose image (240x240 px source, rendered at 480x480 with LVGL zoom=512, no alpha, antialias off)
 - Heading value label
 - True/Magnetic heading mode toggle with knob button press
 - T/M mode indicator label
@@ -125,8 +132,10 @@ The classes on the UML class diagram are presented with their full public API. T
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
-- **Clockwise:** COMPASS → ATTITUDE → BRIGHTNESS → COMPASS → ...
-- **Counter-clockwise:** COMPASS → BRIGHTNESS → ATTITUDE → COMPASS → ...
+- **Clockwise:** COMPASS → ATTITUDE → ... → BRIGHTNESS → COMPASS
+- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → ATTITUDE → COMPASS
+
+Screen carousel is scalable, new screens may be added.
 
 ### ESP-NOW communication
 
@@ -148,13 +157,13 @@ Screen carousel order:
 
 Three lines printed to Serial every 5 seconds:
 ```
-[DIAG] PPS: 18.5 | UI updates: 52 | UI avg: 0.54 ms | UI max: 0.87 ms
-[DIAG] LVGL calls: 112 | avg: 36.99 ms | max: 91.14 ms
-[DIAG] Flush calls: 186 | avg: 4.57 ms | max: 4.91 ms
-[DIAG] Heap free: 8056051 | min: 8048775 | Stack loop: 5184 | enc: 1268 | btn: 720
+[DIAG] PPS: 18.9 | UI updates: 44 | UI avg: 0.62 ms | UI max: 0.76 ms
+[DIAG] LVGL calls: 88 | avg: 47.96 ms | max: 164.03 ms
+[DIAG] Flush calls: 176 | avg: 4.61 ms | max: 4.91 ms
+[DIAG] Heap free: 8051531 | min: 8044127 | Stack loop: 5100 | enc: 1316 | btn: 716
 ```
 
-Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240×240 source image with zoom=512, no alpha, antialias off — rotation render time reduced from ~200 ms to ~30 ms avg, ~206 ms to ~99 ms max and further down to ~91 ms with larger draw buffer and adaptive LVGL tick scheduling of v1.0.0.
+Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240x240 source image with zoom=512, no alpha, antialias off - then further with larger draw buffer and adaptive LVGL tick scheduling in v1.0.0.
 
 ## Project structure
 
@@ -163,12 +172,13 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
 | `espnow_protocol.h` | Data structs: `HeadingData`, `LevelCommand`, `LevelResponse` |
-| `ESPNowReceiver.h/.cpp` | Class ESPNowReceiver — ESP-NOW receive and level command sender |
-| `CompassUI.h/.cpp` | Class CompassUI — compass screen adapter |
-| `AttitudeUI.h/.cpp` | Class AttitudeUI — attitude screen adapter + leveling state machine |
-| `BrightnessUI.h/.cpp` | Class BrightnessUI — brightness screen adapter + adjustment state machine |
-| `RotaryEncoder.h/.cpp` | Class RotaryEncoder — rotary knob rotation and button, FreeRTOS tasks |
-| `ScreenManager.h/.cpp` | Class ScreenManager — 3-screen carousel + cleanup on screen leave |
+| `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
+| `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive and level command sender |
+| `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, implements `IScreenUI` |
+| `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter + leveling state machine, implements `IScreenUI` |
+| `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, implements `IScreenUI` |
+| `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
+| `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
 | `ui.h/.c` | SquareLine Studio generated — UI init |
 | `ui_CompassScreen.h/.c` | SquareLine Studio generated |
 | `ui_AttitudeScreen.h/.c` | SquareLine Studio generated |
@@ -235,12 +245,12 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 | Screen | UI updates/5s | LVGL avg | LVGL max | Notes |
 |--------|--------------|----------|----------|-------|
-| Compass (heading changing) | ~52 | ~37 ms | ~91 ms | 240×240 zoom=512, no alpha, antialias off, draw buffer 120 lines, adaptive LVGL tick scheduling |
-| Compass (stable heading) | 48–74 | 1–7 ms | — | 0.5° threshold prevents unnecessary re-renders |
-| Attitude (data flowing) | ~80 | 4–13 ms | — | Horizon line 680×4 px is cheap to render |
+| Compass (heading changing) | ~52 | ~48 ms | ~160 ms | 240x240 zoom=512, no alpha, antialias off, draw buffer 120 lines, adaptive LVGL tick scheduling |
+| Compass (stable heading) | 48-74 | 1-7 ms | — | 0.5° threshold prevents unnecessary re-renders |
+| Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680-4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
-Flash usage: ~35% (1,126,561 bytes of 3,145,728).
+Flash usage: ~40% (1,281,897 bytes of 3,145,728).
 
 ## Security
 
@@ -251,6 +261,11 @@ This device receives data only via ESP-NOW broadcast on a local WiFi channel. Th
 ## Credits
 
 Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowPanel-2.1inch-HMI-ESP32-Rotary-Display-480-480-IPS-Round-Touch-Knob-Screen).
+
+[Humidity icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/humidity)
+[Temperature icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/temperature)
+[Sun icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/sun)
+[Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
 Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI

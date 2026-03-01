@@ -4,6 +4,73 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.0.0] - 2026-02-28
+
+### Added
+
+#### `IScreenUI.h` — abstract base class for all screen adapters
+- New pure-virtual interface used by `ScreenManager` and `CrowPanelApplication`
+- Pure virtuals: `begin()`, `getLvglScreen() const`
+- Default-empty virtuals: `onEnter()`, `onLeave()`, `update()`, `onButtonPress()`, `onRotation(int8_t dir)`
+- `interceptsRotation() const` — returns `false` by default; override to absorb knob rotation (e.g. `BrightnessUI` in ADJUSTING mode)
+- Enables open-ended screen registration without modifying any existing classes
+
+### Changed
+
+#### `ScreenManager` — fully rewritten to index-based, type-erased carousel
+- **Removed:** typed constructor parameters `CompassUI&`, `AttitudeUI&`, `BrightnessUI&`; `enum class Screen`; `isCompassActive()`, `isAttitudeActive()`, `isBrightnessActive()`; all `switch`-based screen dispatching
+- **Added:** `addScreen(IScreenUI*)` — registers a screen before `begin()`; up to `MAX_SCREENS = 8` screens
+- **Added:** `getCurrentScreen() const` — returns `IScreenUI*` to the currently active screen
+- Carousel arithmetic: `nextIdx()` / `previousIdx()` use modulo (`% _screen_count`); no switch statements
+- `switchTo()` calls `onLeavingCurrentScreen()` (→ `onLeave()` on departing screen) then `onEnter()` on arriving screen
+- Adding a new screen requires only: create class `: public IScreenUI`, call `addScreen(&instance)` in `begin()` — carousel requires no further changes
+
+#### `CompassUI` — implements `IScreenUI`, pull model
+- Now inherits `IScreenUI`; `ESPNowReceiver&` moved from `CrowPanelApplication` to constructor parameter `explicit CompassUI(ESPNowReceiver& receiver)`
+- `getLvglScreen() const override` → returns `ui_CompassScreen` (non-inline, keeps `ui.h` out of header)
+- `update() override` — pull model: calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; no parameters
+- `onButtonPress() override` — calls private `toggleHeadingMode()`
+- `CONNECTION_TIMEOUT_MS = 3000` moved from `CrowPanelApplication` to `CompassUI` as `static constexpr`
+- **Removed from public API:** `update(const HeadingData&, bool)`, `showDisconnected()`, `toggleHeadingMode()` (all → private)
+- **Removed from header:** `#include "espnow_protocol.h"` (now included transitively via `ESPNowReceiver.h`)
+
+#### `AttitudeUI` — implements `IScreenUI`, pull model
+- Now inherits `IScreenUI`
+- `getLvglScreen() const override` → returns `ui_AttitudeScreen`
+- `update() override` — pull model: calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; tracks `_last_connected` to call `showWaiting()` once on disconnect transition; always ticks `updateLevelState()` regardless of connection state
+- `onButtonPress() override` — replaces `bool handleButtonPress()` (same state machine logic, `void` return)
+- `onLeave() override` — calls `cancelLevelOperation()`; ensures dialog is hidden when switching away mid-operation
+- **Moved to private:** `updateLevelState()`, `cancelLevelOperation()`
+- **Removed from public API:** `update(const HeadingData&, bool)`, `showDisconnected()`, `handleButtonPress()`, `updateLevelState()`, `cancelLevelOperation()`
+- `_last_connected` member added; `CONNECTION_TIMEOUT_MS = 3000` added as `static constexpr`
+- **Removed from header:** `#include "ui.h"` (kept in `.cpp` only), `#include "espnow_protocol.h"`
+
+#### `BrightnessUI` — implements `IScreenUI`, PWM channel to constructor
+- Now inherits `IScreenUI`
+- `pwm_channel` parameter moved from `begin(int)` to constructor: `explicit BrightnessUI(int pwm_channel)`; `begin()` now takes no parameters and overrides `IScreenUI::begin()`
+- `getLvglScreen() const override` → returns `ui_BrightnessScreen`
+- `update() override` — delegates to private `updateState()`
+- `onButtonPress() override` — delegates to private `handleButtonPress()`
+- `onRotation(int8_t dir) override` — delegates to private `handleRotation(dir)`
+- `interceptsRotation() const override` — returns `isAdjusting()` (true when ADJUSTING)
+- `onLeave() override` — delegates to private `cancelAdjustment()` (saves brightness to NVS on screen leave)
+- **Moved to private:** `handleButtonPress()`, `handleRotation()`, `updateState()`, `cancelAdjustment()`, `isAdjusting()`
+- **Removed from header:** `#include "ui.h"` (kept in `.cpp` only)
+
+#### `CrowPanelApplication` — simplified orchestration
+- Constructor init list: `_compassUI(_receiver)`, `_brightnessUI(PWM_CHANNEL)`, `_screenMgr()` (no args)
+- `begin()`: calls `_compassUI.begin()`, `_attitudeUI.begin()`, `_brightnessUI.begin()` (no param); then `addScreen()` for each; then `_screenMgr.begin()`
+- `handleKnobRotation()` — 10 lines → 6: `getCurrentScreen()->interceptsRotation()` / `onRotation()` / `switchNext()` / `switchPrevious()`
+- `handleKnobButtonPress()` — 6 lines → 2: `getCurrentScreen()->onButtonPress()`
+- `handleUIUpdate()` — 35 lines → 8: single `getCurrentScreen()->update()` call with timing measurement; all data fetch, routing, and per-screen state machine ticks removed
+- **Removed:** `CONNECTION_TIMEOUT_MS`, `#include "espnow_protocol.h"`, `isCompassActive()` / `isAttitudeActive()` / `isBrightnessActive()` usage, explicit `updateLevelState()` / `updateState()` calls, `was_connected` static, `showDisconnected()` calls
+
+### Performance
+- UI update time now correctly measures only pull-model overhead (data fetch + threshold check): avg 0.54 ms, max 0.80 ms
+- LVGL max (~164 ms) now reflects the full compass rose rendering cost; previously this was split between UI time (`lv_obj_update_layout()` ~91 ms) and LVGL time; total rendering budget is unchanged
+
+---
+
 ## [v1.0.0] - 2026-02-25
 
 ### Changed
@@ -266,6 +333,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v2.0.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v1.0.0
 [v0.4.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.3.0

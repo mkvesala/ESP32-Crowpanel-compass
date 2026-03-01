@@ -1,15 +1,20 @@
 #include "BrightnessUI.h"
+#include "ui.h"
 
 // === P U B L I C ===
 
 // Constructor
-BrightnessUI::BrightnessUI() {}
+BrightnessUI::BrightnessUI(int pwm_channel)
+    : _pwm_channel(pwm_channel) {}
+
+// Return the LVGL screen object for this UI
+lv_obj_t* BrightnessUI::getLvglScreen() const {
+    return ui_BrightnessScreen;
+}
 
 // Initialize
-void BrightnessUI::begin(int pwm_channel) {
+void BrightnessUI::begin() {
     if (_initialized) return;
-
-    _pwm_channel = pwm_channel;
 
     // Load saved brightness from NVS
     _brightness_percent = this->loadBrightness();
@@ -21,6 +26,33 @@ void BrightnessUI::begin(int pwm_channel) {
     _state = BrightnessState::IDLE;
     _initialized = true;
 }
+
+// update(): delegates to updateState()
+void BrightnessUI::update() {
+    this->updateState();
+}
+
+// onButtonPress(): delegates to handleButtonPress()
+void BrightnessUI::onButtonPress() {
+    this->handleButtonPress();
+}
+
+// onRotation(): delegates to handleRotation()
+void BrightnessUI::onRotation(int8_t dir) {
+    this->handleRotation(dir);
+}
+
+// interceptsRotation(): true when ADJUSTING (absorbs knob rotation)
+bool BrightnessUI::interceptsRotation() const {
+    return this->isAdjusting();
+}
+
+// onLeave(): cancel adjustment when leaving screen
+void BrightnessUI::onLeave() {
+    this->cancelAdjustment();
+}
+
+// === P R I V A T E ===
 
 // Handle knob button press
 void BrightnessUI::handleButtonPress() {
@@ -50,7 +82,7 @@ void BrightnessUI::handleRotation(int8_t direction) {
 
     _brightness_percent = (int8_t)new_percent;
 
-    // Upodate HW, UI arc element and UI label element real time
+    // Update HW, UI arc element and UI label element real time
     this->applyBrightness();
     this->updateUI();
 
@@ -64,20 +96,18 @@ void BrightnessUI::updateState() {
     if (_state != BrightnessState::ADJUSTING) return;
 
     if (millis() - _last_rotation_time >= AUTOSAVE_TIMEOUT_MS) {
-        this->saveBrightness(); // Save to NVS
-        this->setState(BrightnessState::IDLE); // Back to IDLE
+        this->saveBrightness();
+        this->setState(BrightnessState::IDLE);
     }
 }
 
-// Cancel brightness adjustment
+// Cancel brightness adjustment (saves current value to NVS)
 void BrightnessUI::cancelAdjustment() {
     if (_state == BrightnessState::ADJUSTING) {
         this->saveBrightness();
         this->setState(BrightnessState::IDLE);
     }
 }
-
-// === P R I V A T E ===
 
 // Manage the state machine
 void BrightnessUI::setState(BrightnessState new_state) {

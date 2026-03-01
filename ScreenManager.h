@@ -2,62 +2,46 @@
 
 #include <Arduino.h>
 #include <lvgl.h>
-#include "CompassUI.h"
-#include "AttitudeUI.h"
-#include "BrightnessUI.h"
-#include "ui.h"
+#include "IScreenUI.h"
 
 // ===  C L A S S  S C R E E N M A N A G E R ===
 //
 // - Class ScreenManager - responsible for switching between screens
-// - Init: screenMgr.begin();
-// - Provides public API to switch smoothly (lvgl animation) between screens CW or CCW.
-// - Uses: AttitudeUI, CompassUI, BrightnessUI
+// - Screens are registered via addScreen() before begin()
+// - Init: call addScreen() for each screen, then screenMgr.begin()
+// - Provides public API to switch smoothly (LVGL animation) CW or CCW
+// - Carousel order matches registration order (modulo index arithmetic)
 // - Owned by: CrowPanelApplication
 
 class ScreenManager {
 
 public:
 
-    ScreenManager(CompassUI &compassUI, AttitudeUI &attitudeUI, BrightnessUI &brightnessUI);
+    static constexpr uint8_t MAX_SCREENS = 8;
 
-    void begin();
-    void switchNext();
-    void switchPrevious();
+    ScreenManager() = default;
 
-    bool isCompassActive() const { return _current == Screen::COMPASS; }
-    bool isAttitudeActive() const { return _current == Screen::ATTITUDE; }
-    bool isBrightnessActive() const { return _current == Screen::BRIGHTNESS; }
+    void addScreen(IScreenUI* screen);      // Register screen — call before begin()
+    void begin();                           // Load first screen, mark initialized
+    void switchNext();                      // CW carousel step
+    void switchPrevious();                  // CCW carousel step
+    IScreenUI* getCurrentScreen() const;
 
 private:
 
-    // Animation direction
     enum class Direction { CW, CCW };
 
-    // Current screen
-    enum class Screen {
-        COMPASS,
-        ATTITUDE,
-        BRIGHTNESS
-    };
+    void switchTo(uint8_t index, Direction dir);
+    void onLeavingCurrentScreen();
 
-    bool _initialized = false;
-    Screen _current = Screen::COMPASS;
+    uint8_t nextIdx()     const { return (_current + 1)                  % _screen_count; }
+    uint8_t previousIdx() const { return (_current + _screen_count - 1) % _screen_count; }
 
-    CompassUI &_compassUI;
-    AttitudeUI &_attitudeUI;
-    BrightnessUI &_brightnessUI;
+    IScreenUI*  _screens[MAX_SCREENS] = {};
+    uint8_t     _screen_count = 0;
+    uint8_t     _current      = 0;
+    bool        _initialized  = false;
 
-    // Animation duration
     static constexpr uint32_t ANIM_DURATION_MS = 300;
 
-    // Carousel order helpers
-    Screen nextScreen() const;
-    Screen previousScreen() const;
-
-    // Unified screen switch with animation direction
-    void switchTo(Screen screen, Direction dir);
-
-    // Helper to clean up when leaving the current screen
-    void onLeavingCurrentScreen();
 };

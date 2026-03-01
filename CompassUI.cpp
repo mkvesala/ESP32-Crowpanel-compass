@@ -4,10 +4,16 @@
 // === P U B L I C ===
 
 // Constructor
-CompassUI::CompassUI()
-    : _last_heading_x10(0xFFFF)
+CompassUI::CompassUI(ESPNowReceiver& receiver)
+    : _receiver(receiver)
+    , _last_heading_x10(0xFFFF)
     , _last_heading_deg(0xFFFF)
     , _use_true_heading(true) {}
+
+// Return the LVGL screen object for this UI
+lv_obj_t* CompassUI::getLvglScreen() const {
+    return ui_CompassScreen;
+}
 
 // Initialize
 void CompassUI::begin() {
@@ -18,39 +24,30 @@ void CompassUI::begin() {
     this->showWaiting();
 }
 
-// Update UI with latest compass data
-void CompassUI::update(const HeadingData& data, bool connected) {
+// Pull model: fetch data from receiver and update UI
+void CompassUI::update() {
     if (!_initialized) return;
 
-    bool is_true = _use_true_heading;
+    bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
+    this->setConnectionIndicator(is_connected);
 
-    uint16_t heading_x10 = is_true ? data.heading_true_x10 : data.heading_mag_x10;
-    uint16_t heading_deg = is_true ? data.getHeadingTrueDeg() : data.getHeadingMagDeg();
+    if (!is_connected) return;
 
-    // Update UI elements
-    this->setCompassRotation(heading_x10);
-    this->updateHeadingLabel(heading_deg);
-    this->updateHeadingMode(is_true);
-    this->setConnectionIndicator(connected);
+    if (_receiver.hasNewData()) {
+        HeadingData data = _receiver.getData();
+        bool is_true = _use_true_heading;
+        uint16_t heading_x10 = is_true ? data.heading_true_x10 : data.heading_mag_x10;
+        uint16_t heading_deg = is_true ? data.getHeadingTrueDeg() : data.getHeadingMagDeg();
+
+        this->setCompassRotation(heading_x10);
+        this->updateHeadingLabel(heading_deg);
+        this->updateHeadingMode(is_true);
+    }
 }
 
-// Toggle heading mode TRUE/MAGNETIC
-void CompassUI::toggleHeadingMode() {
-    _use_true_heading = !_use_true_heading;
-
-    // Force UI update on next update() call
-    _last_heading_x10 = 0xFFFF;
-    _last_heading_deg = 0xFFFF;
-    _last_is_true = !_use_true_heading;
-}
-
-// Show "disconnected" status on UI
-void CompassUI::showDisconnected() {
-    if (!_initialized) return;
-
-    // "The red dot"
-    lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
-    _last_connected = false;
+// onButtonPress: toggle TRUE/MAGNETIC heading mode
+void CompassUI::onButtonPress() {
+    this->toggleHeadingMode();
 }
 
 // === P R I V A T E ===
@@ -69,6 +66,25 @@ void CompassUI::showWaiting() {
     _last_heading_deg = 0xFFFF;
     _last_is_true = false;
     _last_connected = false;
+}
+
+// Show "disconnected" status on UI (internal helper)
+void CompassUI::showDisconnected() {
+    if (!_initialized) return;
+
+    // "The red dot"
+    lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
+    _last_connected = false;
+}
+
+// Toggle TRUE/MAGNETIC heading mode
+void CompassUI::toggleHeadingMode() {
+    _use_true_heading = !_use_true_heading;
+
+    // Force UI update on next update() call
+    _last_heading_x10 = 0xFFFF;
+    _last_heading_deg = 0xFFFF;
+    _last_is_true = !_use_true_heading;
 }
 
 // Rotate the compass rose UI image element based on heading
@@ -95,7 +111,6 @@ void CompassUI::updateHeadingLabel(uint16_t heading_deg) {
 
     char buf[16];
     // UI font has to contain UTF-8 degree sign U+00B0
-
     snprintf(buf, sizeof(buf), "%03d°", heading_deg);
     lv_label_set_text(ui_LabelHeading, buf);
 }

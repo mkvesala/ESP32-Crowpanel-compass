@@ -1,14 +1,20 @@
 #include "AttitudeUI.h"
+#include "ui.h"
 
 // === P U B L I C ===
 
 // Constructor
-AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
+AttitudeUI::AttitudeUI(ESPNowReceiver& receiver)
     : _receiver(receiver)
     , _last_pitch_x10(0x7FFF)
     , _last_roll_x10(0x7FFF)
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF) {}
+
+// Return the LVGL screen object for this UI
+lv_obj_t* AttitudeUI::getLvglScreen() const {
+    return ui_AttitudeScreen;
+}
 
 // Initialize
 void AttitudeUI::begin() {
@@ -27,37 +33,42 @@ void AttitudeUI::begin() {
     this->showWaiting();
 }
 
-// Update attitude screen with the compass data
-void AttitudeUI::update(const HeadingData& data, bool connected) {
+// Pull model: fetch data from receiver and update UI
+void AttitudeUI::update() {
     if (!_initialized) return;
-    if (!connected) {
-        this->showDisconnected();
-        return;
+
+    bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
+
+    if (!is_connected) {
+        if (_last_connected) {
+            // Transition: connected → disconnected
+            this->showWaiting();
+            _last_connected = false;
+        }
+    } else {
+        _last_connected = true;
+
+        if (_receiver.hasNewData()) {
+            HeadingData data = _receiver.getData();
+            this->updateHorizon(data.pitch_x10, data.roll_x10);
+            this->updatePitchLabel(data.getPitchDeg());
+            this->updateRollLabel(data.getRollDeg());
+        }
     }
 
-    // Update horizon location and rotation
-    this->updateHorizon(data.pitch_x10, data.roll_x10);
-
-    // Update values to pitch and roll UI label elements
-    this->updatePitchLabel(data.getPitchDeg());
-    this->updateRollLabel(data.getRollDeg());
+    // Always tick the level state machine regardless of connection
+    this->updateLevelState();
 }
 
-// Show waiting layout if disconnected
-void AttitudeUI::showDisconnected() {
+// onButtonPress: level state machine — handle knob press
+void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
-    this->showWaiting();
-}
-
-// Level state machine - handle knob press
-bool AttitudeUI::handleButtonPress() {
-    if (!_initialized) return false;
 
     switch (_level_state) {
         case LevelState::IDLE:
             // First press: show confirmation dialog
             this->setLevelState(LevelState::CONFIRM_WAIT);
-            return true;
+            break;
 
         case LevelState::CONFIRM_WAIT:
             // Second press: send level command
@@ -66,20 +77,32 @@ bool AttitudeUI::handleButtonPress() {
             } else {
                 this->setLevelState(LevelState::FAILED);
             }
-            return true;
+            break;
 
         case LevelState::SENDING:
         case LevelState::SUCCESS:
         case LevelState::FAILED:
             // Ignore presses during these states
-            return true;
+            break;
     }
-    return false;
 }
 
-// Level state machine - update level state
+// onLeave: cancel level operation when leaving screen
+void AttitudeUI::onLeave() {
+    this->cancelLevelOperation();
+}
+
+// === P R I V A T E ===
+
+// Level state machine — cancel operation and return to idle
+void AttitudeUI::cancelLevelOperation() {
+    if (_level_state != LevelState::IDLE) {
+        this->setLevelState(LevelState::IDLE);
+    }
+}
+
+// Level state machine — advance timeouts and check responses
 void AttitudeUI::updateLevelState() {
-    if (!_initialized) return;
     if (_level_state == LevelState::IDLE) return;
 
     uint32_t elapsed = millis() - _state_start_time;
@@ -118,16 +141,7 @@ void AttitudeUI::updateLevelState() {
     }
 }
 
-// Level state machine - cancel operation and go to idle
-void AttitudeUI::cancelLevelOperation() {
-    if (_level_state != LevelState::IDLE) {
-        this->setLevelState(LevelState::IDLE);
-    }
-}
-
-// === P R I V A T E ===
-
-// Update AttitudeScreen to show "waiting for data" 
+// Update AttitudeScreen to show "waiting for data"
 void AttitudeUI::showWaiting() {
     if (!_initialized) return;
 
@@ -141,9 +155,9 @@ void AttitudeUI::showWaiting() {
 
     // Reset cached values
     _last_pitch_x10 = 0x7FFF;
-    _last_roll_x10 = 0x7FFF;
+    _last_roll_x10  = 0x7FFF;
     _last_pitch_deg = 0x7FFF;
-    _last_roll_deg = 0x7FFF;
+    _last_roll_deg  = 0x7FFF;
 }
 
 // Update artificial horizon based on pitch and roll values
@@ -151,18 +165,18 @@ void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
     // Update only if changed
     if (pitch_x10 == _last_pitch_x10 && roll_x10 == _last_roll_x10) return;
     _last_pitch_x10 = pitch_x10;
-    _last_roll_x10 = roll_x10;
+    _last_roll_x10  = roll_x10;
 
     // PITCH: Move ImageHorizon UI element vertically
     // Bow down - pitch down - horizon up
-    // lv_obj_set_y: positive value moves object down in relation to align-poing
+    // lv_obj_set_y: positive value moves object down in relation to align-point
     // ImageHorizon is ALIGN_CENTER, y=0 is the center point
     int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
     lv_obj_set_y(ui_ImageHorizon, y_offset);
 
     // ROLL: Rotate ImageHorizon UI element
     // Roll port side → horizon rotates starboard
-    // lv_img_set_angle: positive ange = clockwise, uses 0.1° resolution
+    // lv_img_set_angle: positive angle = clockwise, uses 0.1° resolution
     lv_img_set_angle(ui_ImageHorizon, -roll_x10);
 }
 
@@ -188,7 +202,7 @@ void AttitudeUI::updateRollLabel(int16_t roll_deg) {
     lv_label_set_text(ui_LabelRoll, buf);
 }
 
-// Level state machine - update UI label element for dialog
+// Level state machine — update UI dialog element
 void AttitudeUI::updateLevelDialog() {
     switch (_level_state) {
         case LevelState::IDLE:
@@ -221,7 +235,7 @@ void AttitudeUI::updateLevelDialog() {
     }
 }
 
-// Level state machine - set new state
+// Level state machine — set new state and update dialog
 void AttitudeUI::setLevelState(LevelState new_state) {
     _level_state = new_state;
     _state_start_time = millis();

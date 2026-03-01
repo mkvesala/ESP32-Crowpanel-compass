@@ -2,34 +2,41 @@
 
 #include <Arduino.h>
 #include <lvgl.h>
-#include "espnow_protocol.h"
+#include "IScreenUI.h"
+#include "ESPNowReceiver.h"
 
 // === C L A S S  C O M P A S S U I ===
 //
 // - Class CompassUI - responsible for managing SquareLine generated UI elements on CompassScreen
+// - Implements IScreenUI (pull model: fetches data from ESPNowReceiver in update())
 // - Initialize: compassUI.begin()
-// - Update in loop(): compassUI.update(..)
+// - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
-//   - Show "disconnected" status
-//   - Toggle heading mode (TRUE/MAGNETIC)
-//   - Return current heading mode (TRUE/MAGNETIC)
+//   - Toggle heading mode (TRUE/MAGNETIC) via onButtonPress()
 // - Owned by: CrowPanelApplication
 
-class CompassUI {
+class CompassUI : public IScreenUI {
 
 public:
 
-    CompassUI();
+    explicit CompassUI(ESPNowReceiver& receiver);
 
-    void begin();
-    void update(const HeadingData& data, bool connected);
-    void showDisconnected();
-    void toggleHeadingMode();
+    void begin()                    override;
+    lv_obj_t* getLvglScreen() const override;
+    void update()                   override;   // pull model: reads from _receiver
+    void onButtonPress()            override;   // toggles True/Magnetic heading mode
 
 private:
 
+    ESPNowReceiver& _receiver;
+
+    // Connection timeout before showing disconnected state
+    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
+
     // Methods to update SquareLine UI elements
     void showWaiting();
+    void showDisconnected();
+    void toggleHeadingMode();
     void setCompassRotation(uint16_t heading_x10);
     void updateHeadingLabel(uint16_t heading_deg);
     void updateHeadingMode(bool is_true);
@@ -37,20 +44,20 @@ private:
 
     // Compass rose rotation threshold (0.5° = 5 in x10 units)
     static constexpr uint16_t ROTATION_THRESHOLD_X10 = 5;
-    
-    // Colors for "connected" panel on UI, "the red dot"
+
+    // Colors for connection panel, "the red dot"
     static constexpr uint32_t COLOR_CONNECTED    = 0x000000;  // Black
     static constexpr uint32_t COLOR_DISCONNECTED = 0xFF0000;  // Red
 
     // Cached values
     uint16_t _last_heading_x10;
     uint16_t _last_heading_deg;
-    bool     _last_is_true  = false;
+    bool     _last_is_true   = false;
     bool     _last_connected = false;
 
     // true = True heading, false = Magnetic heading
     bool _use_true_heading;
 
     bool _initialized = false;
-    
+
 };
