@@ -143,7 +143,7 @@ All ESP-NOW packets are wrapped in the payload of `ESPNowHeader`. `ESPNOW_MAGIC 
 
 ```cpp
 struct ESPNowHeader {
-   uint32_t magic;           // ESPNOW_MAGIC
+   uint32_t magic;           // ESPNOW_MAGIC ('E''S''N''W')
    uint8_t  msg_type;        // ESPNowMsgType
    uint8_t  payload_len;     // payload length in bytes (max 250)
    uint8_t  reserved[2];     // padding, set to zero
@@ -175,7 +175,7 @@ struct HeadingDelta {
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway):
 - `ESPNowPacket<HeadingDelta>`:
   - 24 B packet, 8 B header + 16 B payload
-  - Payload: `HeadingDelta` struct ()`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
+  - Payload: `HeadingDelta` struct (`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
   - `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
 **Sends** attitude leveling command as broadcast:
