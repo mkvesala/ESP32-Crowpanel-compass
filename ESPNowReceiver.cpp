@@ -1,5 +1,7 @@
 #include "ESPNowReceiver.h"
 
+using namespace ESPNow;
+
 // === P U B L I C ===
 
 // Constructor
@@ -89,14 +91,12 @@ bool ESPNowReceiver::sendLevelCommand() {
         peerInfo.channel = _channel;
         peerInfo.encrypt = false;
 
-        if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-            return false;
-        }
+        if (esp_now_add_peer(&peerInfo) != ESP_OK) return false;
     }
 
     // Build framed packet
-    EspNowPacket<LevelCommand> pkt;
-    initHeader(pkt.hdr, EspNowMsgType::LEVEL_COMMAND, sizeof(LevelCommand));
+    ESPNowPacket<LevelCommand> pkt;
+    initHeader(pkt.hdr, ESPNowMsgType::LEVEL_COMMAND, sizeof(LevelCommand));
     memcpy(pkt.payload.magic, "LVLC", 4);
     memset(pkt.payload.reserved, 0, 4);
 
@@ -136,22 +136,22 @@ bool ESPNowReceiver::getLevelResult() {
 void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
 
     // Minimum frame size check
-    if (data_len < (int)sizeof(EspNowHeader)) return;
+    if (data_len < (int)sizeof(ESPNowHeader)) return;
 
     // Extract and validate header
-    EspNowHeader hdr;
-    memcpy(&hdr, data, sizeof(EspNowHeader));
+    ESPNowHeader hdr;
+    memcpy(&hdr, data, sizeof(ESPNowHeader));
 
     if (hdr.magic != ESPNOW_MAGIC) return;
 
     // Frame integrity: buffer must hold header + declared payload
-    if (data_len < (int)(sizeof(EspNowHeader) + hdr.payload_len)) return;
+    if (data_len < (int)(sizeof(ESPNowHeader) + hdr.payload_len)) return;
 
-    const uint8_t* payload = data + sizeof(EspNowHeader);
+    const uint8_t* payload = data + sizeof(ESPNowHeader);
 
-    switch (static_cast<EspNowMsgType>(hdr.msg_type)) {
+    switch (static_cast<ESPNowMsgType>(hdr.msg_type)) {
 
-        case EspNowMsgType::HEADING_DELTA: {
+        case ESPNowMsgType::HEADING_DELTA: {
             if (hdr.payload_len != sizeof(HeadingDelta)) return;
             HeadingDelta delta;
             memcpy(&delta, payload, sizeof(HeadingDelta));
@@ -165,7 +165,7 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
             break;
         }
 
-        case EspNowMsgType::LEVEL_RESPONSE: {
+        case ESPNowMsgType::LEVEL_RESPONSE: {
             if (hdr.payload_len != sizeof(LevelResponse)) return;
             LevelResponse resp;
             memcpy(&resp, payload, sizeof(LevelResponse));

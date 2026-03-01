@@ -19,12 +19,12 @@ public:
 
     static constexpr uint8_t MAX_SCREENS = 8;
 
-    ScreenManager() = default;
+    explicit ScreenManager() = default;
 
-    void addScreen(IScreenUI* screen);      // Register screen — call before begin()
-    void begin();                           // Load first screen, mark initialized
-    void switchNext();                      // CW carousel step
-    void switchPrevious();                  // CCW carousel step
+    void addScreen(IScreenUI* screen); 
+    void begin();                          
+    void switchNext();                    
+    void switchPrevious();                  
     IScreenUI* getCurrentScreen() const;
 
 private:
@@ -34,13 +34,13 @@ private:
     void switchTo(uint8_t index, Direction dir);
     void onLeavingCurrentScreen();
 
-    uint8_t nextIdx()     const { return (_current + 1)                  % _screen_count; }
+    uint8_t nextIdx() const { return (_current + 1) % _screen_count; }
     uint8_t previousIdx() const { return (_current + _screen_count - 1) % _screen_count; }
 
-    IScreenUI*  _screens[MAX_SCREENS] = {};
-    uint8_t     _screen_count = 0;
-    uint8_t     _current      = 0;
-    bool        _initialized  = false;
+    IScreenUI* _screens[MAX_SCREENS] = {};
+    uint8_t _screen_count = 0;
+    uint8_t _current = 0;
+    bool _initialized = false;
 
     static constexpr uint32_t ANIM_DURATION_MS = 300;
 

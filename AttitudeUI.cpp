@@ -4,19 +4,19 @@
 // === P U B L I C ===
 
 // Constructor
-AttitudeUI::AttitudeUI(ESPNowReceiver& receiver)
+AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
     : _receiver(receiver)
     , _last_pitch_x10(0x7FFF)
     , _last_roll_x10(0x7FFF)
     , _last_pitch_deg(0x7FFF)
     , _last_roll_deg(0x7FFF) {}
 
-// Return the LVGL screen object for this UI
+// Implements getLvglScreen(): Return the LVGL screen object for this UI
 lv_obj_t* AttitudeUI::getLvglScreen() const {
     return ui_AttitudeScreen;
 }
 
-// Initialize
+// Implements begin(): Initialize
 void AttitudeUI::begin() {
     if (_initialized) return;
 
@@ -33,7 +33,7 @@ void AttitudeUI::begin() {
     this->showWaiting();
 }
 
-// Pull model: fetch data from receiver and update UI
+// Implements update(): fetch data from receiver and update UI
 void AttitudeUI::update() {
     if (!_initialized) return;
 
@@ -60,7 +60,7 @@ void AttitudeUI::update() {
     this->updateLevelState();
 }
 
-// onButtonPress: level state machine — handle knob press
+// Implements onButtonPress(): level state machine — handle knob press
 void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
 
@@ -87,7 +87,7 @@ void AttitudeUI::onButtonPress() {
     }
 }
 
-// onLeave: cancel level operation when leaving screen
+// Implements onLeave(): cancel level operation when leaving screen
 void AttitudeUI::onLeave() {
     this->cancelLevelOperation();
 }
@@ -96,9 +96,7 @@ void AttitudeUI::onLeave() {
 
 // Level state machine — cancel operation and return to idle
 void AttitudeUI::cancelLevelOperation() {
-    if (_level_state != LevelState::IDLE) {
-        this->setLevelState(LevelState::IDLE);
-    }
+    if (_level_state != LevelState::IDLE) this->setLevelState(LevelState::IDLE);
 }
 
 // Level state machine — advance timeouts and check responses
@@ -109,9 +107,7 @@ void AttitudeUI::updateLevelState() {
 
     switch (_level_state) {
         case LevelState::CONFIRM_WAIT:
-            if (elapsed >= CONFIRM_TIMEOUT_MS) {
-                this->setLevelState(LevelState::IDLE);
-            }
+            if (elapsed >= CONFIRM_TIMEOUT_MS) this->setLevelState(LevelState::IDLE);
             break;
 
         case LevelState::SENDING:
@@ -124,15 +120,11 @@ void AttitudeUI::updateLevelState() {
             break;
 
         case LevelState::SUCCESS:
-            if (elapsed >= SUCCESS_DISPLAY_MS) {
-                this->setLevelState(LevelState::IDLE);
-            }
+            if (elapsed >= SUCCESS_DISPLAY_MS) this->setLevelState(LevelState::IDLE);
             break;
 
         case LevelState::FAILED:
-            if (elapsed >= FAILED_DISPLAY_MS) {
-                this->setLevelState(LevelState::IDLE);
-            }
+            if (elapsed >= FAILED_DISPLAY_MS) this->setLevelState(LevelState::IDLE);
             break;
 
         case LevelState::IDLE:

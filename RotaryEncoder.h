@@ -26,7 +26,7 @@ class RotaryEncoder {
 
 public:
 
-    RotaryEncoder(PCF8574 &pcf);
+    explicit RotaryEncoder(PCF8574 &pcf);
 
     void begin();
     int8_t getDirection();

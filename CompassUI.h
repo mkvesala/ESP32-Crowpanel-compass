@@ -8,7 +8,8 @@
 // === C L A S S  C O M P A S S U I ===
 //
 // - Class CompassUI - responsible for managing SquareLine generated UI elements on CompassScreen
-// - Implements IScreenUI (pull model: fetches data from ESPNowReceiver in update())
+// - Implements (inherits): IScreenUI
+// - Fetches data from ESPNowReceiver in update())
 // - Initialize: compassUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
@@ -19,16 +20,16 @@ class CompassUI : public IScreenUI {
 
 public:
 
-    explicit CompassUI(ESPNowReceiver& receiver);
+    explicit CompassUI(ESPNowReceiver &receiver);
 
-    void begin()                    override;
+    void begin() override;
     lv_obj_t* getLvglScreen() const override;
-    void update()                   override;   // pull model: reads from _receiver
-    void onButtonPress()            override;   // toggles True/Magnetic heading mode
+    void update() override; 
+    void onButtonPress() override;  
 
 private:
 
-    ESPNowReceiver& _receiver;
+    ESPNowReceiver &_receiver;
 
     // Connection timeout before showing disconnected state
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
@@ -46,14 +47,14 @@ private:
     static constexpr uint16_t ROTATION_THRESHOLD_X10 = 5;
 
     // Colors for connection panel, "the red dot"
-    static constexpr uint32_t COLOR_CONNECTED    = 0x000000;  // Black
+    static constexpr uint32_t COLOR_CONNECTED = 0x000000;  // Black
     static constexpr uint32_t COLOR_DISCONNECTED = 0xFF0000;  // Red
 
     // Cached values
     uint16_t _last_heading_x10;
     uint16_t _last_heading_deg;
-    bool     _last_is_true   = false;
-    bool     _last_connected = false;
+    bool _last_is_true = false;
+    bool _last_connected = false;
 
     // true = True heading, false = Magnetic heading
     bool _use_true_heading;

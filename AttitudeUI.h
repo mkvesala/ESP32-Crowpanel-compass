@@ -8,7 +8,8 @@
 // === C L A S S  A T T I T U D E U I ===
 //
 // - Class AttitudeUI - responsible for managing SquareLine generated UI elements on AttitudeScreen
-// - Implements IScreenUI (pull model: fetches data from ESPNowReceiver in update())
+// - Implements (inherits): IScreenUI
+// - Fetches data from ESPNowReceiver in update())
 // - Initialize: attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
@@ -28,11 +29,11 @@ public:
 
     explicit AttitudeUI(ESPNowReceiver& receiver);
 
-    void begin()                    override;
-    lv_obj_t* getLvglScreen() const override;   // non-inline, defined in .cpp
-    void update()                   override;   // pull model: reads from _receiver
-    void onButtonPress()            override;   // level state machine: IDLE→CONFIRM_WAIT→SENDING
-    void onLeave()                  override;   // cancelLevelOperation()
+    void begin() override;
+    lv_obj_t* getLvglScreen() const override;   
+    void update() override;                     
+    void onButtonPress() override;              
+    void onLeave() override;                   
 
 private:
 
@@ -45,7 +46,7 @@ private:
         FAILED          // "Failed!" visible briefly
     };
 
-    ESPNowReceiver& _receiver;
+    ESPNowReceiver &_receiver;
 
     // Connection timeout before showing waiting state
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
@@ -64,7 +65,7 @@ private:
     int16_t _last_roll_x10;
     int16_t _last_pitch_deg;
     int16_t _last_roll_deg;
-    bool    _last_connected = false;
+    bool  _last_connected = false;
 
     bool _initialized = false;
 
@@ -81,7 +82,7 @@ private:
     // Timeouts (ms)
     static constexpr uint32_t CONFIRM_TIMEOUT_MS = 3000;
     static constexpr uint32_t SENDING_TIMEOUT_MS = 3000;
-    static constexpr uint32_t SUCCESS_DISPLAY_MS = 1500;
+    static constexpr uint32_t SUCCESS_DISPLAY_MS = 2000;
     static constexpr uint32_t FAILED_DISPLAY_MS  = 2000;
 
 };

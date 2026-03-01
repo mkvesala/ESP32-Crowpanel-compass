@@ -18,10 +18,7 @@
 // - Class CrowPanelApplication - "the app", responsible for orchestrating everything
 // - Init: app.begin();
 // - Loop: app.loop()
-// - Provides public API to:
-//  - ..
-// - Uses: 
-// - Owns: PCF8574, ESPNowReceiver, CompassUI, AttitudeUI, BrightnessUI, RotaryEncoder, ScreenManager
+// - Owns: Arduino_ESP32RGBPanel, Arduino_ST7701_RGBPanel, PCF8574, ESPNowReceiver, CompassUI, AttitudeUI, BrightnessUI, RotaryEncoder, ScreenManager
 
 class CrowPanelApplication {
 

@@ -196,9 +196,9 @@ void CrowPanelApplication::handleLvglTick(const uint32_t now) {
     uint32_t next_ms = lv_timer_handler();
     uint32_t lvgl_elapsed = micros() - lvgl_start;
 
-    if      (next_ms < LVGL_TICK_MIN_MS) _next_lvgl_interval_ms = LVGL_TICK_MIN_MS;
+    if (next_ms < LVGL_TICK_MIN_MS) _next_lvgl_interval_ms = LVGL_TICK_MIN_MS;
     else if (next_ms > LVGL_TICK_MAX_MS) _next_lvgl_interval_ms = LVGL_TICK_MAX_MS;
-    else                                  _next_lvgl_interval_ms = next_ms;
+    else _next_lvgl_interval_ms = next_ms;
 
     _diag_lvgl_time_total += lvgl_elapsed;
     if (lvgl_elapsed > _diag_lvgl_time_max) _diag_lvgl_time_max = lvgl_elapsed;
@@ -216,7 +216,7 @@ void CrowPanelApplication::handleKnobRotation() {
         screen->onRotation(dir);
     } else {
         if (dir > 0) _screenMgr.switchNext();
-        else         _screenMgr.switchPrevious();
+        else _screenMgr.switchPrevious();
     }
 }
 
@@ -243,9 +243,7 @@ void CrowPanelApplication::handleUIUpdate(const uint32_t now) {
 
     _diag_ui_updates++;
     _diag_ui_update_time_total += ui_elapsed;
-    if (ui_elapsed > _diag_ui_update_time_max) {
-        _diag_ui_update_time_max = ui_elapsed;
-    }
+    if (ui_elapsed > _diag_ui_update_time_max) _diag_ui_update_time_max = ui_elapsed;
 }
 
 // Print diagnostics to Serial

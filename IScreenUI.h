@@ -7,7 +7,7 @@
 //
 // - Abstract base class for all UI screen adapters
 // - Defines the interface used by ScreenManager and CrowPanelApplication
-// - Concrete classes: CompassUI, AttitudeUI, BrightnessUI, ...
+// - Inherited by: CompassUI, AttitudeUI, BrightnessUI, WeatherUI, ...
 //
 // Lifecycle (managed by CrowPanelApplication + ScreenManager):
 //   begin()              — called by CrowPanelApplication before addScreen()
@@ -27,14 +27,14 @@ public:
 
     virtual ~IScreenUI() = default;
 
-    virtual void begin()                    = 0;
+    virtual void begin() = 0;
     virtual lv_obj_t* getLvglScreen() const = 0;
 
-    virtual void onEnter()               {}
-    virtual void onLeave()               {}
-    virtual void update()                {}
-    virtual void onButtonPress()         {}
-    virtual void onRotation(int8_t dir)  {}
+    virtual void onEnter(){}
+    virtual void onLeave(){}
+    virtual void update(){}
+    virtual void onButtonPress(){}
+    virtual void onRotation(int8_t dir){}
 
     virtual bool interceptsRotation() const { return false; }
 

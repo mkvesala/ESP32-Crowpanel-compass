@@ -7,12 +7,12 @@
 BrightnessUI::BrightnessUI(int pwm_channel)
     : _pwm_channel(pwm_channel) {}
 
-// Return the LVGL screen object for this UI
+// Implements getLvglScreen(): Return the LVGL screen object for this UI
 lv_obj_t* BrightnessUI::getLvglScreen() const {
     return ui_BrightnessScreen;
 }
 
-// Initialize
+// Implements begin(): Initialize
 void BrightnessUI::begin() {
     if (_initialized) return;
 
@@ -27,27 +27,27 @@ void BrightnessUI::begin() {
     _initialized = true;
 }
 
-// update(): delegates to updateState()
+// Implements update(): delegates to updateState()
 void BrightnessUI::update() {
     this->updateState();
 }
 
-// onButtonPress(): delegates to handleButtonPress()
+// Implements onButtonPress(): delegates to handleButtonPress()
 void BrightnessUI::onButtonPress() {
     this->handleButtonPress();
 }
 
-// onRotation(): delegates to handleRotation()
+// Implements onRotation(): delegates to handleRotation()
 void BrightnessUI::onRotation(int8_t dir) {
     this->handleRotation(dir);
 }
 
-// interceptsRotation(): true when ADJUSTING (absorbs knob rotation)
+// Implements interceptsRotation(): true when ADJUSTING (absorbs knob rotation)
 bool BrightnessUI::interceptsRotation() const {
     return this->isAdjusting();
 }
 
-// onLeave(): cancel adjustment when leaving screen
+// Implements onLeave(): cancel adjustment when leaving screen
 void BrightnessUI::onLeave() {
     this->cancelAdjustment();
 }
