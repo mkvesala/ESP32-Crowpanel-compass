@@ -139,7 +139,16 @@ Screen carousel is scalable, new screens may be added.
 
 ### ESP-NOW communication
 
-All ESP-NOW packets are wrapped in the payload of `ESPNowHeader`. `ESPNOW_MAGIC = 0x45534E57' identifies the packets.
+All ESP-NOW messages are wrapped in the payload of `ESPNowPacket`.
+```cpp
+template <typename TPayload>
+  struct ESPNowPacket {
+    ESPNowHeader hdr;
+    TPayload payload;
+} __attribute__((packed));
+```
+
+`ESPNowHeader` contains `ESPNOW_MAGIC = 0x45534E57' which identifies the packets from others on the same channel.
 
 ```cpp
 struct ESPNowHeader {
@@ -150,7 +159,7 @@ struct ESPNowHeader {
 } __attribute__((packed));
 ```
 
-`ESPNowMsgType` identifies the content delivered in the payload. New data sources can be plugged in by adding a new message type and the respective payload struct.
+`ESPNowMsgType` identifies the content delivered, topped with the payload length information in the header.
 
 Sample types:
 
