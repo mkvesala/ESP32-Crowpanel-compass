@@ -47,19 +47,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `switchTo()` calls `onLeavingCurrentScreen()` (→ `onLeave()` on departing screen) then `onEnter()` on arriving screen
 - Adding a new screen requires only: create class `: public IScreenUI`, call `addScreen(&instance)` in `begin()` — carousel requires no further changes
 
-#### `CompassUI` — implements `IScreenUI`, pull model
-- Now inherits `IScreenUI`; `ESPNowReceiver&` moved from `CrowPanelApplication` to constructor parameter `explicit CompassUI(ESPNowReceiver& receiver)`
+#### `CompassUI` — realizes `IScreenUI`
+- Now realizes `IScreenUI`; `ESPNowReceiver&` moved from `CrowPanelApplication` to constructor parameter `explicit CompassUI(ESPNowReceiver& receiver)`
 - `getLvglScreen() const override` → returns `ui_CompassScreen` (non-inline, keeps `ui.h` out of header)
-- `update() override` — pull model: calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; no parameters
+- `update() override` — calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; no parameters
 - `onButtonPress() override` — calls private `toggleHeadingMode()`
 - `CONNECTION_TIMEOUT_MS = 3000` moved from `CrowPanelApplication` to `CompassUI` as `static constexpr`
 - **Removed from public API:** `update(const HeadingData&, bool)`, `showDisconnected()`, `toggleHeadingMode()` (all → private)
 - **Removed from header:** `#include "espnow_protocol.h"` (now included transitively via `ESPNowReceiver.h`)
 
-#### `AttitudeUI` — implements `IScreenUI`, pull model
-- Now inherits `IScreenUI`
+#### `AttitudeUI` — realizes `IScreenUI`
+- Now realizes `IScreenUI`
 - `getLvglScreen() const override` → returns `ui_AttitudeScreen`
-- `update() override` — pull model: calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; tracks `_last_connected` to call `showWaiting()` once on disconnect transition; always ticks `updateLevelState()` regardless of connection state
+- `update() override` — calls `_receiver.isConnected()`, `hasNewData()`, `getData()` internally; tracks `_last_connected` to call `showWaiting()` once on disconnect transition; always ticks `updateLevelState()` regardless of connection state
 - `onButtonPress() override` — replaces `bool handleButtonPress()` (same state machine logic, `void` return)
 - `onLeave() override` — calls `cancelLevelOperation()`; ensures dialog is hidden when switching away mid-operation
 - **Moved to private:** `updateLevelState()`, `cancelLevelOperation()`
@@ -67,8 +67,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `_last_connected` member added; `CONNECTION_TIMEOUT_MS = 3000` added as `static constexpr`
 - **Removed from header:** `#include "ui.h"` (kept in `.cpp` only), `#include "espnow_protocol.h"`
 
-#### `BrightnessUI` — implements `IScreenUI`, PWM channel to constructor
-- Now inherits `IScreenUI`
+#### `BrightnessUI` — realizes `IScreenUI`, PWM channel to constructor
+- Now realizes `IScreenUI`
 - `pwm_channel` parameter moved from `begin(int)` to constructor: `explicit BrightnessUI(int pwm_channel)`; `begin()` now takes no parameters and overrides `IScreenUI::begin()`
 - `getLvglScreen() const override` → returns `ui_BrightnessScreen`
 - `update() override` — delegates to private `updateState()`
