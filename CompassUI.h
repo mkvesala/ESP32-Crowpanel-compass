@@ -9,11 +9,15 @@
 //
 // - Class CompassUI - responsible for managing SquareLine generated UI elements on CompassScreen
 // - Realizes: IScreenUI
-// - Fetches data from ESPNowReceiver in update())
-// - Initialize: compassUI.begin()
+// - Fetches data from ESPNowReceiver in update()
+// - Initialize: _compassUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
-// - Provides public API to:
-//   - Toggle heading mode (TRUE/MAGNETIC) via onButtonPress()
+// - Provides public API to toggle heading mode (TRUE/MAGNETIC) via onButtonPress()
+// - UI logic:
+//   - Rotate compass rose image based on heading (to the opposite direction)
+//   - Arrow stays stable
+//   - 0.5° deadband for re-rendering the compass rose image
+//   - Knob button press: toggle heading mode T/M
 // - Owned by: CrowPanelApplication
 
 class CompassUI : public IScreenUI {

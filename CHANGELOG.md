@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+#### `WeatherUI` — new screen adapter for weather data
+- New `WeatherUI` class realizes `IScreenUI`; constructor: `explicit WeatherUI(ESPNowReceiver& receiver)`
+- Receives `WeatherDelta` packets (temperature, pressure, humidity) via `ESPNowReceiver::hasNewWeatherData()` / `getWeatherData()` — pull model consistent with `CompassUI` and `AttitudeUI`
+- Three panels: `PanelTemperature`, `PanelPressure`, `PanelHumidity` — knob button press cycles TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE (modulo)
+- Session min/max tracked per measurement (NAN sentinel, resets on reboot, not persisted to NVS)
+- Pressure trend indicator `ui_LabelTrend`: shows `↑` / `↓` when consecutive readings differ by ≥ 0.1 hPa; hidden on first data point and stable readings
+- Connection tracking independent from compass: `_last_data_millis` with `CONNECTION_TIMEOUT_MS = 15000` ms (3× 5 s send interval); main value labels show `"---"` on timeout; session min/max preserved during disconnect
+- Active panel persisted to NVS (namespace `"weather"`, key `"panel"`) on `onLeave()`; restored on `begin()`
+
 #### `IScreenUI.h` — abstract base class for all screen adapters
 - New pure-virtual interface used by `ScreenManager` and `CrowPanelApplication`
 - Pure virtuals: `begin()`, `getLvglScreen() const`
@@ -34,8 +43,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Minimum frame size guard: `data_len < sizeof(EspNowHeader)` → discard
   - Magic validation: `hdr.magic != ESPNOW_MAGIC` → discard
   - Frame integrity check: `data_len < sizeof(EspNowHeader) + hdr.payload_len` → discard
-  - `switch(static_cast<EspNowMsgType>(hdr.msg_type))` with `HEADING_DELTA` and `LEVEL_RESPONSE` cases; `default` silently ignores unknown types
+  - `switch(static_cast<EspNowMsgType>(hdr.msg_type))` with `HEADING_DELTA`, `LEVEL_RESPONSE`, and `WEATHER_DELTA` cases; `default` silently ignores unknown types
   - `LEVEL_RESPONSE`: `memcmp(resp.magic, "LVLR")` check removed — `msg_type` is now the authoritative discriminator
+- **Added** `WEATHER_DELTA` case — stores `WeatherDelta` payload into `s_latest_weather`, sets `s_has_new_weather = true`; does not update `s_last_rx_millis` / `s_packet_count` (those are compass connection indicators; `WeatherUI` tracks own `_last_data_millis`)
+- **Added** `hasNewWeatherData() const` — thread-safe read of `s_has_new_weather`
+- **Added** `getWeatherData()` — thread-safe read of `s_latest_weather`, clears `s_has_new_weather`
+- **Added** `s_latest_weather` / `s_has_new_weather` `inline static` members
 - `sendLevelCommand()`: sends `EspNowPacket<LevelCommand>` (16 bytes) via `initHeader()` instead of bare `LevelCommand` (8 bytes)
 - **⚠ Breaking wire protocol change** — requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0
 
@@ -80,8 +93,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Removed from header:** `#include "ui.h"` (kept in `.cpp` only)
 
 #### `CrowPanelApplication` — simplified orchestration
-- Constructor init list: `_compassUI(_receiver)`, `_brightnessUI(PWM_CHANNEL)`, `_screenMgr()` (no args)
-- `begin()`: calls `_compassUI.begin()`, `_attitudeUI.begin()`, `_brightnessUI.begin()` (no param); then `addScreen()` for each; then `_screenMgr.begin()`
+- Constructor init list: `_compassUI(_receiver)`, `_attitudeUI(_receiver)`, `_weatherUI(_receiver)`, `_brightnessUI(PWM_CHANNEL)`, `_screenMgr()` (no args)
+- `begin()`: calls `begin()` for each UI adapter in order, then `addScreen()` for each; screen carousel: **COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BRIGHTNESS(3)**; then `_screenMgr.begin()`
 - `handleKnobRotation()` — 10 lines → 6: `getCurrentScreen()->interceptsRotation()` / `onRotation()` / `switchNext()` / `switchPrevious()`
 - `handleKnobButtonPress()` — 6 lines → 2: `getCurrentScreen()->onButtonPress()`
 - `handleUIUpdate()` — 35 lines → 8: single `getCurrentScreen()->update()` call with timing measurement; all data fetch, routing, and per-screen state machine ticks removed

@@ -65,19 +65,18 @@ bool ESPNowReceiver::isConnected(uint32_t timeout_ms) const {
 void ESPNowReceiver::updateStats() {
     uint32_t now = millis();
     uint32_t elapsed = now - _last_stats_millis;
+    if (elapsed < 1000) return;
 
-    if (elapsed >= 1000) {
-        uint32_t count;
-        portENTER_CRITICAL(&s_spinlock);
-        count = s_packet_count;
-        portEXIT_CRITICAL(&s_spinlock);
+    uint32_t count;
+    portENTER_CRITICAL(&s_spinlock);
+    count = s_packet_count;
+    portEXIT_CRITICAL(&s_spinlock);
 
-        uint32_t delta_count = count - _last_packet_count;
-        _packets_per_second = (float)delta_count * 1000.0f / (float)elapsed;
+    uint32_t delta_count = count - _last_packet_count;
+    _packets_per_second = (float)delta_count * 1000.0f / (float)elapsed;
 
-        _last_packet_count = count;
-        _last_stats_millis = now;
-    }
+    _last_packet_count = count;
+    _last_stats_millis = now;
 }
 
 // Send attitude leveling command to ESP-NOW as broadcast
@@ -147,6 +146,7 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
 
     const uint8_t* payload = data + sizeof(ESPNowHeader);
 
+    // Actual handling of the payload content, based on the message type
     switch (static_cast<ESPNowMsgType>(hdr.msg_type)) {
 
         case ESPNowMsgType::HEADING_DELTA: {
@@ -174,8 +174,38 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
             break;
         }
 
+        case ESPNowMsgType::WEATHER_DELTA: {
+            if (hdr.payload_len != sizeof(WeatherDelta)) return;
+            WeatherDelta weather;
+            memcpy(&weather, payload, sizeof(WeatherDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_weather  = weather;
+            s_has_new_weather = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
     }
+}
+
+// Returns true if new weather data packet available, otherwise false
+bool ESPNowReceiver::hasNewWeatherData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_weather;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest weather data packet received via ESP-NOW
+WeatherDelta ESPNowReceiver::getWeatherData() {
+    WeatherDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_weather;
+    s_has_new_weather = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
 }

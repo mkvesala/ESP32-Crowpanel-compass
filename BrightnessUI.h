@@ -11,7 +11,7 @@
 //  - Updating SquareLine generated UI elements on BrightnessScreen
 //  - Adjusting display backlight brightness with RotaryEncoder
 // - Realizes: IScreenUI
-// - Init: brightnessUI.begin()
+// - Init: _brightnessUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API (via IScreenUI) to:
 //  - Handle knob button press via onButtonPress()

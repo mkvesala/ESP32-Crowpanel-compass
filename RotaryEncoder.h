@@ -6,7 +6,7 @@
 // === C L A S S  R O T A R Y E N C O D E R ===
 //
 // - Class RotaryEncoder - responsible for managing CrowPanel 2.1" HMI rotary encoder
-// - Init: encoder.begin();
+// - Init: _encoder.begin();
 // - FreeRTOS Tasks:
 //  - encoderTask, "RotaryEnc", core 0 - reads knob rotation
 //  - buttonTask, "RotaryBtn", core 0 - reads knob press

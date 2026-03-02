@@ -12,10 +12,10 @@ using namespace ESPNow;
 //
 // - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication
 //
-// - Provides public API to manage inbound compass data and outbound attitude leveling command
+// - Provides public API to manage incoming instrument data and outbound attitude leveling command
+// - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), LEVEL_RESPONSE
+// - Sends: LEVEL_COMMAND (broadcast)
 // - Init: _receiver.begin(channel)
-// - Loop: if (_receiver.hasNewData()) HeadingData data = _receiver.getData();
-// - Level: _receiver.sendLevelCommand(); if (_receiver.hasLevelResponse()) bool ok = _receiver.getLevelResult();
 // - Owned by: CrowPanelApplication
 
 class ESPNowReceiver {
@@ -32,6 +32,8 @@ public:
     bool sendLevelCommand();
     bool hasLevelResponse() const;
     bool getLevelResult();
+    bool hasNewWeatherData() const;
+    WeatherDelta getWeatherData();
 
     float getPacketsPerSecond() const { return _packets_per_second; }
 
@@ -50,6 +52,10 @@ private:
     // Static variables for level response handling
     inline static volatile bool s_level_response_received = false;
     inline static volatile bool s_level_response_success = false;
+
+    // Static variables for weather data handling
+    inline static WeatherDelta s_latest_weather = {};
+    inline static volatile bool s_has_new_weather = false;
     
     // ESP-NOW mac address for broadcasting
     inline static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

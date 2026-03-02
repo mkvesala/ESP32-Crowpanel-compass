@@ -10,7 +10,7 @@
 // - Class AttitudeUI - responsible for managing SquareLine generated UI elements on AttitudeScreen
 // - Realizes: IScreenUI
 // - Fetches data from ESPNowReceiver in update())
-// - Initialize: attitudeUI.begin()
+// - Initialize: _attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
 //   - Handle knob button press (activates attitude leveling) via onButtonPress()
@@ -27,7 +27,7 @@ class AttitudeUI : public IScreenUI {
 
 public:
 
-    explicit AttitudeUI(ESPNowReceiver& receiver);
+    explicit AttitudeUI(ESPNowReceiver &receiver);
 
     void begin() override;
     lv_obj_t* getLvglScreen() const override;   
@@ -65,7 +65,7 @@ private:
     int16_t _last_roll_x10;
     int16_t _last_pitch_deg;
     int16_t _last_roll_deg;
-    bool  _last_connected = false;
+    bool _last_connected = false;
 
     bool _initialized = false;
 

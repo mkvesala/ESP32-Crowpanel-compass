@@ -123,17 +123,17 @@ void RotaryEncoder::processButton() {
     bool current_state = _pcf8574.digitalRead(P5, true);
     uint32_t now = millis();
 
-    // Debounce, react only if timer due
-    if (current_state != _last_button_state) {
-        if (now - _last_button_time >= DEBOUNCE_MS) {
-            if (current_state == LOW && _last_button_state == HIGH) {
-                // Captured falling edge
-                portENTER_CRITICAL(&_spinlock);
-                _button_pressed = true;
-                portEXIT_CRITICAL(&_spinlock);
-            }
-            _last_button_state = current_state;
-            _last_button_time = now;
-        }
+
+    if (current_state == _last_button_state) return;
+    if (now - _last_button_time < DEBOUNCE_MS) return;
+
+    if (current_state == LOW && _last_button_state == HIGH) {
+        portENTER_CRITICAL(&_spinlock);
+        _button_pressed = true;
+        portEXIT_CRITICAL(&_spinlock);
     }
+
+    _last_button_state = current_state;
+    _last_button_time = now;
+    
 }

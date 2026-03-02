@@ -44,9 +44,7 @@ void ScreenManager::switchTo(uint8_t index, Direction dir) {
     this->onLeavingCurrentScreen();
     _current = index;
 
-    auto anim = (dir == Direction::CW)
-        ? LV_SCR_LOAD_ANIM_MOVE_LEFT
-        : LV_SCR_LOAD_ANIM_MOVE_RIGHT;
+    auto anim = (dir == Direction::CW) ? LV_SCR_LOAD_ANIM_MOVE_LEFT : LV_SCR_LOAD_ANIM_MOVE_RIGHT;
 
     lv_scr_load_anim(_screens[index]->getLvglScreen(), anim, ANIM_DURATION_MS, 0, false);
     _screens[index]->onEnter();

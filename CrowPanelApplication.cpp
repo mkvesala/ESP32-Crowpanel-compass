@@ -49,6 +49,7 @@ CrowPanelApplication::CrowPanelApplication():
     _receiver(),
     _compassUI(_receiver),
     _attitudeUI(_receiver),
+    _weatherUI(_receiver),
     _brightnessUI(PWM_CHANNEL),
     _encoder(_pcf8574),
     _screenMgr() {}
@@ -70,11 +71,13 @@ void CrowPanelApplication::begin() {
     // UI adapter init
     _compassUI.begin();
     _attitudeUI.begin();
+    _weatherUI.begin();
     _brightnessUI.begin();
 
-    // Register screens with manager
+    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BRIGHTNESS)
     _screenMgr.addScreen(&_compassUI);
     _screenMgr.addScreen(&_attitudeUI);
+    _screenMgr.addScreen(&_weatherUI);
     _screenMgr.addScreen(&_brightnessUI);
 
     // Screen manager init (loads first screen)
@@ -222,10 +225,9 @@ void CrowPanelApplication::handleKnobRotation() {
 
 // Handle knob button press
 void CrowPanelApplication::handleKnobButtonPress() {
-    if (_encoder.getButtonPressed()) {
-        IScreenUI* screen = _screenMgr.getCurrentScreen();
-        if (screen) screen->onButtonPress();
-    }
+    if (!_encoder.getButtonPressed()) return;
+    IScreenUI* screen = _screenMgr.getCurrentScreen();
+    if (screen) screen->onButtonPress();
 }
 
 // Handle UI update

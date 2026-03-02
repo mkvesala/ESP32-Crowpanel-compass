@@ -72,11 +72,8 @@ void AttitudeUI::onButtonPress() {
 
         case LevelState::CONFIRM_WAIT:
             // Second press: send level command
-            if (_receiver.sendLevelCommand()) {
-                this->setLevelState(LevelState::SENDING);
-            } else {
-                this->setLevelState(LevelState::FAILED);
-            }
+            if (_receiver.sendLevelCommand()) this->setLevelState(LevelState::SENDING);
+            else this->setLevelState(LevelState::FAILED);
             break;
 
         case LevelState::SENDING:
@@ -114,9 +111,7 @@ void AttitudeUI::updateLevelState() {
             if (_receiver.hasLevelResponse()) {
                 bool success = _receiver.getLevelResult();
                 this->setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
-            } else if (elapsed >= SENDING_TIMEOUT_MS) {
-                this->setLevelState(LevelState::FAILED);
-            }
+            } else if (elapsed >= SENDING_TIMEOUT_MS) this->setLevelState(LevelState::FAILED);
             break;
 
         case LevelState::SUCCESS:

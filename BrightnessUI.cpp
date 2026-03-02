@@ -92,21 +92,20 @@ void BrightnessUI::handleRotation(int8_t direction) {
 
 // Check the auto-save timer and update state accordingly
 void BrightnessUI::updateState() {
+
     if (!_initialized) return;
     if (_state != BrightnessState::ADJUSTING) return;
+    if (millis() - _last_rotation_time < AUTOSAVE_TIMEOUT_MS) return;
 
-    if (millis() - _last_rotation_time >= AUTOSAVE_TIMEOUT_MS) {
-        this->saveBrightness();
-        this->setState(BrightnessState::IDLE);
-    }
+    this->saveBrightness();
+    this->setState(BrightnessState::IDLE);
 }
 
 // Cancel brightness adjustment (saves current value to NVS)
 void BrightnessUI::cancelAdjustment() {
-    if (_state == BrightnessState::ADJUSTING) {
-        this->saveBrightness();
-        this->setState(BrightnessState::IDLE);
-    }
+    if (_state != BrightnessState::ADJUSTING) return;
+    this->saveBrightness();
+    this->setState(BrightnessState::IDLE);
 }
 
 // Manage the state machine
