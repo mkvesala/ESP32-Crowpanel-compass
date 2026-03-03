@@ -146,19 +146,29 @@ void WeatherUI::updatePressure(float pres_hpa) {
     snprintf(buf, sizeof(buf), "Min %.0f", _min_pressure);
     lv_label_set_text(ui_LabelMinPressure, buf);
 
-    // Trend indicator
-    if (isnan(_prev_pressure_hpa)) {
+    // Trend indicator update based on EMA
+    if (isnan(_pressure_ema)) {
+        // First reading — initialize EMA and reference, hide trend
+        _pressure_ema     = pres_hpa;
+        _pressure_ema_ref = pres_hpa;
         lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        float diff = pres_hpa - _prev_pressure_hpa;
-        if (fabsf(diff) < PRESSURE_TREND_THRESHOLD) {
-            lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-        } else {
-            lv_obj_clear_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-            lv_label_set_text(ui_LabelTrend, (diff > 0.0f) ? "↑" : "↓");
-        }
+        return;
     }
-    _prev_pressure_hpa = pres_hpa;
+    _pressure_ema = EMA_ALPHA * pres_hpa + (1.0f - EMA_ALPHA) * _pressure_ema;
+
+    float diff = _pressure_ema - _pressure_ema_ref;
+    if (diff >= PRESSURE_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrend, "↑");
+    } else if (diff <= -PRESSURE_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrend, "↓");
+    } else {
+        // Neutral zone — hide indicator and drift reference toward EMA
+        lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
+        _pressure_ema_ref = _pressure_ema;
+    }
+
 }
 
 // Update humidity value and session min/max

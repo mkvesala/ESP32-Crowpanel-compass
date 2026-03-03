@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v2.0.0] - 2026-02-28
+## [v2.0.0] - 2026-03-04
 
 ### Added
 
@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Receives `WeatherDelta` packets (temperature, pressure, humidity) via `ESPNowReceiver::hasNewWeatherData()` / `getWeatherData()` — pull model consistent with `CompassUI` and `AttitudeUI`
 - Three panels: `PanelTemperature`, `PanelPressure`, `PanelHumidity` — knob button press cycles TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE (modulo)
 - Session min/max tracked per measurement (NAN sentinel, resets on reboot, not persisted to NVS)
-- Pressure trend indicator `ui_LabelTrend`: shows `↑` / `↓` when consecutive readings differ by ≥ 0.1 hPa; hidden on first data point and stable readings
+- Pressure trend indicator `ui_LabelTrend`: shows `↑` / `↓` when EMA of the readings (alpha 0.15) ≥ 0.5 hPa; hidden on first data point and stable readings
 - Connection tracking independent from compass: `_last_data_millis` with `CONNECTION_TIMEOUT_MS = 15000` ms (3× 5 s send interval); main value labels show `"---"` on timeout; session min/max preserved during disconnect
 - Active panel persisted to NVS (namespace `"weather"`, key `"panel"`) on `onLeave()`; restored on `begin()`
 

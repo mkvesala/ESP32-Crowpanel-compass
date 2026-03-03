@@ -9,11 +9,11 @@
 // === C L A S S  W E A T H E R U I ===
 //
 // - Class WeatherUI - responsible for updating LVGL UI elements on WeatherScreen
-// - Receives: ESPNowPacket<WeatherDelta> via ESPNowReceiver (sent at ~5s intervals)
+// - Receives: ESPNowPacket<WeatherDelta> via ESPNowReceiver (sent at ~2s intervals)
 // - Knob press: cycles visible panel (TEMPERATURE → PRESSURE → HUMIDITY → ...)
-// - Min/Max: tracked in-session, not persisted to NVS
+// - Min/Max: tracked runtime only, not persisted to NVS
 // - Active panel: persisted to NVS on onLeave()
-// - Inherits: IScreenUI
+// - Realizes: IScreenUI
 // - Owned by: CrowPanelApplication
 
 class WeatherUI : public IScreenUI {
@@ -47,7 +47,9 @@ private:
     float _temperature_c = NAN;
     float _humidity_p = NAN;
     float _pressure_hpa = NAN;
-    float _prev_pressure_hpa = NAN;  // for trend detection
+
+    float _pressure_ema     = NAN;   // exponential moving average
+    float _pressure_ema_ref = NAN;   // reference EMA for trend comparison
 
     // Session min/max (NAN = not yet received, not saved to NVS)
     float _max_temp = NAN;
@@ -74,9 +76,9 @@ private:
     void savePanel();
     WeatherPanel loadPanel();
 
-    // Weather sender sends at 5s intervals; timeout = 3x interval
-    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 15000;
-    static constexpr float PRESSURE_TREND_THRESHOLD = 0.1f;  // hPa
+    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
+    static constexpr float EMA_ALPHA                = 0.15f;  // τ ≈ 12 s at 2 s intervals
+    static constexpr float PRESSURE_TREND_THRESHOLD = 0.5f;   // hPa vs. reference EMA
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";
