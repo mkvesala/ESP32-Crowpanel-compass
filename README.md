@@ -7,11 +7,12 @@
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-orange)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives compass heading, pitch and roll via ESP-NOW from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass and displays the values on a round LVGL UI.
+Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives compass heading, pitch and roll via ESP-NOW from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass. Receives temperature, air pressure and relative humidity via ESP-NOW from a BME280 based sender. Displays values on a round LVGL UI.
 
 Different screens selectable with the rotary knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
 - **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
+- **Weather screen** - toggle between temperature, pressure and humidity views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
 
 Developed and tested on:
