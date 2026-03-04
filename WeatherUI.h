@@ -20,7 +20,7 @@ class WeatherUI : public IScreenUI {
 
 public:
 
-    explicit WeatherUI(ESPNowReceiver& receiver);
+    explicit WeatherUI(ESPNowReceiver &receiver);
 
     void begin() override;
     lv_obj_t* getLvglScreen() const override;
@@ -48,8 +48,8 @@ private:
     float _humidity_p = NAN;
     float _pressure_hpa = NAN;
 
-    float _pressure_ema     = NAN;   // exponential moving average
-    float _pressure_ema_ref = NAN;   // reference EMA for trend comparison
+    float _pressure_ema = NAN; // exponential moving average
+    float _pressure_ema_ref = NAN; // reference EMA for trend comparison
 
     // Session min/max (NAN = not yet received, not saved to NVS)
     float _max_temp = NAN;
@@ -77,8 +77,8 @@ private:
     WeatherPanel loadPanel();
 
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
-    static constexpr float EMA_ALPHA                = 0.15f;  // τ ≈ 12 s at 2 s intervals
-    static constexpr float PRESSURE_TREND_THRESHOLD = 0.5f;   // hPa vs. reference EMA
+    static constexpr float EMA_ALPHA = 0.10f;  // τ ≈ 19 s at 2 s intervals
+    static constexpr float PRESSURE_TREND_THRESHOLD = 0.5f; // hPa vs. reference EMA
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";

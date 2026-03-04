@@ -22,7 +22,8 @@ Developed and tested on:
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
-- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) — compass sender
+- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
+- BME280 based ESP-NOW sender for temperature, humidity and pressure
 
 ## Purpose of the project
 
@@ -36,7 +37,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Updates ESP-NOW protocol with framed packets (`ESPNowHeader`). See [CHANGELOG](CHANGELOG.md) for details. |
+| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Updates ESP-NOW protocol with framed packets (`ESPNowHeader`). Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
 ## Classes
@@ -110,6 +111,17 @@ The classes on the UML class diagram are presented with their full public API. T
   3. Response received → "Success!" (green) or "Failed!" (red)
   4. Timeout or screen switch → return to idle
 
+### Weather screen
+
+<img src="docs/weatherscreen1.png" height="240"> <img src="docs/weatherui1.jpeg" height="240"> <img src="docs/weatherscreen2.png" height="240"> <img src="docs/weatherui2.jpeg" height="240"> <img src="docs/weatherscreen3.png" height="240"> <img src="docs/weatherui3.jpeg" height="240">
+
+- Pressing the knob button toggles between TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE view
+- Last view stored in NVS onLeave()
+- Stored view retrieved from NVS when returning to the screen (default: temperature)
+- Temperature view: Temperature °C, maximum and minimum temperature °C (runtime, not persistent in NVS)
+- Pressure view: Pressure hPA, maximum and minimum pressure hPA (runtime, not persistent), trend based on EMA (alpha 0.10) and 0.5 hPA threshold
+- Humidity view: Humidity %, maximum and minimum humidity % (runtime, not persisten)
+
 ### Brightness screen
 
 <img src="docs/brightnessscreen.png" height="240"> <img src="docs/brightnessui.jpeg" height="240">
@@ -129,11 +141,12 @@ The classes on the UML class diagram are presented with their full public API. T
 |--------|--------------|-------------------|--------------------|
 | Compass | Toggle T/M heading mode | Switch screen | — |
 | Attitude | Trigger level confirmation dialog | Switch screen | — |
+| Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | - |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
-- **Clockwise:** COMPASS → ATTITUDE → ... → BRIGHTNESS → COMPASS
-- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → ATTITUDE → COMPASS
+- **Clockwise:** COMPASS → ATTITUDE → WEATHER → ... → BRIGHTNESS → COMPASS
+- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → WEATHER → ATTITUDE → COMPASS
 
 Screen carousel is scalable, new screens may be added.
 
@@ -166,11 +179,13 @@ Sample types:
 ```cpp
 enum class ESPNowMsgType : uint8_t {
    HEADING_DELTA   = 1,      // CMPS14-ESP32-SignalK-gateway
+   BATTERY_DELTA   = 2,      // VEDirect based sender
+   WEATHER_DELTA   = 3,      // BME280 based sender
    LEVEL_COMMAND   = 10,     // CMPS14-ESP32-SignalK-gateway
    LEVEL_RESPONSE  = 11,     // CMPS14-ESP32-SignalK-gateway
 };
 ```
-Sample payload:
+Sample payloads:
 
 ```cpp
 struct HeadingDelta {
@@ -178,6 +193,12 @@ struct HeadingDelta {
    float heading_true_rad;  // True heading (radians)
    float pitch_rad;         // Pitch (radians)
    float roll_rad;          // Roll (radians)
+};
+
+struct WeatherDelta {
+   float temperature_c;   // °C
+   float humidity_p;      // percent
+   float pressure_hpa;    // hPa
 };
 ```
 
@@ -187,6 +208,11 @@ struct HeadingDelta {
   - Payload: `HeadingDelta` struct (`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
   - `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
+**Receives** at ~0.5 Hz, in °C, % and hPA (sent by BME280 based sender):
+- `ESPNowPacket<WeatherDelta>`:
+  - 20 B packet, 8 B header + 12 B payload
+  - Payload: `WeatherDelta` struct (`temperature_c`, `humidity_p`, `pressure_hpa`)
+
 **Sends** attitude leveling command as broadcast:
 - `ESPNowPacket<LevelCommand>`:
   - 16 B, 8 B header + 8 B payload
@@ -195,7 +221,7 @@ struct HeadingDelta {
 - `ESPNowPacket<LevelResponse>`:
   - 16 B, 8 B header + 8 B payload
 
-**Channel:** Both devices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This is because sending compass has to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
+**Channel:** ESP-NOW evices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
 **Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
@@ -222,14 +248,16 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `LevelCommand/Response` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
 | `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive and level command sender |
-| `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, implements `IScreenUI` |
-| `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter + leveling state machine, implements `IScreenUI` |
-| `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, implements `IScreenUI` |
+| `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |
+| `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter + leveling state machine, realizes `IScreenUI` |
+| `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
+| `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
 | `ui.h/.c` | SquareLine Studio generated — UI init |
 | `ui_CompassScreen.h/.c` | SquareLine Studio generated |
 | `ui_AttitudeScreen.h/.c` | SquareLine Studio generated |
+| `ui_WeatherScreen.h/.c` | SquareLine Studio generated | 
 | `ui_BrightnessScreen.h/.c` | SquareLine Studio generated |
 | `ui_helpers.h/.c` | SquareLine Studio generated |
 | `ui_font_*.c` | Custom fonts |
@@ -247,7 +275,8 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
    - Rotary encoder with push button (PCF8574 I2C GPIO expander at 0x21)
 2. WiFi router with fixed channel 6
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
-4. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
+4. BME280 based ESP-NOW sender
+5. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
 
@@ -262,6 +291,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
    - [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) (by Moon On Our Nation)
    - [PCF8574](https://github.com/RobTillaart/PCF8574) (by Rob Tillaart)
 4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
+5. CMPS14-ESP32-SignalK-gateway v1.3.0
 
 **Note:** the esp32 board package and LVGL are far beyond the latest versions. The example source code provided by Elecrow did not compile with the newer versions so the development was done on the older libraries. TODO: study if the project can be migrated to the latest versions.
 
@@ -279,7 +309,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
    ```
 5. Connect and power up the CrowPanel with USB
 6. Compile and upload with Arduino IDE (board: ESP32S3 Dev Module)
-7. Point the CMPS14-ESP32-SignalK-gateway to the same WiFi channel
+7. Point the CMPS14-ESP32-SignalK-gateway and other ESP-NOW senders to the same WiFi channel
 
 **SquareLine Studio note:** SquareLine Studio clears the export directory completely on export. Always git commit before exporting from SquareLine Studio and set a temporary directory in project settings for the export folder.
 
@@ -298,7 +328,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 | Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680x4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
 
-Flash usage: ~40% (1,281,941 bytes of 3,145,728).
+Flash usage: ~40%.
 
 ## Security
 
@@ -322,6 +352,7 @@ Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI
 - Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.7
 - LVGL 8.3.6 and SquareLine Studio 1.6.0
+- CMPS14-ESP32-SignalK-gateway v1.3.0
 
 Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these two projects relate:
 
@@ -335,4 +366,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" height="240"> <img src="docs/weatherscreen2.png" height="240"> <img src="docs/weatherscreen3.png" height="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">

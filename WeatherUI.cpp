@@ -4,7 +4,7 @@
 // === P U B L I C ===
 
 // Constructor
-WeatherUI::WeatherUI(ESPNowReceiver& receiver)
+WeatherUI::WeatherUI(ESPNowReceiver &receiver)
     : _receiver(receiver) {}
 
 // Realizes getLvglScreen(): return the LVGL screen object for this UI
@@ -41,8 +41,7 @@ void WeatherUI::update() {
         this->updateHumidity(data.humidity_p);
     }
 
-    bool connected = (_last_data_millis > 0 &&
-                      (millis() - _last_data_millis) < CONNECTION_TIMEOUT_MS);
+    bool connected = (_last_data_millis > 0 && (millis() - _last_data_millis) < CONNECTION_TIMEOUT_MS);
 
     if (!connected && _last_connected) this->showWaiting();
     _last_connected = connected;
@@ -52,8 +51,7 @@ void WeatherUI::update() {
 void WeatherUI::onButtonPress() {
     if (!_initialized) return;
 
-    uint8_t next = (static_cast<uint8_t>(_active_panel) + 1)
-                   % static_cast<uint8_t>(WeatherPanel::COUNT);
+    uint8_t next = (static_cast<uint8_t>(_active_panel) + 1) % static_cast<uint8_t>(WeatherPanel::COUNT);
     this->showPanel(static_cast<WeatherPanel>(next));
 }
 
@@ -68,10 +66,12 @@ void WeatherUI::onLeave() {
 void WeatherUI::showPanel(WeatherPanel panel) {
     _active_panel = panel;
 
+    // Hide all
     lv_obj_add_flag(ui_PanelTemperature, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(ui_PanelPressure,    LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(ui_PanelHumidity,    LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_PanelPressure, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_PanelHumidity, LV_OBJ_FLAG_HIDDEN);
 
+    // Show one
     switch (panel) {
         case WeatherPanel::TEMPERATURE:
             lv_obj_clear_flag(ui_PanelTemperature, LV_OBJ_FLAG_HIDDEN);
@@ -91,7 +91,7 @@ void WeatherUI::showPanel(WeatherPanel panel) {
 void WeatherUI::showWaiting() {
     if (!_initialized) return;
 
-    lv_label_set_text(ui_LabelTemp,     "---");
+    lv_label_set_text(ui_LabelTemp, "---");
     lv_label_set_text(ui_LabelPressure, "---");
     lv_label_set_text(ui_LabelHumidity, "---");
     lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);

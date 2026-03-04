@@ -9,12 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 #### `WeatherUI` — new screen adapter for weather data
-- New `WeatherUI` class realizes `IScreenUI`; constructor: `explicit WeatherUI(ESPNowReceiver& receiver)`
+- New `WeatherUI` class realizes `IScreenUI`; constructor: `explicit WeatherUI(ESPNowReceiver &receiver)`
 - Receives `WeatherDelta` packets (temperature, pressure, humidity) via `ESPNowReceiver::hasNewWeatherData()` / `getWeatherData()` — pull model consistent with `CompassUI` and `AttitudeUI`
 - Three panels: `PanelTemperature`, `PanelPressure`, `PanelHumidity` — knob button press cycles TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE (modulo)
 - Session min/max tracked per measurement (NAN sentinel, resets on reboot, not persisted to NVS)
-- Pressure trend indicator `ui_LabelTrend`: shows `↑` / `↓` when EMA of the readings (alpha 0.15) ≥ 0.5 hPa; hidden on first data point and stable readings
-- Connection tracking independent from compass: `_last_data_millis` with `CONNECTION_TIMEOUT_MS = 15000` ms (3× 5 s send interval); main value labels show `"---"` on timeout; session min/max preserved during disconnect
+- Pressure trend indicator `ui_LabelTrend`: shows `↑` / `↓` when EMA of the readings (alpha 0.10) ≥ 0.5 hPa; hidden on first data point and stable readings
+- Connection tracking independent from compass: `_last_data_millis` with `CONNECTION_TIMEOUT_MS = 6000` ms (3x 2 s send interval); main value labels show `"---"` on timeout; session min/max preserved during disconnect
 - Active panel persisted to NVS (namespace `"weather"`, key `"panel"`) on `onLeave()`; restored on `begin()`
 
 #### `IScreenUI.h` — abstract base class for all screen adapters
@@ -26,30 +26,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-#### `espnow_protocol.h` — wrapped in `namespace EspNow`, framing protocol added
-- All contents wrapped in `namespace EspNow {}` — prevents name collision with application-level structs in other translation units (e.g. `CMPS14Processor::HeadingDelta` in the sender repo)
-- `ESPNowReceiver.h`: `using namespace EspNow;` added — all protocol types remain available unqualified within receiver code
+#### `espnow_protocol.h` — wrapped in `namespace ESPNow`, framing protocol added
+- All contents wrapped in `namespace ESPNow {}` — prevents name collision with application-level structs in other translation units (e.g. `CMPS14Processor::HeadingDelta` in the sender repo)
+- `ESPNowReceiver.h`: `using namespace ESPNow;` added — all protocol types remain available unqualified within receiver code
 - **Added** `ESPNOW_MAGIC = 0x45534E57` — 4-byte magic (`'E''S''N''W'`) identifies own packets on a shared channel; packets from other ESP-NOW devices are silently discarded
-- **Added** `EspNowMsgType` — `enum class uint8_t`: `HEADING_DELTA=1`, `BATTERY_DELTA=2`, `WEATHER_DELTA=3`, `LEVEL_COMMAND=10`, `LEVEL_RESPONSE=11`
-- **Added** `EspNowHeader` — fixed 8-byte `__attribute__((packed))` struct: `magic` (uint32_t), `msg_type` (uint8_t), `payload_len` (uint8_t), `reserved[2]`; 4-byte aligned so float payloads remain naturally aligned
-- **Added** `EspNowPacket<TPayload>` — `__attribute__((packed))` template wrapping `EspNowHeader` + `TPayload`
-- **Added** `initHeader()` — inline helper to fill all `EspNowHeader` fields in one call
+- **Added** `ESPNowMsgType` — `enum class uint8_t`: `HEADING_DELTA=1`, `BATTERY_DELTA=2`, `WEATHER_DELTA=3`, `LEVEL_COMMAND=10`, `LEVEL_RESPONSE=11`
+- **Added** `ESPNowHeader` — fixed 8-byte `__attribute__((packed))` struct: `magic` (uint32_t), `msg_type` (uint8_t), `payload_len` (uint8_t), `reserved[2]`; 4-byte aligned so float payloads remain naturally aligned
+- **Added** `ESPNowPacket<TPayload>` — `__attribute__((packed))` template wrapping `ESPNowHeader` + `TPayload`
+- **Added** `initHeader()` — inline helper to fill all `ESPNowHeader` fields in one call
 - **Added** `BatteryDelta` — payload stub for future battery sender: `house_voltage`, `house_current`, `house_power`, `house_soc`, `start_voltage` (5 × float)
 - **Added** `WeatherDelta` — payload stub for future weather sender: `temperature_c`, `humidity_p`, `pressure_hpa` (3 × float)
 - Existing types (`HeadingDelta`, `HeadingData`, `LevelCommand`, `LevelResponse`, `convertDeltaToData`) unchanged; `LevelCommand`/`LevelResponse` magic fields now redundant (`msg_type` is the authoritative discriminator) but retained for now
 
 #### `ESPNowReceiver` — header-based dispatch, framed send
-- `onDataRecv()` rewritten: size-based type discrimination → `EspNowHeader`-based dispatch
-  - Minimum frame size guard: `data_len < sizeof(EspNowHeader)` → discard
+- `onDataRecv()` rewritten: size-based type discrimination → `ESPNowHeader`-based dispatch
+  - Minimum frame size guard: `data_len < sizeof(ESPNowHeader)` → discard
   - Magic validation: `hdr.magic != ESPNOW_MAGIC` → discard
-  - Frame integrity check: `data_len < sizeof(EspNowHeader) + hdr.payload_len` → discard
-  - `switch(static_cast<EspNowMsgType>(hdr.msg_type))` with `HEADING_DELTA`, `LEVEL_RESPONSE`, and `WEATHER_DELTA` cases; `default` silently ignores unknown types
+  - Frame integrity check: `data_len < sizeof(ESPNowHeader) + hdr.payload_len` → discard
+  - `switch(static_cast<ESPNowMsgType>(hdr.msg_type))` with `HEADING_DELTA`, `LEVEL_RESPONSE`, and `WEATHER_DELTA` cases; `default` silently ignores unknown types
   - `LEVEL_RESPONSE`: `memcmp(resp.magic, "LVLR")` check removed — `msg_type` is now the authoritative discriminator
 - **Added** `WEATHER_DELTA` case — stores `WeatherDelta` payload into `s_latest_weather`, sets `s_has_new_weather = true`; does not update `s_last_rx_millis` / `s_packet_count` (those are compass connection indicators; `WeatherUI` tracks own `_last_data_millis`)
 - **Added** `hasNewWeatherData() const` — thread-safe read of `s_has_new_weather`
 - **Added** `getWeatherData()` — thread-safe read of `s_latest_weather`, clears `s_has_new_weather`
 - **Added** `s_latest_weather` / `s_has_new_weather` `inline static` members
-- `sendLevelCommand()`: sends `EspNowPacket<LevelCommand>` (16 bytes) via `initHeader()` instead of bare `LevelCommand` (8 bytes)
+- `sendLevelCommand()`: sends `ESPNowPacket<LevelCommand>` (16 bytes) via `initHeader()` instead of bare `LevelCommand` (8 bytes)
 - **⚠ Breaking wire protocol change** — requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0
 
 #### `ScreenManager` — fully rewritten to index-based, type-erased carousel
@@ -106,31 +106,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### UI
 - Sun icon on the brightness screen changed - [Sun icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/sun)
+- Humidity icon on the weather screen - [Humidity icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/humidity)
+- Temperature icon on the weather screen - [Temperature icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/temperature)
+- Pressure icon on the weather screen - [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 - Level dialog Success! message timeout increased from 1500 ms to 2000 ms
 
 ### Developer Notes
 
 #### ESP-NOW wire protocol (v2.0.0)
 
-All packets now carry an 8-byte `EspNowHeader` prefix. Requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0.
+All packets now carry an 8-byte `ESPNowHeader` prefix. Requires coordinated update of CMPS14-ESP32-SignalK-gateway to v1.3.0.
 
 | Packet | v1.0.0 | v2.0.0 |
 |--------|--------|--------|
-| `HeadingDelta` | 16 B bare | 24 B (`EspNowHeader` + 16 B payload) |
-| `LevelCommand` | 8 B bare | 16 B (`EspNowHeader` + 8 B payload) |
-| `LevelResponse` | 8 B bare | 16 B (`EspNowHeader` + 8 B payload) |
+| `HeadingDelta` | 16 B bare | 24 B (`ESPNowHeader` + 16 B payload) |
+| `LevelCommand` | 8 B bare | 16 B (`ESPNowHeader` + 8 B payload) |
+| `LevelResponse` | 8 B bare | 16 B (`ESPNowHeader` + 8 B payload) |
+| `WeatherDelta` | - | 20 B (`ESPNowHeader` + 12 B payload) |
 
 ```cpp
 // Every packet on the wire
-struct EspNowHeader {       // 8 bytes, packed
+struct ESPNowHeader {       // 8 bytes, packed
     uint32_t magic;         // 0x45534E57 ('E''S''N''W')
-    uint8_t  msg_type;      // EspNowMsgType enum
+    uint8_t  msg_type;      // ESPNowMsgType enum
     uint8_t  payload_len;   // sizeof(payload struct)
     uint8_t  reserved[2];
 };
 
 template <typename TPayload>
-struct EspNowPacket { EspNowHeader hdr; TPayload payload; }; // packed
+struct ESPNowPacket { ESPNowHeader hdr; TPayload payload; }; // packed
 ```
 
 ---
