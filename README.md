@@ -209,13 +209,13 @@ struct WeatherDelta {
 };
 ```
 
-**Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway):
+**Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway), as broadcast:
 - `ESPNowPacket<HeadingDelta>`:
   - 24 B packet, 8 B header + 16 B payload
   - Payload: `HeadingDelta` struct (`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
   - `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
-**Receives** at ~0.5 Hz, in °C, % and hPA (sent by BME280 based sender):
+**Receives** at ~0.5 Hz, in °C, % and hPA (sent by BME280 based sender), as broadcast:
 - `ESPNowPacket<WeatherDelta>`:
   - 20 B packet, 8 B header + 12 B payload
   - Payload: `WeatherDelta` struct (`temperature_c`, `humidity_p`, `pressure_hpa`)
