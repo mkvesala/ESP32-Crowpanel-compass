@@ -38,7 +38,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Updates ESP-NOW protocol with framed packets (`ESPNowHeader`). Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
+| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
 ## Classes
@@ -48,7 +48,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 The classes on the UML class diagram are presented with their full public API. The private attributes only to demostrate the class relationships. The diagram includes the `ESPNowBroker` class of the CMPS14-ESP32-SignalK-gateway.
 
 **`CrowPanelApplication`:**
-- Owns: `Arduino_ESP32RGBPanel`, `Arduino_ST7701_RGBPanel`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
+- Owns: `Arduino_ESP32RGBPanel`, `Arduino_ST7701_RGBPanel`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
@@ -64,16 +64,22 @@ The classes on the UML class diagram are presented with their full public API. T
 - Abstract base class for UI adapter class implementations
 
 **`CompassUI`:**
-- Inherits: `IScreenUI`
+- Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the compass screen based on heading data
 - Owned by: `CrowPanelApplication`
 
 **`AttitudeUI`:**
-- Inherits: `IScreenUI`
+- Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
 - Owned by: `CrowPanelApplication`
+
+**`WeatherUI`:**
+- Realizes: `IScreenUI`
+- Uses: `ESPNowReceiver`
+- Responsible for: updateing LVGL UI objects on the weather screen based on temperature, pressure and humidity data.
+- Owned by: `CrowPanelApplication`  
 
 **`BrightnessUI`:**
 - Inherits: `IScreenUI`
@@ -117,11 +123,11 @@ The classes on the UML class diagram are presented with their full public API. T
 <img src="docs/weatherscreen1.png" height="240"> <img src="docs/weatherui1.jpeg" height="240"> <img src="docs/weatherscreen2.png" height="240"> <img src="docs/weatherui2.jpeg" height="240"> <img src="docs/weatherscreen3.png" height="240"> <img src="docs/weatherui3.jpeg" height="240">
 
 - Pressing the knob button toggles between TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE view
-- Last view stored in NVS onLeave()
+- Last view stored in NVS `onLeave()`
 - Stored view retrieved from NVS when returning to the screen (default: temperature)
 - Temperature view: Temperature °C, maximum and minimum temperature °C (runtime, not persistent in NVS)
 - Pressure view: Pressure hPA, maximum and minimum pressure hPA (runtime, not persistent), trend based on EMA (alpha 0.10) and 0.5 hPA threshold
-- Humidity view: Humidity %, maximum and minimum humidity % (runtime, not persisten)
+- Humidity view: Humidity %, maximum and minimum humidity % (runtime, not persistent)
 
 ### Brightness screen
 
@@ -142,7 +148,7 @@ The classes on the UML class diagram are presented with their full public API. T
 |--------|--------------|-------------------|--------------------|
 | Compass | Toggle T/M heading mode | Switch screen | — |
 | Attitude | Trigger level confirmation dialog | Switch screen | — |
-| Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | - |
+| Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
@@ -162,7 +168,7 @@ template <typename TPayload>
 } __attribute__((packed));
 ```
 
-`ESPNowHeader` contains `ESPNOW_MAGIC = 0x45534E57' which identifies the packets from others on the same channel.
+`ESPNowHeader` contains `ESPNOW_MAGIC = 0x45534E57' ("ESNW") which identifies the packets from others on the same channel.
 
 ```cpp
 struct ESPNowHeader {
@@ -226,7 +232,7 @@ struct WeatherDelta {
 
 **Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateqay v1.3.0 or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0 or newer.
 
 ### Diagnostics/debug
 
@@ -294,7 +300,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
 
-**Note:** the esp32 board package and LVGL are far beyond the latest versions. The example source code provided by Elecrow did not compile with the newer versions so the development was done on the older libraries. TODO: study if the project can be migrated to the latest versions.
+**Note:** the esp32 board package and LVGL are far beyond the latest versions. The example source code provided by Elecrow did not compile with the newer versions so the development was done on the older libraries. Migration task under issues.
 
 ## Installation
 
@@ -367,4 +373,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" height="240"> <img src="docs/weatherscreen2.png" height="240"> <img src="docs/weatherscreen3.png" height="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
