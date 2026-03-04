@@ -12,7 +12,7 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 Different screens selectable with the rotary knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
 - **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
-- **Weather screen** - toggle between temperature, pressure and humidity views
+- **Weather screen** — toggle between temperature, pressure and humidity views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
 
 Developed and tested on:
@@ -78,11 +78,11 @@ The classes on the UML class diagram are presented with their full public API. T
 **`WeatherUI`:**
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
-- Responsible for: updateing LVGL UI objects on the weather screen based on temperature, pressure and humidity data.
+- Responsible for: updating LVGL UI objects on the weather screen based on temperature, pressure and humidity data.
 - Owned by: `CrowPanelApplication`  
 
 **`BrightnessUI`:**
-- Inherits: `IScreenUI`
+- Realizes: `IScreenUI`
 - Uses: `Preferences`
 - Responsible for: backlight brightness adjustment with NVS persistence, updating LVGL UI objects on the brightness screen
 - Owned by: `CrowPanelApplication`
@@ -236,7 +236,7 @@ struct WeatherDelta {
 
 ### Diagnostics/debug
 
-Three lines printed to Serial every 5 seconds:
+Four lines printed to Serial every 5 seconds:
 ```
 [DIAG] PPS: 18.9 | UI updates: 44 | UI avg: 0.62 ms | UI max: 0.76 ms
 [DIAG] LVGL calls: 88 | avg: 47.96 ms | max: 164.03 ms

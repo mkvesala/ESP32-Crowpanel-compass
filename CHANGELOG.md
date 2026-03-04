@@ -401,11 +401,11 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
-[v2.0.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v2.0.0
-[v1.0.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v1.0.0
-[v0.4.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.4.0
-[v0.3.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.3.0
-[v0.2.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.2.0
-[v0.1.0]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.1.0
-[v0.0.2]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.0.2
-[v0.0.1]: https://github.com/mkvesala/ESP32-CrowPanel-compass/releases/tag/v0.0.1 
+[v2.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.0.0
+[v1.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v1.0.0
+[v0.4.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.4.0
+[v0.3.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.3.0
+[v0.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.2.0
+[v0.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.1.0
+[v0.0.2]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.0.2
+[v0.0.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.0.1 
