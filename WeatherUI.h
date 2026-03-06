@@ -48,8 +48,13 @@ private:
     float _humidity_p = NAN;
     float _pressure_hpa = NAN;
 
-    float _pressure_ema = NAN; // exponential moving average
-    float _pressure_ema_ref = NAN; // reference EMA for trend comparison
+     // exponential moving average
+    float _temperature_ema = NAN;
+    float _temperature_ema_ref = NAN;
+    float _pressure_ema = NAN;
+    float _pressure_ema_ref = NAN;
+    float _humidity_ema = NAN;
+    float _humidity_ema_ref = NAN;
 
     // Session min/max (NAN = not yet received, not saved to NVS)
     float _max_temp = NAN;
@@ -77,8 +82,12 @@ private:
     WeatherPanel loadPanel();
 
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
-    static constexpr float EMA_ALPHA = 0.10f;  // τ ≈ 19 s at 2 s intervals
-    static constexpr float PRESSURE_TREND_THRESHOLD = 0.5f; // hPa vs. reference EMA
+    static constexpr float TEMPERATURE_EMA_ALPHA = 0.05f;
+    static constexpr float PRESSURE_EMA_ALPHA = 0.05f;
+    static constexpr float HUMIDITY_EMA_ALPHA = 0.05f;
+    static constexpr float TEMPERATURE_TREND_THRESHOLD = 0.05f;
+    static constexpr float PRESSURE_TREND_THRESHOLD = 0.05f;
+    static constexpr float HUMIDITY_TREND_THRESHOLD = 0.05f;
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";

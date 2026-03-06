@@ -127,6 +127,29 @@ void WeatherUI::updateTemperature(float temp_c) {
 
     snprintf(buf, sizeof(buf), "Min %+.0f°C", _min_temp);
     lv_label_set_text(ui_LabelMinTemp, buf);
+
+    // Trend indicator update based on EMA
+    if (isnan(_temperature_ema)) {
+        // First reading — initialize EMA and reference, hide trend
+        _temperature_ema = temp_c;
+        _temperature_ema_ref = temp_c;
+        lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    _temperature_ema = TEMPERATURE_EMA_ALPHA * temp_c + (1.0f - TEMPERATURE_EMA_ALPHA) * _temperature_ema;
+
+    float diff = _temperature_ema - _temperature_ema_ref;
+    if (diff >= TEMPERATURE_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrendTemp, "↑");
+    } else if (diff <= -TEMPERATURE_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrendTemp, "↓");
+    } else {
+        // Neutral zone — hide indicator and drift reference toward EMA
+        lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
+        _temperature_ema_ref = _temperature_ema;
+    }
 }
 
 // Update pressure value, session min/max, and trend indicator
@@ -154,7 +177,7 @@ void WeatherUI::updatePressure(float pres_hpa) {
         lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
         return;
     }
-    _pressure_ema = EMA_ALPHA * pres_hpa + (1.0f - EMA_ALPHA) * _pressure_ema;
+    _pressure_ema = PRESSURE_EMA_ALPHA * pres_hpa + (1.0f - PRESSURE_EMA_ALPHA) * _pressure_ema;
 
     float diff = _pressure_ema - _pressure_ema_ref;
     if (diff >= PRESSURE_TREND_THRESHOLD) {
@@ -187,6 +210,29 @@ void WeatherUI::updateHumidity(float hum_p) {
 
     snprintf(buf, sizeof(buf), "Min %.0f%%", _min_humidity);
     lv_label_set_text(ui_LabelMinHumidity, buf);
+
+    // Trend indicator update based on EMA
+    if (isnan(_humidity_ema)) {
+        // First reading — initialize EMA and reference, hide trend
+        _humidity_ema = hum_p;
+        _humidity_ema_ref = hum_p;
+        lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    _humidity_ema = HUMIDITY_EMA_ALPHA * hum_p + (1.0f - HUMIDITY_EMA_ALPHA) * _humidity_ema;
+
+    float diff = _humidity_ema - _humidity_ema_ref;
+    if (diff >= HUMIDITY_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrendHumidity, "↑");
+    } else if (diff <= -HUMIDITY_TREND_THRESHOLD) {
+        lv_obj_clear_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(ui_LabelTrendHumidity, "↓");
+    } else {
+        // Neutral zone — hide indicator and drift reference toward EMA
+        lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
+        _humidity_ema_ref = _humidity_ema;
+    }
 }
 
 // Save active panel to NVS
