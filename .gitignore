@@ -4,6 +4,7 @@ secrets.h
 # Claude
 .claude/
 CLAUDE_SESSION_CONTEXT.md
+ESP32_gateway_pattern.md
 
 # SquareLine
 UI/squareline_project/backup/
