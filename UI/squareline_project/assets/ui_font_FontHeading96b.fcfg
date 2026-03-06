@@ -7,8 +7,10 @@
   "size": 96,
   "bpp": 4,
   "letters": 0,
-  "ranges": [],
-  "symbols": "1234567890-°+ChPa.,%↓↑",
+  "ranges": [
+    "0x20"
+  ],
+  "symbols": "1234567890-°+ChPa.,%↓↑VAW",
   "customparams": "--no-compress --no-prefilter",
   "uploaded": false
 }

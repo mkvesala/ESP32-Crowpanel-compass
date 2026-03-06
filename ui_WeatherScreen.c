@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_WeatherScreen = NULL;lv_obj_t *ui_PanelTemperature = NULL;lv_obj_t *ui_ImageTemperature = NULL;lv_obj_t *ui_LabelTemp = NULL;lv_obj_t *ui_LabelMaxTemp = NULL;lv_obj_t *ui_LabelMinTemp = NULL;lv_obj_t *ui_PanelPressure = NULL;lv_obj_t *ui_ImagePressure = NULL;lv_obj_t *ui_LabelPressure = NULL;lv_obj_t *ui_LabelMaxPressure = NULL;lv_obj_t *ui_LabelMinPressure = NULL;lv_obj_t *ui_LabelHpa = NULL;lv_obj_t *ui_LabelTrend = NULL;lv_obj_t *ui_PanelHumidity = NULL;lv_obj_t *ui_ImageHumidity = NULL;lv_obj_t *ui_LabelHumidity = NULL;lv_obj_t *ui_LabelMaxHumidity = NULL;lv_obj_t *ui_LabelMinHumidity = NULL;
+lv_obj_t *ui_WeatherScreen = NULL;lv_obj_t *ui_PanelTemperature = NULL;lv_obj_t *ui_ImageTemperature = NULL;lv_obj_t *ui_LabelTemp = NULL;lv_obj_t *ui_LabelMaxTemp = NULL;lv_obj_t *ui_LabelMinTemp = NULL;lv_obj_t *ui_LabelTrendTemp = NULL;lv_obj_t *ui_PanelPressure = NULL;lv_obj_t *ui_ImagePressure = NULL;lv_obj_t *ui_LabelPressure = NULL;lv_obj_t *ui_LabelMaxPressure = NULL;lv_obj_t *ui_LabelMinPressure = NULL;lv_obj_t *ui_LabelHpa = NULL;lv_obj_t *ui_LabelTrend = NULL;lv_obj_t *ui_PanelHumidity = NULL;lv_obj_t *ui_ImageHumidity = NULL;lv_obj_t *ui_LabelHumidity = NULL;lv_obj_t *ui_LabelMaxHumidity = NULL;lv_obj_t *ui_LabelMinHumidity = NULL;lv_obj_t *ui_LabelTrendHumidity = NULL;
 // event funtions
 
 // build funtions
@@ -70,11 +70,22 @@ lv_obj_set_style_text_color(ui_LabelMinTemp, lv_color_hex(0xFFFFFF), LV_PART_MAI
 lv_obj_set_style_text_opa(ui_LabelMinTemp, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelMinTemp, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+ui_LabelTrendTemp = lv_label_create(ui_PanelTemperature);
+lv_obj_set_width( ui_LabelTrendTemp, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelTrendTemp, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_LabelTrendTemp, 0 );
+lv_obj_set_y( ui_LabelTrendTemp, 80 );
+lv_obj_set_align( ui_LabelTrendTemp, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelTrendTemp,"↓↑");
+lv_obj_clear_flag( ui_LabelTrendTemp, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_obj_set_style_text_color(ui_LabelTrendTemp, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelTrendTemp, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelTrendTemp, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 ui_PanelPressure = lv_obj_create(ui_WeatherScreen);
 lv_obj_set_width( ui_PanelPressure, 480);
 lv_obj_set_height( ui_PanelPressure, 480);
 lv_obj_set_align( ui_PanelPressure, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_PanelPressure, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_clear_flag( ui_PanelPressure, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 lv_obj_set_style_bg_color(ui_PanelPressure, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_PanelPressure, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -152,7 +163,6 @@ ui_PanelHumidity = lv_obj_create(ui_WeatherScreen);
 lv_obj_set_width( ui_PanelHumidity, 480);
 lv_obj_set_height( ui_PanelHumidity, 480);
 lv_obj_set_align( ui_PanelHumidity, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_PanelHumidity, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_clear_flag( ui_PanelHumidity, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 lv_obj_set_style_bg_color(ui_PanelHumidity, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_PanelHumidity, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -202,6 +212,18 @@ lv_obj_set_style_text_color(ui_LabelMinHumidity, lv_color_hex(0xFFFFFF), LV_PART
 lv_obj_set_style_text_opa(ui_LabelMinHumidity, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelMinHumidity, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+ui_LabelTrendHumidity = lv_label_create(ui_PanelHumidity);
+lv_obj_set_width( ui_LabelTrendHumidity, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelTrendHumidity, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_LabelTrendHumidity, 0 );
+lv_obj_set_y( ui_LabelTrendHumidity, 80 );
+lv_obj_set_align( ui_LabelTrendHumidity, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelTrendHumidity,"↓↑");
+lv_obj_clear_flag( ui_LabelTrendHumidity, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_obj_set_style_text_color(ui_LabelTrendHumidity, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelTrendHumidity, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelTrendHumidity, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 }
 
 void ui_WeatherScreen_screen_destroy(void)
@@ -215,6 +237,7 @@ ui_ImageTemperature= NULL;
 ui_LabelTemp= NULL;
 ui_LabelMaxTemp= NULL;
 ui_LabelMinTemp= NULL;
+ui_LabelTrendTemp= NULL;
 ui_PanelPressure= NULL;
 ui_ImagePressure= NULL;
 ui_LabelPressure= NULL;
@@ -227,5 +250,6 @@ ui_ImageHumidity= NULL;
 ui_LabelHumidity= NULL;
 ui_LabelMaxHumidity= NULL;
 ui_LabelMinHumidity= NULL;
+ui_LabelTrendHumidity= NULL;
 
 }

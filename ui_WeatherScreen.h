@@ -19,6 +19,7 @@ extern lv_obj_t *ui_ImageTemperature;
 extern lv_obj_t *ui_LabelTemp;
 extern lv_obj_t *ui_LabelMaxTemp;
 extern lv_obj_t *ui_LabelMinTemp;
+extern lv_obj_t *ui_LabelTrendTemp;
 extern lv_obj_t *ui_PanelPressure;
 extern lv_obj_t *ui_ImagePressure;
 extern lv_obj_t *ui_LabelPressure;
@@ -31,6 +32,7 @@ extern lv_obj_t *ui_ImageHumidity;
 extern lv_obj_t *ui_LabelHumidity;
 extern lv_obj_t *ui_LabelMaxHumidity;
 extern lv_obj_t *ui_LabelMinHumidity;
+extern lv_obj_t *ui_LabelTrendHumidity;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

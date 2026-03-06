@@ -20,6 +20,7 @@ extern "C" {
 #include "ui_AttitudeScreen.h"
 #include "ui_BrightnessScreen.h"
 #include "ui_WeatherScreen.h"
+#include "ui_BatteryScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
@@ -35,6 +36,7 @@ LV_IMG_DECLARE( ui_img_sun3_png);   // assets/sun3.png
 LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png
 LV_IMG_DECLARE( ui_img_air2_png);   // assets/air2.png
 LV_IMG_DECLARE( ui_img_humidity2_png);   // assets/humidity2.png
+LV_IMG_DECLARE( ui_img_1299205280);   // assets/car-battery-2.png
 
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);
