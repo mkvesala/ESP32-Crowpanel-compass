@@ -1,18 +1,23 @@
 ![Logo](docs/projectlogo.svg)
 
-# ESP32 CrowPanel Compass Multi-Function Display
+# ESP32 CrowPanel Compass & Multi-Function Display
 
 [![Platform: ESP32-S3](https://img.shields.io/badge/Platform-ESP32--S3-blue)](https://www.espressif.com/en/sdks/esp-arduino)
 [![Display: CrowPanel 2.1"](https://img.shields.io/badge/Display-CrowPanel%202.1%22-lightgrey)](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-orange)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives compass heading, pitch and roll via ESP-NOW from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass. Receives temperature, air pressure and relative humidity via ESP-NOW from a BME280 based sender. Displays values on a round LVGL UI.
+Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
+- Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
+- Temperature, air pressure and relative humidity from a BME280 based sender
+- House battery bank voltage, current and SoC as well as starter battery voltage from a VEDirect based sender
+Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press).
 
 Different screens selectable with the rotary knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
 - **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
 - **Weather screen** — toggle between temperature, pressure and humidity views
+- **Battery screen** - toggle between house voltage, house current, house SoC and starter voltage views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
 
 Developed and tested on:
@@ -24,13 +29,14 @@ Developed and tested on:
 
 Integrated via ESP-NOW with:
 - [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
-- BME280 based ESP-NOW sender for temperature, humidity and pressure
+- BME280 based ESP-NOW sender for weather data
+- VEDirect based ESP-NOW sender for battery data
 
 ## Purpose of the project
 
 This is one of my individual digital boat projects. Use at your own risk. Not for safety-critical navigation.
 
-1. I needed a compact display for heading, pitch and roll near the helm, receiving data wirelessly from the compass, independently from WiFi and SignalK
+1. I needed a compact multi-function display near the helm, receiving data wirelessly from the compass and other devices, independently from WiFi and SignalK
 2. I wanted to learn LVGL and SquareLine Studio for touch-screen UI development
 3. I continued learning ESP32 C++ patterns and FreeRTOS from the companion compass project
 
@@ -38,7 +44,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v2.0.0 | Latest release. Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
+| v2.1.0 | Latest release. Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
+| v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
 ## Classes
@@ -79,6 +86,12 @@ The classes on the UML class diagram are presented with their full public API. T
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the weather screen based on temperature, pressure and humidity data.
+- Owned by: `CrowPanelApplication`  
+
+**`BatteryUI`:**
+- Realizes: `IScreenUI`
+- Uses: `ESPNowReceiver`
+- Responsible for: updating LVGL UI objects on the battery screen based on battery data.
 - Owned by: `CrowPanelApplication`  
 
 **`BrightnessUI`:**
@@ -125,9 +138,24 @@ The classes on the UML class diagram are presented with their full public API. T
 - Pressing the knob button toggles between TEMPERATURE → PRESSURE → HUMIDITY → TEMPERATURE view
 - Last view stored in NVS `onLeave()`
 - Stored view retrieved from NVS when returning to the screen (default: temperature)
-- Temperature view: Temperature °C, maximum and minimum temperature °C (runtime, not persistent in NVS)
-- Pressure view: Pressure hPA, maximum and minimum pressure hPA (runtime, not persistent), trend based on EMA (alpha 0.10) and 0.5 hPA threshold
-- Humidity view: Humidity %, maximum and minimum humidity % (runtime, not persistent)
+- Temperature view: Temperature °C, maximum and minimum
+- Pressure view: Pressure hPA, maximum and minimum
+- Humidity view: Humidity %, maximum and minimum
+- Min and max values are runtime only, not persistent in NVS
+- Trend indicators based on EMA. Alpha (0.05) and threshold (0.05) can be adjusted via constants for each view separately
+
+### Battery screen
+
+<img src="docs/batteryscreenhousev.png" height="240"> <img src="docs/batteryuihousev.jpeg" height="240"> <img src="docs/batteryscreenhousea.png" height="240"> <img src="docs/batteryuihousea.jpeg" height="240"> <img src="docs/batteryscreenhousesoc.png" height="240"> <img src="docs/batteryuihousesoc.jpeg" height="240"> <img src="docs/batteryscreenstart.png" height="240"> <img src="docs/batteryuistart.jpeg" height="240">
+
+- Pressing the knob button toggles between HOUSE VOLTAGE → HOUSE CURRENT → HOUSE SOC → STARTER VOLTAGE → HOUSE VOLTAGE view
+- Last view stored in NVS `onLeave()`
+- Stored view retrieved from NVS when returning to the screen (default: house voltage)
+- House voltage view: voltage V, maximum and minimum
+- House current view: current A, maximum and minimum
+- House SoC view: state-of-charge %, maximum and minimum
+- Min and max values are runtime only, not persistent in NVS
+- Trend indicators based on EMA. Alpha (0.05) and threshold (0.05) can be adjusted via constants for each view separately
 
 ### Brightness screen
 
@@ -149,11 +177,12 @@ The classes on the UML class diagram are presented with their full public API. T
 | Compass | Toggle T/M heading mode | Switch screen | — |
 | Attitude | Trigger level confirmation dialog | Switch screen | — |
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
+| Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | - |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
-- **Clockwise:** COMPASS → ATTITUDE → WEATHER → ... → BRIGHTNESS → COMPASS
-- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → WEATHER → ATTITUDE → COMPASS
+- **Clockwise:** COMPASS → ATTITUDE → WEATHER → BATTERY → ... → BRIGHTNESS → COMPASS
+- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → BATTERY → WEATHER → ATTITUDE → COMPASS
 
 Screen carousel is scalable, new screens may be added.
 
@@ -207,6 +236,14 @@ struct WeatherDelta {
    float humidity_p;      // percent
    float pressure_hpa;    // hPa
 };
+
+struct BatteryDelta {
+   float house_voltage;   // house bank volts
+   float house_current;   // house bank amps
+   float house_power;     // house bank watts
+   float house_soc;       // house bank soc percent
+   float start_voltage;   // starter battery volts
+};
 ```
 
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway), as broadcast:
@@ -219,6 +256,11 @@ struct WeatherDelta {
 - `ESPNowPacket<WeatherDelta>`:
   - 20 B packet, 8 B header + 12 B payload
   - Payload: `WeatherDelta` struct (`temperature_c`, `humidity_p`, `pressure_hpa`)
+
+**Receives** at ~1 Hz, in V, A and % (sent by VEDirect based sender), as broadcast:
+- `ESPNowPacket<BatteryDelta>`:
+  - 28 B packet, 8 B header + 20 B payload
+  - Payload: `BatteryDelta` struct (`house_voltage`, `house_current`, `house_power`, `house_soc`, `start_voltage`)
 
 **Sends** attitude leveling command as broadcast:
 - `ESPNowPacket<LevelCommand>`:
@@ -258,6 +300,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |
 | `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter + leveling state machine, realizes `IScreenUI` |
 | `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
+| `BatteryUI.h/cpp` | Class `BatteryUI` - battery screen adapter, realizes `IScreenUI` |
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
@@ -265,6 +308,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `ui_CompassScreen.h/.c` | SquareLine Studio generated |
 | `ui_AttitudeScreen.h/.c` | SquareLine Studio generated |
 | `ui_WeatherScreen.h/.c` | SquareLine Studio generated | 
+| `ui_BatteryScreen.h/.c` | SquareLine Studio generated |
 | `ui_BrightnessScreen.h/.c` | SquareLine Studio generated |
 | `ui_helpers.h/.c` | SquareLine Studio generated |
 | `ui_font_*.c` | Custom fonts |
@@ -283,7 +327,8 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 2. WiFi router with fixed channel 6
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
 4. BME280 based ESP-NOW sender
-5. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
+5. VEDirect based ESP-NOW sender
+6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
 
@@ -353,6 +398,8 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Sun icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/sun)
 
+[Battery icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/battery)
+
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
 Developed and tested using:
@@ -373,4 +420,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
