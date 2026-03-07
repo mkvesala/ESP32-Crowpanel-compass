@@ -185,6 +185,17 @@ void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, in
             break;
         }
 
+        case ESPNowMsgType::BATTERY_DELTA: {
+            if (hdr.payload_len != sizeof(BatteryDelta)) return;
+            BatteryDelta battery;
+            memcpy(&battery, payload, sizeof(BatteryDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_battery  = battery;
+            s_has_new_battery = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
@@ -206,6 +217,25 @@ WeatherDelta ESPNowReceiver::getWeatherData() {
     portENTER_CRITICAL(&s_spinlock);
     data = s_latest_weather;
     s_has_new_weather = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns true if new battery data packet available, otherwise false
+bool ESPNowReceiver::hasNewBatteryData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_battery;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest battery data packet received via ESP-NOW
+BatteryDelta ESPNowReceiver::getBatteryData() {
+    BatteryDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_battery;
+    s_has_new_battery = false;
     portEXIT_CRITICAL(&s_spinlock);
     return data;
 }

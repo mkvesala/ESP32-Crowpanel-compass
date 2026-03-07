@@ -10,6 +10,7 @@
 #include "CompassUI.h"
 #include "AttitudeUI.h"
 #include "WeatherUI.h"
+#include "BatteryUI.h"
 #include "BrightnessUI.h"
 #include "RotaryEncoder.h"
 #include "ScreenManager.h"
@@ -98,6 +99,7 @@ private:
     CompassUI _compassUI;
     AttitudeUI _attitudeUI;
     WeatherUI _weatherUI;
+    BatteryUI _batteryUI;
     BrightnessUI _brightnessUI;
     RotaryEncoder _encoder;
     ScreenManager _screenMgr;

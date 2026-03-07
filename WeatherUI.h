@@ -37,7 +37,7 @@ private:
         COUNT       = 3
     };
 
-    ESPNowReceiver  &_receiver;
+    ESPNowReceiver &_receiver;
     bool _initialized = false;
 
     // Active panel

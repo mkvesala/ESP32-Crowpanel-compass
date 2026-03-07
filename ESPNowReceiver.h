@@ -33,7 +33,9 @@ public:
     bool hasLevelResponse() const;
     bool getLevelResult();
     bool hasNewWeatherData() const;
+    bool hasNewBatteryData() const;
     WeatherDelta getWeatherData();
+    BatteryDelta getBatteryData();
 
     float getPacketsPerSecond() const { return _packets_per_second; }
 
@@ -56,6 +58,10 @@ private:
     // Static variables for weather data handling
     inline static WeatherDelta s_latest_weather = {};
     inline static volatile bool s_has_new_weather = false;
+
+    // Static variables for battery data handling
+    inline static BatteryDelta s_latest_battery = {};
+    inline static volatile bool s_has_new_battery = false;
     
     // ESP-NOW mac address for broadcasting
     inline static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
