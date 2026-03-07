@@ -73,6 +73,9 @@ void BatteryUI::onLeave() {
 void BatteryUI::showPanel(BatteryPanel panel) {
     _active_panel = panel;
 
+    lv_obj_add_flag(ui_LabelHouse, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_LabelStarter, LV_OBJ_FLAG_HIDDEN);
+
     // Hide all
     lv_obj_add_flag(ui_PanelHouseVoltage, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_PanelHouseAmps, LV_OBJ_FLAG_HIDDEN);

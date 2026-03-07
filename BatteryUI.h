@@ -92,9 +92,9 @@ private:
     static constexpr float VOLTAGE_EMA_ALPHA = 0.05f;
     static constexpr float CURRENT_EMA_ALPHA = 0.05f;
     static constexpr float SOC_EMA_ALPHA = 0.05f;
-    static constexpr float VOLTAGE_TREND_THRESHOLD = 0.05f;
-    static constexpr float CURRENT_TREND_THRESHOLD = 0.05f;
-    static constexpr float SOC_TREND_THRESHOLD = 0.05f;
+    static constexpr float VOLTAGE_TREND_THRESHOLD = 0.001f;
+    static constexpr float CURRENT_TREND_THRESHOLD = 0.001f;
+    static constexpr float SOC_TREND_THRESHOLD = 0.001f;
 
     static constexpr const char* NVS_NAMESPACE = "battery";
     static constexpr const char* NVS_KEY_PANEL = "panel";

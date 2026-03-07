@@ -143,7 +143,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - Pressure view: Pressure hPA, maximum and minimum
 - Humidity view: Humidity %, maximum and minimum
 - Min and max values are runtime only, not persistent in NVS
-- Trend indicators based on EMA. Alpha (0.05) and threshold (0.05) can be adjusted via constants for each view separately
+- Trend indicators based on EMA. Alpha (0.05) and threshold (0.001) can be adjusted via constants for each view separately
 
 ### Battery screen
 
@@ -156,7 +156,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - House current view: current A, maximum and minimum
 - House SoC view: state-of-charge %, maximum and minimum
 - Min and max values are runtime only, not persistent in NVS
-- Trend indicators based on EMA. Alpha (0.05) and threshold (0.05) can be adjusted via constants for each view separately
+- Trend indicators based on EMA. Alpha (0.05) and threshold (0.001) can be adjusted via constants for each view separately
 
 ### Brightness screen
 
@@ -167,7 +167,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - Knob rotation in ADJUSTING mode: ±2% brightness, updates arc, label and backlight in real-time
 - 3-second timeout after last rotation → saves to NVS and returns to idle
 - Brightness range: 2%–100% (2% minimum prevents screen going completely dark)
-- Default: 78% (~200/255)
+- Default: 48% (~122/255)
 - Persistence: ESP32 Preferences (NVS), namespace `"display"`, key `"brightness"`
 - PWM: GPIO6, LEDC channel 0, 5 kHz, 8-bit
 

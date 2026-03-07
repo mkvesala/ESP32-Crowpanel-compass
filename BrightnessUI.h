@@ -85,5 +85,5 @@ private:
     // NVS namespace and key, default brightness value
     static constexpr const char* NVS_NAMESPACE = "display";
     static constexpr const char* NVS_KEY_BRIGHTNESS = "brightness";
-    static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 78;  // 200/255 pwm value
+    static constexpr int8_t DEFAULT_BRIGHTNESS_PERCENT = 48;  // 122/255 pwm value
 };

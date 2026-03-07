@@ -85,9 +85,9 @@ private:
     static constexpr float TEMPERATURE_EMA_ALPHA = 0.05f;
     static constexpr float PRESSURE_EMA_ALPHA = 0.05f;
     static constexpr float HUMIDITY_EMA_ALPHA = 0.05f;
-    static constexpr float TEMPERATURE_TREND_THRESHOLD = 0.05f;
-    static constexpr float PRESSURE_TREND_THRESHOLD = 0.05f;
-    static constexpr float HUMIDITY_TREND_THRESHOLD = 0.05f;
+    static constexpr float TEMPERATURE_TREND_THRESHOLD = 0.001f;
+    static constexpr float PRESSURE_TREND_THRESHOLD = 0.001f;
+    static constexpr float HUMIDITY_TREND_THRESHOLD = 0.001f;
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";
