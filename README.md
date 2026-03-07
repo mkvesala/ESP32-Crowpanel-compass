@@ -11,9 +11,10 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
 - Temperature, air pressure and relative humidity from a BME280 based sender
 - House battery bank voltage, current and SoC as well as starter battery voltage from a VEDirect based sender
-Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press).
 
-Different screens selectable with the rotary knob:
+Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
+
+Different screens selectable by rotating the knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
 - **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
 - **Weather screen** — toggle between temperature, pressure and humidity views
@@ -37,7 +38,7 @@ Integrated via ESP-NOW with:
 This is one of my individual digital boat projects. Use at your own risk. Not for safety-critical navigation.
 
 1. I needed a compact multi-function display near the helm, receiving data wirelessly from the compass and other devices, independently from WiFi and SignalK
-2. I wanted to learn LVGL and SquareLine Studio for touch-screen UI development
+2. I wanted to learn LVGL and SquareLine Studio for UI development
 3. I continued learning ESP32 C++ patterns and FreeRTOS from the companion compass project
 
 ## Release history
