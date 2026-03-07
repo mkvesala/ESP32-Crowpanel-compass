@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.0] - 2026-03-07
+
+### Added
+
+#### `BatteryUI` — new screen adapter for battery data
+- New `BatteryUI` class realizes `IScreenUI`; constructor: `explicit BatteryUI(ESPNowReceiver &receiver)`
+- Receives `BatteryDelta` packets via `ESPNowReceiver::hasNewBatteryData()` / `getBatteryData()` — pull model consistent with other UI adapters
+- Four panels: `HOUSE_V` (house bank voltage), `HOUSE_A` (house bank current), `HOUSE_SOC` (state of charge), `START_V` (starter battery voltage) — knob button press cycles in order (modulo)
+- Session min/max tracked per measurement (NAN sentinel, resets on reboot, not persisted to NVS)
+- EMA-based trend indicators for all four measurements: `↑` / `↓` when EMA deviation exceeds threshold; hidden on first data point and stable readings; EMA alphas: `VOLTAGE_EMA_ALPHA = CURRENT_EMA_ALPHA = SOC_EMA_ALPHA = 0.05`; thresholds: `VOLTAGE_TREND_THRESHOLD = 0.05 V`, `CURRENT_TREND_THRESHOLD = 0.05 A`, `SOC_TREND_THRESHOLD = 0.05 %`
+- Connection tracking independent from compass sender: `_last_data_millis` with `CONNECTION_TIMEOUT_MS = 6000 ms`; main value labels show `"---"` on timeout; session min/max preserved during disconnect
+- Active panel persisted to NVS (namespace `"battery"`, key `"panel"`) on `onLeave()`; restored on `begin()`
+- Registered as screen index 3 in carousel: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → BRIGHTNESS(4)
+
+### Changed
+
+#### `WeatherUI` — trend indicators added for temperature and humidity panels
+- Temperature trend (`ui_LabelTrendTemp`) and humidity trend (`ui_LabelTrendHumidity`) added alongside the existing pressure trend (`ui_LabelTrend`) — same EMA pattern
+- All three trend labels now hidden in `begin()` and `showWaiting()` (previously only `ui_LabelTrend` was hidden — temperature and humidity trends could remain visible on disconnect)
+- EMA alpha and threshold values revised for all three panels: `TEMPERATURE_EMA_ALPHA = PRESSURE_EMA_ALPHA = HUMIDITY_EMA_ALPHA = 0.05`, `TEMPERATURE_TREND_THRESHOLD = PRESSURE_TREND_THRESHOLD = HUMIDITY_TREND_THRESHOLD = 0.05` (previously pressure used `alpha = 0.10`, `threshold = 0.5 hPa`)
+
+#### `ESPNowReceiver` — `BATTERY_DELTA` dispatch added
+- `onDataRecv()` switch extended with `BATTERY_DELTA` case — stores `BatteryDelta` payload into `s_latest_battery`, sets `s_has_new_battery = true`; does not update `s_last_rx_millis` / `s_packet_count` (those are compass connection indicators; `BatteryUI` tracks its own `_last_data_millis`)
+- Added `hasNewBatteryData() const` — thread-safe read of `s_has_new_battery`
+- Added `getBatteryData()` — thread-safe read of `s_latest_battery`, clears `s_has_new_battery`
+- Added `s_latest_battery` / `s_has_new_battery` `inline static` members
+
+#### `CrowPanelApplication` — `BatteryUI` added to carousel
+- `_batteryUI(ESPNowReceiver&)` member added; declared between `_weatherUI` and `_brightnessUI` to control construction order
+- `begin()`: calls `_batteryUI.begin()` and `_screenMgr.addScreen(&_batteryUI)` between weather and brightness
+- Screen carousel updated: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → BRIGHTNESS(4)
+
+---
+
 ## [v2.0.0] - 2026-03-04
 
 ### Added
@@ -401,6 +435,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v2.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.1.0
 [v2.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v1.0.0
 [v0.4.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v0.4.0

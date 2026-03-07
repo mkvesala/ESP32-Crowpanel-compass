@@ -19,8 +19,10 @@ void WeatherUI::begin() {
     // Load saved panel from NVS
     _active_panel = this->loadPanel();
 
-    // Trend label hidden until pressure data arrives
+    // Trend labels hidden until data arrives
+    lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
 
     // Show the active panel and waiting state
     this->showPanel(_active_panel);
@@ -94,7 +96,9 @@ void WeatherUI::showWaiting() {
     lv_label_set_text(ui_LabelTemp, "---");
     lv_label_set_text(ui_LabelPressure, "---");
     lv_label_set_text(ui_LabelHumidity, "---");
+    lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
 
     // Min/max labels: show "---" only if no session data yet
     if (isnan(_min_temp)) {

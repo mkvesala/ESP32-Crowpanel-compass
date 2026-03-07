@@ -76,7 +76,7 @@ void CrowPanelApplication::begin() {
     _batteryUI.begin();
     _brightnessUI.begin();
 
-    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BRIGHTNESS)
+    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BATTERY → BRIGHTNESS)
     _screenMgr.addScreen(&_compassUI);
     _screenMgr.addScreen(&_attitudeUI);
     _screenMgr.addScreen(&_weatherUI);

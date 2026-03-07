@@ -70,7 +70,7 @@ private:
     float _max_start_v = NAN;
     float _min_start_v = NAN;
 
-    // Connection tracking (weather sender is separate from compass sender)
+    // Connection tracking (battery sender is separate from compass sender)
     uint32_t _last_data_millis = 0;
     bool _last_connected = false;
 

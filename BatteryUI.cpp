@@ -35,7 +35,7 @@ void BatteryUI::begin() {
     _initialized = true;
 }
 
-// Realizes update(): fetch weather data from receiver and update UI
+// Realizes update(): fetch battery data from receiver and update UI
 void BatteryUI::update() {
     if (!_initialized) return;
 
