@@ -4,8 +4,8 @@
 // === P U B L I C ===
 
 // Constructor
-BrightnessUI::BrightnessUI(int pwm_channel)
-    : _pwm_channel(pwm_channel) {}
+BrightnessUI::BrightnessUI(uint8_t backlight_pin)
+    : _backlight_pin(backlight_pin) {}
 
 // Realizes getLvglScreen(): Return the LVGL screen object for this UI
 lv_obj_t* BrightnessUI::getLvglScreen() const {
@@ -137,7 +137,7 @@ void BrightnessUI::updateUI() {
 
 // Set HW backlight brightness
 void BrightnessUI::applyBrightness() {
-    ledcWrite(_pwm_channel, this->percentToPwm(_brightness_percent));
+    ledcWrite(_backlight_pin, this->percentToPwm(_brightness_percent));
 }
 
 // Translate % to pwm value

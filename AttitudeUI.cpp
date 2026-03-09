@@ -22,7 +22,7 @@ void AttitudeUI::begin() {
 
     // Set rotation pivot to the center of ImageHorizon element
     // PNG is 680x4, center point is 340, 2
-    lv_img_set_pivot(ui_ImageHorizon, 340, 2);
+    lv_image_set_pivot(ui_ImageHorizon, 340, 2);
 
     // Set ContainerLevelingDialog hidden
     lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
@@ -138,7 +138,7 @@ void AttitudeUI::showWaiting() {
 
     // Horizon to the neutral position
     lv_obj_set_y(ui_ImageHorizon, 0);
-    lv_img_set_angle(ui_ImageHorizon, 0);
+    lv_image_set_rotation(ui_ImageHorizon, 0);
 
     // Reset cached values
     _last_pitch_x10 = 0x7FFF;
@@ -164,7 +164,7 @@ void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
     // ROLL: Rotate ImageHorizon UI element
     // Roll port side → horizon rotates starboard
     // lv_img_set_angle: positive angle = clockwise, uses 0.1° resolution
-    lv_img_set_angle(ui_ImageHorizon, -roll_x10);
+    lv_image_set_rotation(ui_ImageHorizon, -roll_x10);
 }
 
 // Update UI label element for pitch value

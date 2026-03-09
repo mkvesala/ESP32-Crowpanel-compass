@@ -130,7 +130,7 @@ bool ESPNowReceiver::getLevelResult() {
 // === P R I V A T E ===
 
 // Callback for data receive of ESP-NOW
-void ESPNowReceiver::onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len) {
+void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int data_len) {
 
     // Minimum frame size check
     if (data_len < (int)sizeof(ESPNowHeader)) return;

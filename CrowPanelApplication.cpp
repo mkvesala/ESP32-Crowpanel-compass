@@ -7,11 +7,11 @@ static uint32_t s_flush_max = 0;
 static uint32_t s_flush_calls = 0;
 
 // Static callback function for lvgl
-static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
+static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
 
-    auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data);
+    auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(lv_display_get_user_data(disp));
     if (!gfx) {
-        lv_disp_flush_ready(disp);
+        lv_display_flush_ready(disp);
         return;
     }
     uint32_t t0 = micros();
@@ -19,15 +19,14 @@ static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* 
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
-    // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
-    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
 
     uint32_t ft = micros() - t0;
     s_flush_total += ft;
     s_flush_calls++;
     if (ft > s_flush_max) s_flush_max = ft;
 
-    lv_disp_flush_ready(disp);
+    lv_display_flush_ready(disp);
 }
 
 // === P U B L I C ===
@@ -51,7 +50,7 @@ CrowPanelApplication::CrowPanelApplication():
     _attitudeUI(_receiver),
     _weatherUI(_receiver),
     _batteryUI(_receiver),
-    _brightnessUI(PWM_CHANNEL),
+    _brightnessUI(SCREEN_BACKLIGHT_PIN),
     _encoder(_pcf8574),
     _screenMgr() {}
 
@@ -165,30 +164,27 @@ void CrowPanelApplication::initDisplay() {
 
 // Screen backlight
 void CrowPanelApplication::initBacklight(uint8_t duty) {
-    ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
-    ledcAttachPin(SCREEN_BACKLIGHT_PIN, PWM_CHANNEL);
-    ledcWrite(PWM_CHANNEL, duty);
+    ledcAttach(SCREEN_BACKLIGHT_PIN, PWM_FREQ, PWM_RESOLUTION);
+    ledcWrite(SCREEN_BACKLIGHT_PIN, duty);
 }
 
 // LVGL init
 void CrowPanelApplication::initLvgl() {
 
     lv_init();
+    lv_tick_set_cb(millis);
 
-    _buf1 = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    _buf1 = (uint8_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
     if (!_buf1) {
         while (1) delay(1000);  // Halt
     }
-    lv_disp_draw_buf_init(&_draw_buf, _buf1, NULL, BUF_PIXELS);
 
-    static lv_disp_drv_t disp_drv;
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = SCREEN_WIDTH;
-    disp_drv.ver_res = SCREEN_HEIGHT;
-    disp_drv.flush_cb = lvglFlushCb;
-    disp_drv.draw_buf = &_draw_buf;
-    disp_drv.user_data = &_gfx;
-    lv_disp_drv_register(&disp_drv);
+    _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
+    lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
+    lv_display_set_buffers(_lvgl_disp, _buf1, NULL,
+                           sizeof(lv_color_t) * BUF_PIXELS,
+                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_user_data(_lvgl_disp, &_gfx);
 
 }
 

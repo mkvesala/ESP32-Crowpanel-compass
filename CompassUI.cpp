@@ -19,7 +19,7 @@ lv_obj_t* CompassUI::getLvglScreen() const {
 void CompassUI::begin() {
     if (_initialized) return;
     // Rotating compass rose is expensive, remove antialiasing to make it cheaper
-    lv_img_set_antialias(ui_ImageCompassRose, false);
+    lv_image_set_antialias(ui_ImageCompassRose, false);
     _initialized = true;
     this->showWaiting();
 }
@@ -101,7 +101,7 @@ void CompassUI::setCompassRotation(uint16_t heading_x10) {
 
     // Rotate the rose to the opposite direction
     int16_t angle = -(int16_t)heading_x10;
-    lv_img_set_angle(ui_ImageCompassRose, angle);
+    lv_image_set_rotation(ui_ImageCompassRose, angle);
 }
 
 // Update the heading value to the UI label element

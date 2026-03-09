@@ -28,7 +28,7 @@ class BrightnessUI : public IScreenUI {
 
 public:
 
-    explicit BrightnessUI(int pwm_channel);
+    explicit BrightnessUI(uint8_t backlight_pin);
 
     void begin() override;
     lv_obj_t* getLvglScreen() const override;
@@ -54,7 +54,7 @@ private:
     int8_t _brightness_percent = DEFAULT_BRIGHTNESS_PERCENT;
 
     // Hardware
-    int _pwm_channel = 0;
+    uint8_t _backlight_pin;
 
     // Timing
     uint32_t _last_rotation_time = 0;

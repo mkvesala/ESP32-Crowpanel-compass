@@ -49,10 +49,9 @@ private:
     static constexpr uint8_t PCF_LCD_RST = P4;  // 4
     static constexpr uint8_t PCF_RE_BTN  = P5;  // 5
 
-    // Backlight PWM (ESP32 core 2.0.14 API)
+    // Backlight PWM (ESP32 core 3.x API)
     static constexpr uint8_t SCREEN_BACKLIGHT_PIN = 6;
     static constexpr uint32_t PWM_FREQ = 5000;
-    static constexpr uint8_t PWM_CHANNEL = 0;
     static constexpr uint8_t PWM_RESOLUTION = 8;
     static constexpr uint8_t PWM_DUTY = 200;
 
@@ -60,9 +59,9 @@ private:
     static constexpr uint16_t SCREEN_WIDTH  = 480;
     static constexpr uint16_t SCREEN_HEIGHT = 480;
 
-    // LVGL draw buffer (120 lines)
-    lv_disp_draw_buf_t _draw_buf;
-    lv_color_t *_buf1 = nullptr;
+    // LVGL display and draw buffer (120 lines)
+    lv_display_t* _lvgl_disp = nullptr;
+    uint8_t *_buf1 = nullptr;
     static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 120;
 
     // LVGL tick (adaptive, driven by lv_timer_handler() return value)

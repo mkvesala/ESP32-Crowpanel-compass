@@ -42,7 +42,7 @@ public:
 private:
 
     // Static callback for ESP-NOW
-    static void onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len);
+    static void onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int data_len);
 
     // Static data storage for ESP-NOW
     inline static portMUX_TYPE s_spinlock = portMUX_INITIALIZER_UNLOCKED;
