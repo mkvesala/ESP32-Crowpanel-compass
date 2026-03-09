@@ -158,7 +158,7 @@ void CrowPanelApplication::initPcfAndResetLines() {
 // Display init
 void CrowPanelApplication::initDisplay() {
     _gfx.begin();
-    _gfx.fillScreen(BLACK);
+    _gfx.fillScreen(RGB565_BLACK);
 }
 
 // Screen backlight
