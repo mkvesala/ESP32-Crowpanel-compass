@@ -9,6 +9,8 @@ ESP32_gateway_pattern.md
 # SquareLine
 UI/squareline_project/backup/
 UI/squareline_project/cache/
+UI/squareline_project_v3/backup/
+UI/squareline_project_v3/cache/
 ui_files/
 
 # Build artifacts
