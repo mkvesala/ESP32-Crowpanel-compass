@@ -86,9 +86,10 @@ private:
     uint32_t _diag_lvgl_calls = 0;
     uint32_t _diag_last_print = 0;
 
-    // Arduino_GFX bus + panel
+    // Arduino_GFX: SPI init bus + RGB panel bus + display
+    Arduino_SWSPI _init_bus;
     Arduino_ESP32RGBPanel _bus;
-    Arduino_ST7701_RGBPanel _gfx;
+    Arduino_RGB_Display _gfx;
 
     // Knob button switch
     PCF8574 _pcf8574;

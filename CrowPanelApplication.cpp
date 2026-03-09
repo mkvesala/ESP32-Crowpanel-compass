@@ -9,7 +9,7 @@ static uint32_t s_flush_calls = 0;
 // Static callback function for lvgl
 static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
 
-    auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(lv_display_get_user_data(disp));
+    auto* gfx = static_cast<Arduino_RGB_Display*>(lv_display_get_user_data(disp));
     if (!gfx) {
         lv_display_flush_ready(disp);
         return;
@@ -33,17 +33,16 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
 
 // Constructor
 CrowPanelApplication::CrowPanelApplication():
-    _bus(16, 2, 1,
-        40, 7, 15, 41,
-        46, 3, 8, 18, 17,
-        14, 13, 12, 11, 10, 9,
-        5, 45, 48, 47, 21),
-    _gfx(&_bus, GFX_NOT_DEFINED, 0,
-        false, 480, 480,
-        st7701_type5_init_operations, sizeof(st7701_type5_init_operations),
-        true,
-        10, 4, 20,
-        10, 4, 20),
+    _init_bus(GFX_NOT_DEFINED, 16, 2, 1, GFX_NOT_DEFINED),
+    _bus(40 /* DE */, 7 /* VSYNC */, 15 /* HSYNC */, 41 /* PCLK */,
+        46 /* R0 */, 3 /* R1 */, 8 /* R2 */, 18 /* R3 */, 17 /* R4 */,
+        14 /* G0 */, 13 /* G1 */, 12 /* G2 */, 11 /* G3 */, 10 /* G4 */, 9 /* G5 */,
+        5 /* B0 */, 45 /* B1 */, 48 /* B2 */, 47 /* B3 */, 21 /* B4 */,
+        0, 10, 4, 20,   /* hsync: polarity, front, pulse, back */
+        0, 10, 4, 20),  /* vsync: polarity, front, pulse, back */
+    _gfx(480 /* width */, 480 /* height */, &_bus, 0 /* rotation */, true /* auto_flush */,
+        &_init_bus, GFX_NOT_DEFINED /* RST */,
+        st7701_type5_init_operations, sizeof(st7701_type5_init_operations)),
     _pcf8574(0x21),
     _receiver(),
     _compassUI(_receiver),
