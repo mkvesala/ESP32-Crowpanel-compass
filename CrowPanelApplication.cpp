@@ -6,8 +6,8 @@ static uint32_t s_flush_total = 0;
 static uint32_t s_flush_max = 0;
 static uint32_t s_flush_calls = 0;
 
-// Static callback function for lvgl (direct rendering mode)
-// LVGL renders directly to the PSRAM framebuffer; we just flush the CPU cache.
+// Static callback function for LVGL (partial rendering mode)
+// LVGL renders a region into the SRAM draw buffer, then we blit it to the display.
 static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
 
     auto* gfx = static_cast<Arduino_RGB_Display*>(lv_display_get_user_data(disp));
@@ -17,8 +17,9 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
     }
     uint32_t t0 = micros();
 
-    // Flush CPU cache → PSRAM so DMA reads the pixels LVGL just rendered.
-    gfx->flush(true);
+    int32_t w = area->x2 - area->x1 + 1;
+    int32_t h = area->y2 - area->y1 + 1;
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h);
 
     uint32_t ft = micros() - t0;
     s_flush_total += ft;
@@ -157,11 +158,14 @@ void CrowPanelApplication::initPcfAndResetLines() {
 // Display init
 void CrowPanelApplication::initDisplay() {
     _gfx.begin();
-    _gfx.fillScreen(RGB565_BLACK);
+    Serial.printf("[INIT] _gfx.begin done at %lu ms\n", millis());
+    _gfx.fillScreen(BLACK);
 }
 
 // Screen backlight
 void CrowPanelApplication::initBacklight(uint8_t duty) {
+    Serial.print("Init backlight called at (ms): ");
+    Serial.println(millis());
     ledcAttach(SCREEN_BACKLIGHT_PIN, PWM_FREQ, PWM_RESOLUTION);
     ledcWrite(SCREEN_BACKLIGHT_PIN, duty);
 }
@@ -172,18 +176,20 @@ void CrowPanelApplication::initLvgl() {
     lv_init();
     lv_tick_set_cb(millis);
 
-    // Direct rendering mode: LVGL renders into the GFX PSRAM framebuffer directly.
-    // No intermediate SRAM copy buffer needed.
-    uint16_t* fb = _gfx.getFramebuffer();
-    if (!fb) {
-        while (1) delay(1000);  // Halt
+    // Partial rendering mode: LVGL renders into an SRAM draw buffer (120 lines),
+    // then lvglFlushCb blits each region to the display via draw16bitRGBBitmap.
+    // Buffer size uses sizeof(uint16_t) (RGB565, 2 bytes/pixel) — NOT sizeof(lv_color_t)
+    // which is 3 bytes in LVGL 9 and would cause wrong flush-row calculations.
+    _buf1 = (uint8_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    if (!_buf1) {
+        while (1) delay(1000);  // Halt: out of SRAM
     }
 
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
-    lv_display_set_buffers(_lvgl_disp, (uint8_t*)fb, nullptr,
-                           SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t),
-                           LV_DISPLAY_RENDER_MODE_DIRECT);
+    lv_display_set_buffers(_lvgl_disp, _buf1, nullptr,
+                           sizeof(uint16_t) * BUF_PIXELS,
+                           LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_user_data(_lvgl_disp, &_gfx);
 
 }

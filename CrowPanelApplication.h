@@ -59,8 +59,10 @@ private:
     static constexpr uint16_t SCREEN_WIDTH  = 480;
     static constexpr uint16_t SCREEN_HEIGHT = 480;
 
-    // LVGL display (direct rendering mode — no separate draw buffer)
+    // LVGL display + partial draw buffer (120 lines × 480 px × 2 bytes = 115 200 B SRAM)
     lv_display_t* _lvgl_disp = nullptr;
+    uint8_t* _buf1 = nullptr;
+    static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 120;
 
     // LVGL tick (adaptive, driven by lv_timer_handler() return value)
     uint32_t _last_lvgl_tick = 0;
