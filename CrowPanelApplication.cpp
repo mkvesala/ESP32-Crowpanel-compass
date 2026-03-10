@@ -19,6 +19,15 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
+    // DEBUG: print once to see px_map address and first pixel value
+    static bool s_debug_done = false;
+    if (!s_debug_done) {
+        s_debug_done = true;
+        Serial.printf("[FLUSH DBG] px_map=%p area=(%d,%d)-(%d,%d) w=%lu h=%lu px[0]=0x%04X px[1]=0x%04X\n",
+            px_map, area->x1, area->y1, area->x2, area->y2, w, h,
+            ((uint16_t*)px_map)[0], ((uint16_t*)px_map)[1]);
+    }
+
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
 
     uint32_t ft = micros() - t0;
@@ -177,6 +186,7 @@ void CrowPanelApplication::initLvgl() {
     if (!_buf1) {
         while (1) delay(1000);  // Halt
     }
+    Serial.printf("[LVGL DBG] _buf1=%p size=%lu bytes\n", _buf1, (uint32_t)(sizeof(lv_color_t) * BUF_PIXELS));
 
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
