@@ -6,7 +6,8 @@ static uint32_t s_flush_total = 0;
 static uint32_t s_flush_max = 0;
 static uint32_t s_flush_calls = 0;
 
-// Static callback function for lvgl
+// Static callback function for lvgl (direct rendering mode)
+// LVGL renders directly to the PSRAM framebuffer; we just flush the CPU cache.
 static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
 
     auto* gfx = static_cast<Arduino_RGB_Display*>(lv_display_get_user_data(disp));
@@ -16,19 +17,8 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
     }
     uint32_t t0 = micros();
 
-    uint32_t w = (area->x2 - area->x1 + 1);
-    uint32_t h = (area->y2 - area->y1 + 1);
-
-    // DEBUG: print once to see px_map address and first pixel value
-    static bool s_debug_done = false;
-    if (!s_debug_done) {
-        s_debug_done = true;
-        Serial.printf("[FLUSH DBG] px_map=%p area=(%d,%d)-(%d,%d) w=%lu h=%lu px[0]=0x%04X px[1]=0x%04X\n",
-            px_map, area->x1, area->y1, area->x2, area->y2, w, h,
-            ((uint16_t*)px_map)[0], ((uint16_t*)px_map)[1]);
-    }
-
-    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
+    // Flush CPU cache → PSRAM so DMA reads the pixels LVGL just rendered.
+    gfx->flush(true);
 
     uint32_t ft = micros() - t0;
     s_flush_total += ft;
@@ -182,17 +172,18 @@ void CrowPanelApplication::initLvgl() {
     lv_init();
     lv_tick_set_cb(millis);
 
-    _buf1 = (uint8_t *)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
-    if (!_buf1) {
+    // Direct rendering mode: LVGL renders into the GFX PSRAM framebuffer directly.
+    // No intermediate SRAM copy buffer needed.
+    uint16_t* fb = _gfx.getFramebuffer();
+    if (!fb) {
         while (1) delay(1000);  // Halt
     }
-    Serial.printf("[LVGL DBG] _buf1=%p size=%lu bytes\n", _buf1, (uint32_t)(sizeof(lv_color_t) * BUF_PIXELS));
 
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
-    lv_display_set_buffers(_lvgl_disp, _buf1, NULL,
-                           sizeof(lv_color_t) * BUF_PIXELS,
-                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(_lvgl_disp, (uint8_t*)fb, nullptr,
+                           SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t),
+                           LV_DISPLAY_RENDER_MODE_DIRECT);
     lv_display_set_user_data(_lvgl_disp, &_gfx);
 
 }
