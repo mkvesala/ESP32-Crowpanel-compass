@@ -61,7 +61,7 @@ private:
 
     // LVGL display + partial draw buffer (120 lines × 480 px × 2 bytes = 115 200 B SRAM)
     lv_display_t* _lvgl_disp = nullptr;
-    uint8_t* _buf1 = nullptr;
+    uint16_t* _buf1 = nullptr;
     static constexpr uint32_t BUF_PIXELS = SCREEN_WIDTH * 120;
 
     // LVGL tick (adaptive, driven by lv_timer_handler() return value)

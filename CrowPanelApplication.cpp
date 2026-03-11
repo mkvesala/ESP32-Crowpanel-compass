@@ -6,7 +6,7 @@ static uint32_t s_flush_total = 0;
 static uint32_t s_flush_max = 0;
 static uint32_t s_flush_calls = 0;
 
-// Static callback function for LVGL (partial rendering mode)
+// Static callback function for LVGL (using now partial rendering mode)
 // LVGL renders a region into the SRAM draw buffer, then we blit it to the display.
 static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
 
@@ -19,7 +19,10 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
 
     int32_t w = area->x2 - area->x1 + 1;
     int32_t h = area->y2 - area->y1 + 1;
-    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h);
+    // lv_draw_sw_rgb565_swap(px_map, w * h); // Not needed?
+    // gfx->flush(true); // DIRECT rendering mode
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h); // PARTIAL rendering mode
+    // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h); // PARTIAL rendering mode, Big endian
 
     uint32_t ft = micros() - t0;
     s_flush_total += ft;
@@ -158,9 +161,24 @@ void CrowPanelApplication::initPcfAndResetLines() {
 // Display init
 void CrowPanelApplication::initDisplay() {
     _gfx.begin();
-    Serial.printf("[INIT] _gfx.begin done at %lu ms\n", millis());
+    _gfx.fillScreen(RGB565_BLACK);
+    delay(2000);
+    _gfx.fillScreen(RGB565_WHITE);
+    delay(2000);
+    _gfx.fillScreen(RGB565_RED);
+    delay(2000);
     _gfx.fillScreen(RGB565_GREEN);
-    delay(5000);
+    delay(2000);
+    _gfx.fillScreen(RGB565_BLUE);
+    delay(2000);
+    _gfx.fillScreen(RGB565_YELLOW);
+    delay(2000);
+    _gfx.fillScreen(RGB565_CYAN);
+    delay(2000);
+    _gfx.fillScreen(RGB565_MAGENTA);
+    delay(2000);
+    _gfx.fillScreen(RGB565_BLACK);
+    delay(2000);
 }
 
 // Screen backlight
@@ -179,16 +197,31 @@ void CrowPanelApplication::initLvgl() {
     // then lvglFlushCb blits each region to the display via draw16bitRGBBitmap.
     // Buffer size uses sizeof(uint16_t) (RGB565, 2 bytes/pixel) — NOT sizeof(lv_color_t)
     // which is 3 bytes in LVGL 9 and would cause wrong flush-row calculations.
-    _buf1 = (uint8_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    _buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    // _buf1 = _gfx.getFramebuffer(); // DIRECT rendering mode
     if (!_buf1) {
         while (1) delay(1000);  // Halt: out of SRAM
     }
 
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
-    lv_display_set_buffers(_lvgl_disp, _buf1, nullptr,
+    
+    // lv_display_set_color_format(_lvgl_disp, LV_COLOR_FORMAT_RGB565); // Not needed?
+    
+    // DIRECT rendeering mode:
+    // lv_display_set_buffers(_lvgl_disp,
+    //                        (void*)_buf1,
+    //                        nullptr,
+    //                        SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t),
+    //                        LV_DISPLAY_RENDER_MODE_DIRECT);
+
+    // PARTIAL rendering mode
+    lv_display_set_buffers(_lvgl_disp,
+                           _buf1,
+                           nullptr,
                            sizeof(uint16_t) * BUF_PIXELS,
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
+    
     lv_display_set_user_data(_lvgl_disp, &_gfx);
 
 }
