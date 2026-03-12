@@ -246,4 +246,127 @@ VAROITUS: SquareLine Studio tyhjentää export-hakemiston kokonaan — git commi
 - `LV_COLOR_16_SWAP`: tarkista onko se aktiivinen `lv_conf.h` :ssa ennen B-vaiheen aloitusta; jos on, muista lisätä `lv_display_set_color_format(...RGB565_SWAPPED)` B1:n yhteydessä
 - LVGL 9 `lv_conf.h`: `LV_TICK_CUSTOM=1` on projektin kannalta kriittinen asetus — varmista säilyminen uudessa konfissa
 
+---
+
+## Toteutunut migraatio — mitä oikeasti muutettiin
+
+**Lopputulos:** LVGL 9.5.0 + ESP32 Core 3.3.7 + Arduino_GFX 1.6.5 — toimii ✅
+
+Alla kuvataan kaikki todelliset muutokset suunniteltuun verrattuna. Useita kohtia poikkeaa alkuperäisestä suunnitelmasta.
+
+---
+
+### Vaihe A — ESP32 Core 2.0.14 → 3.3.7 ✅
+
+Toteutui suunnitelman mukaisesti.
+
+**A1. LEDC PWM** (`CrowPanelApplication.cpp::initBacklight`, `BrightnessUI.cpp`): toteutui kuten suunniteltu.
+
+**A2. ESP-NOW callback** (`ESPNowReceiver.h/.cpp`): toteutui kuten suunniteltu.
+
+**A3. Arduino_GFX 1.3.1 → 1.6.5** — poikkesi suunnitelmasta merkittävästi:
+
+- `Arduino_ST7701_RGBPanel` **ei ole** Arduino Library Manager -versiossa 1.6.5 (vain GitHub-versiossa). Pakko siirtyä `Arduino_RGB_Display`-lähestymiseen.
+- Uusi GFX-objektirakenne (`CrowPanelApplication.h`):
+  ```cpp
+  // Vanha (1.3.1):
+  Arduino_ESP32RGBPanel _bus;
+  Arduino_ST7701_RGBPanel _gfx;
+
+  // Uusi (1.6.5):
+  Arduino_SWSPI _init_bus;        // erillinen SPI-väylä init-komennoille
+  Arduino_ESP32RGBPanel _bus;
+  Arduino_RGB_Display _gfx;       // auto_flush=true
+  ```
+- `_gfx.begin()` palauttaa `bool` (1.6.5), ei `void` kuten `Arduino_ST7701_RGBPanel`:ssa.
+
+---
+
+### Vaihe B — LVGL 8.3.6 → 9.5.0 ✅
+
+**B1+B2. Display driver + flush callback** — toteutui pääosin suunnitelman mukaan, mutta kolme kriittistä poikkeamaa:
+
+**Poikkeama 1 — Buffer-tyyppi ja koko:**
+```cpp
+// Suunniteltu (virheellinen):
+_buf1 = (uint8_t*)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, ...);
+//  sizeof(lv_color_t) == 3 LVGL 9:ssä (RGB888) → väärä koko!
+
+// Toteutunut (oikea):
+uint16_t* _buf1 = nullptr;  // tyyppi uint16_t*, ei uint8_t*
+_buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, ...);
+// sizeof(uint16_t) == 2 → oikea RGB565-koko, 480×120×2 = 115 200 B
+```
+
+**Poikkeama 2 — flush-callbackin cast-tyyppi:**
+```cpp
+// Suunniteltu (vanha tyyppi jäi):
+auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(...);
+
+// Toteutunut:
+auto* gfx = static_cast<Arduino_RGB_Display*>(...);
+```
+
+**Poikkeama 3 — `lv_tick_set_cb` korvaa `LV_TICK_CUSTOM`:**
+- `LV_TICK_CUSTOM` ei ole enää LVGL 9:n `lv_conf.h`:ssa
+- Ticking hoidetaan koodissa: `lv_tick_set_cb(millis)` `initLvgl()`-funktiossa
+
+**B3. Image widget API** (`CompassUI.cpp`, `AttitudeUI.cpp`): toteutui kuten suunniteltu.
+
+**B4. `lv_conf.h`** — poikkesi suunnitelmasta:
+- Kaikki asetukset (`LV_COLOR_DEPTH 16`, `LV_DRAW_BUF_STRIDE_ALIGN 1`, `LV_DRAW_SW_SUPPORT_RGB565_SWAPPED 1`, `LV_MEM_SIZE 64KB`) vastaavat LVGL 9:n oletusarvoja — lv_conf.h:ssa ei ole projektikohtaisia muutoksia
+- Tiedosto siirretty projektin juureen (`lv_conf.h` repossa) — löytyy `__has_include`-mekanismilla automaattisesti ennen libraries/-kansion versiota
+
+**B5. SquareLine Studio re-export**: toteutui kuten suunniteltu.
+
+---
+
+### Kriittinen GFX-ongelma ja ratkaisu — pystyviivakuvio
+
+Suurin työ oli satunnaisen pystyviivakuvion poistaminen näytöltä. Juurisyy ja ratkaisu:
+
+**Juurisyy: `_bus`-konstruktorin hsync/vsync polariteetti oli väärin**
+
+```cpp
+// Vanha (aiheutti satunnaisen pystyviivakuvion):
+0, 10, 4, 20,   /* hsync: polarity, front, pulse, back */
+0, 10, 4, 20),  /* vsync: polarity, front, pulse, back */
+
+// Uusi (korjattu):
+1, 10, 4, 20,   /* hsync: polarity, front, pulse, back */
+1, 10, 4, 20),  /* vsync: polarity, front, pulse, back */
+```
+
+Väärä polariteetti aiheutti sen, että RGB-paneelin DMA luki framebufferia väärästä kohdasta suhteessa sync-signaaleihin.
+
+**Projektikohtainen init-taulukko (`Crowpanel_ST7701_Init.h/.cpp`):**
+
+GFX-kirjaston sisäinen `st7701_type5`-init-taulukko aiheutti väriongelman (värit BGR-järjestyksessä). Ratkaisu: oma projektikohtainen init-taulukko jossa kriittiset muutokset:
+
+```cpp
+WRITE_C8_D8, 0x36, 0x00, // BGR=0 → RGB (kirjastossa oli 0x08 = BGR)
+WRITE_C8_D8, 0x3A, 0x60, // RGB666 (toistaiseksi — toimii vaikka käytetään RGB565)
+```
+
+**`begin()` -järjestys:** `initBacklight()` ennen `initDisplay()` (taustavalo päälle ennen paneeli-inittiä).
+
+---
+
+### Muutoskohdat — toteutunut
+
+| Tiedosto | Vaihe | Muutos |
+|----------|-------|--------|
+| `CrowPanelApplication.cpp` | A1 | `ledcSetup`/`AttachPin` → `ledcAttach`; `ledcWrite(channel,...)` → `ledcWrite(pin,...)` |
+| `BrightnessUI.cpp` | A1 | `ledcWrite(_pwm_channel,...)` → `ledcWrite(BACKLIGHT_PIN,...)` |
+| `ESPNowReceiver.h/.cpp` | A2 | Callback-signatuuri `mac_addr*` → `esp_now_recv_info_t*` |
+| `CrowPanelApplication.h` | A3+B1 | `Arduino_ST7701_RGBPanel` → `Arduino_SWSPI` + `Arduino_RGB_Display`; `uint16_t* _buf1` |
+| `CrowPanelApplication.cpp` | A3+B1 | Konstruktori: uusi GFX-objektirakenne + `_bus` polariteetti → 1 |
+| `CrowPanelApplication.cpp` | B1+B2 | `initLvgl()`: `sizeof(uint16_t)*BUF_PIXELS`, `lv_tick_set_cb(millis)` |
+| `CrowPanelApplication.cpp` | B2 | `lvglFlushCb()`: `Arduino_RGB_Display*` cast, `lv_display_flush_ready()` |
+| `Crowpanel_ST7701_Init.h/.cpp` | A3 | **Uusi tiedosto** — projektikohtainen ST7701 init-taulukko (`0x36=0x00` RGB) |
+| `CompassUI.cpp` | B3 | `lv_img_*` → `lv_image_*` |
+| `AttitudeUI.cpp` | B3 | `lv_img_*` → `lv_image_*` |
+| `lv_conf.h` | B4 | Siirretty projektin juureen repoon; kaikki arvot = LVGL 9 oletuksia |
+| `ui*.h/.c` (6 kpl) | B5 | SquareLine Studio re-export LVGL 9 -kohteella |
+
 
