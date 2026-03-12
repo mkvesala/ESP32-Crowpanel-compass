@@ -21,7 +21,7 @@
 // - Class CrowPanelApplication - "the app", responsible for orchestrating everything
 // - Init: app.begin();
 // - Loop: app.loop()
-// - Owns: Arduino_ESP32RGBPanel, Arduino_ST7701_RGBPanel, PCF8574, ESPNowReceiver,
+// - Owns: Arduino_ESP32RGBPanel, Arduino_RGB_Display, Arduino_SWSPI, PCF8574, ESPNowReceiver,
 //         CompassUI, AttitudeUI, WeatherUI, BatteryUI, BrightnessUI, RotaryEncoder, ScreenManager
 // - Screen carousel: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → BRIGHTNESS(4) → COMPASS(0)
 
@@ -71,7 +71,7 @@ private:
     static constexpr uint32_t LVGL_TICK_MIN_MS = 1;
     static constexpr uint32_t LVGL_TICK_MAX_MS = 20;
 
-    // UI upddate frequency ~17 Hz (compass send rate is 53 ms)
+    // UI update frequency ~17 Hz (compass send rate is 53 ms)
     static constexpr uint32_t UI_UPDATE_INTERVAL_MS = 59;
     uint32_t _last_ui_update = 0;
 
@@ -92,7 +92,7 @@ private:
     Arduino_ESP32RGBPanel _bus;
     Arduino_RGB_Display _gfx;
 
-    // Knob button switch
+    // PCF8574 I/O expander (LCD power/reset, touch reset/int, knob button)
     PCF8574 _pcf8574;
 
     // Core instances for the app

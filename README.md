@@ -6,6 +6,7 @@
 [![Display: CrowPanel 2.1"](https://img.shields.io/badge/Display-CrowPanel%202.1%22-lightgrey)](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-orange)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![UI: LVGL9](https://img.shields.io/badge/ui-lvgl9-grey)](https://lvgl.io)
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
@@ -23,9 +24,9 @@ Different screens selectable by rotating the knob:
 
 Developed and tested on:
 - [Elecrow CrowPanel 2.1" HMI ESP32 Rotary Display](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
-- [ESP32 board package](https://github.com/espressif/arduino-esp32) (2.0.14)
-- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.7)
-- [LVGL](https://lvgl.io/) (8.3.6)
+- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
+- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
+- [LVGL](https://lvgl.io/) (9.5.0)
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
@@ -45,7 +46,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v2.1.0 | Latest release. Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
+| v3.0.0 | Latest release. Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. See [CHANGELOG](CHANGELOG.md) for details.
+| v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
@@ -56,7 +58,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 The classes on the UML class diagram are presented with their full public API. The private attributes only to demostrate the class relationships. The diagram includes the `ESPNowBroker` class of the CMPS14-ESP32-SignalK-gateway.
 
 **`CrowPanelApplication`:**
-- Owns: `Arduino_ESP32RGBPanel`, `Arduino_ST7701_RGBPanel`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
+- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
@@ -169,7 +171,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - Brightness range: 2%–100% (2% minimum prevents screen going completely dark)
 - Default: 48% (~122/255)
 - Persistence: ESP32 Preferences (NVS), namespace `"display"`, key `"brightness"`
-- PWM: GPIO6, LEDC channel 0, 5 kHz, 8-bit
+- PWM: GPIO6, 5 kHz, 8-bit
 
 ### Knob behavior
 
@@ -287,7 +289,7 @@ Four lines printed to Serial every 5 seconds:
 [DIAG] Heap free: 8051531 | min: 8044127 | Stack loop: 5100 | enc: 1316 | btn: 716
 ```
 
-Compass rose `lv_img_set_angle()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240x240 source image with zoom=512, no alpha, antialias off - then further with larger draw buffer and adaptive LVGL tick scheduling in v1.0.0.
+Compass rose `lv_image_set_rotation()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240x240 source image with zoom=512, no alpha, antialias off - then further with larger draw buffer and adaptive LVGL tick scheduling in v1.0.0.
 
 ## Project structure
 
@@ -305,6 +307,8 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
+| `lv_conf.h` | LVGL configuration file based on the template provided by LVGL library |
+| `Crowpanel_ST7701_Init.h/.cpp` | `Arduino_RGB_Display` init table for CrowPanel display - `crowpanel_st7701_type5_init_operations` |
 | `ui.h/.c` | SquareLine Studio generated — UI init |
 | `ui_CompassScreen.h/.c` | SquareLine Studio generated |
 | `ui_AttitudeScreen.h/.c` | SquareLine Studio generated |
@@ -337,16 +341,14 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 
 ## Software
 
-1. Arduino IDE 2.3.7
-2. Espressif Systems esp32 board package 2.0.14
+1. Arduino IDE 2.3.8
+2. Espressif Systems esp32 board package 3.3.7
 3. Additional libraries:
-   - [LVGL](https://lvgl.io/) 8.3.6
-   - [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) (by Moon On Our Nation)
-   - [PCF8574](https://github.com/RobTillaart/PCF8574) (by Rob Tillaart)
+   - [LVGL](https://lvgl.io/) 9.5.0
+   - [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) (by Moon On Our Nation) 1.6.5
+   - [PCF8574](https://github.com/xreef/PCF8574_library) (by Renzo Mischianti) 2.4.0
 4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
-
-**Note:** the esp32 board package and LVGL are far beyond the latest versions. The example source code provided by Elecrow did not compile with the newer versions so the development was done on the older libraries. Migration task under issues.
 
 ## Installation
 
@@ -355,7 +357,7 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
    git clone https://github.com/mkvesala/ESP32-Crowpanel-compass.git
    ```
 2. Alternatively, download the code as zip
-3. Install required libraries in Arduino IDE (LVGL, Arduino_GFX_Library, PCF8574) - **Note the versions!**
+3. Install required libraries in Arduino IDE (LVGL, Arduino_GFX_Library, PCF8574)
 4. Set ESP-NOW channel in `CrowPanelApplication.h` to match your router:
    ```cpp
    static constexpr uint8_t ESP_NOW_CHANNEL = 6;
@@ -363,6 +365,8 @@ Compass rose `lv_img_set_angle()` is the main performance bottleneck on the comp
 5. Connect and power up the CrowPanel with USB
 6. Compile and upload with Arduino IDE (board: ESP32S3 Dev Module)
 7. Point the CMPS14-ESP32-SignalK-gateway and other ESP-NOW senders to the same WiFi channel
+
+**Note** that `lv_conf.h` is in project root (with default values from the library template). If you are using LVGL elsewhere, this file is probably under `Arduino/libraries/` folder next to `lvgl` library folder. Check the settings and use either one to avoid conflicts.
 
 **SquareLine Studio note:** SquareLine Studio clears the export directory completely on export. Always git commit before exporting from SquareLine Studio and set a temporary directory in project settings for the export folder.
 
@@ -405,8 +409,8 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI
-- Espressif Systems esp32 2.0.14 package on Arduino IDE 2.3.7
-- LVGL 8.3.6 and SquareLine Studio 1.6.0
+- Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
+- LVGL 9.5.0 and SquareLine Studio 1.6.0
 - CMPS14-ESP32-SignalK-gateway v1.3.0
 
 Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these two projects relate:

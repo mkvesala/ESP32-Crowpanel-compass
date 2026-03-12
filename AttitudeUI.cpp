@@ -163,7 +163,8 @@ void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
 
     // ROLL: Rotate ImageHorizon UI element
     // Roll port side → horizon rotates starboard
-    // lv_img_set_angle: positive angle = clockwise, uses 0.1° resolution
+    // lv_image_set_rotation: positive angle = clockwise, uses 0.1° resolution
+
     lv_image_set_rotation(ui_ImageHorizon, -roll_x10);
 }
 

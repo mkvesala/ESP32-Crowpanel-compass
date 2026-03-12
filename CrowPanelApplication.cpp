@@ -160,7 +160,9 @@ void CrowPanelApplication::initPcfAndResetLines() {
 
 // Display init
 void CrowPanelApplication::initDisplay() {
-    _gfx.begin();
+    if (!_gfx.begin()) {
+        while (1) delay (1000); // Halt, GFX not ready
+    }
     _gfx.fillScreen(RGB565_BLACK);
 
     // Color order debug for GFX:
@@ -195,11 +197,7 @@ void CrowPanelApplication::initLvgl() {
     lv_init();
     lv_tick_set_cb(millis);
 
-    // Partial rendering mode: LVGL renders into an SRAM draw buffer (120 lines),
-    // then lvglFlushCb blits each region to the display via draw16bitRGBBitmap.
-    // Buffer size uses sizeof(uint16_t) (RGB565, 2 bytes/pixel) — NOT sizeof(lv_color_t)
-    // which is 3 bytes in LVGL 9 and would cause wrong flush-row calculations.
-    _buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+    _buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL); // PARTIAL rendering mode
     // _buf1 = _gfx.getFramebuffer(); // DIRECT rendering mode
     if (!_buf1) {
         while (1) delay(1000);  // Halt: out of SRAM
@@ -208,9 +206,9 @@ void CrowPanelApplication::initLvgl() {
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
     
-    // lv_display_set_color_format(_lvgl_disp, LV_COLOR_FORMAT_RGB565); // Not needed?
+    // lv_display_set_color_format(_lvgl_disp, LV_COLOR_FORMAT_RGB565);
     
-    // DIRECT rendeering mode:
+    // DIRECT rendering mode:
     // lv_display_set_buffers(_lvgl_disp,
     //                        (void*)_buf1,
     //                        nullptr,
