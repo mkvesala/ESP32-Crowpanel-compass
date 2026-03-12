@@ -6,7 +6,7 @@
 #include <Arduino_GFX_Library.h>
 #include "PCF8574.h"
 #include "ui.h"
-#include "Crowpanel_ST7701 Init.h" // init array
+#include "Crowpanel_ST7701_Init.h" // init array
 #include "ESPNowReceiver.h"
 #include "CompassUI.h"
 #include "AttitudeUI.h"
