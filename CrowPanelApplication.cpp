@@ -162,23 +162,25 @@ void CrowPanelApplication::initPcfAndResetLines() {
 void CrowPanelApplication::initDisplay() {
     _gfx.begin();
     _gfx.fillScreen(RGB565_BLACK);
-    delay(2000);
-    _gfx.fillScreen(RGB565_WHITE);
-    delay(2000);
-    _gfx.fillScreen(RGB565_RED);
-    delay(2000);
-    _gfx.fillScreen(RGB565_GREEN);
-    delay(2000);
-    _gfx.fillScreen(RGB565_BLUE);
-    delay(2000);
-    _gfx.fillScreen(RGB565_YELLOW);
-    delay(2000);
-    _gfx.fillScreen(RGB565_CYAN);
-    delay(2000);
-    _gfx.fillScreen(RGB565_MAGENTA);
-    delay(2000);
-    _gfx.fillScreen(RGB565_BLACK);
-    delay(2000);
+
+    // Color order debug for GFX:
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_WHITE);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_RED);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_GREEN);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_BLUE);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_YELLOW);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_CYAN);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_MAGENTA);
+    // delay(2000);
+    // _gfx.fillScreen(RGB565_BLACK);
+    // delay(2000);
 }
 
 // Screen backlight
