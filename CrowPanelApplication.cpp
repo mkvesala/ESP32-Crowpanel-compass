@@ -45,7 +45,7 @@ CrowPanelApplication::CrowPanelApplication():
         1, 10, 4, 20),  /* vsync: polarity, front, pulse, back */
     _gfx(480 /* width */, 480 /* height */, &_bus, 0 /* rotation */, true /* auto_flush */,
         &_init_bus, GFX_NOT_DEFINED /* RST */,
-        st7701_type5_init_operations, sizeof(st7701_type5_init_operations)),
+        crowpanel_st7701_type5_init_operations, crowpanel_st7701_type5_init_operations_len),
     _pcf8574(0x21),
     _receiver(),
     _compassUI(_receiver),
