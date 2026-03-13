@@ -39,9 +39,12 @@ CrowPanelApplication::CrowPanelApplication():
         46 /* R0 */, 3 /* R1 */, 8 /* R2 */, 18 /* R3 */, 17 /* R4 */,
         14 /* G0 */, 13 /* G1 */, 12 /* G2 */, 11 /* G3 */, 10 /* G4 */, 9 /* G5 */,
         5 /* B0 */, 45 /* B1 */, 48 /* B2 */, 47 /* B3 */, 21 /* B4 */,
-        1, 10, 4, 20,   /* hsync: polarity, front, pulse, back */
-        1, 10, 4, 20),  /* vsync: polarity, front, pulse, back */
-    _gfx(480 /* width */, 480 /* height */, &_bus, 0 /* rotation */, false /* auto_flush — false: no periodic background DMA flush, PARTIAL mode blits manually via draw16bitRGBBitmap() */,
+        1, 10, 4, 24,   /* hsync: polarity, front, pulse, back */
+        1, 10, 4, 24,  /* vsync: polarity, front, pulse, back */
+        0 /* pclk_active_neg */, 10000000 /* prefer_speed */, false /* useBigEndian */,
+        0 /* de_idle_high */, 0 /* pclk_idle_high */,
+        4800 /* bounce_buffer_size_px: 10 lines × 480 px — DMA reads from SRAM, not PSRAM directly */),
+    _gfx(480 /* width */, 480 /* height */, &_bus, 0 /* rotation */, true /* auto_flush */,
         &_init_bus, GFX_NOT_DEFINED /* RST */,
         crowpanel_st7701_type5_init_operations, crowpanel_st7701_type5_init_operations_len),
     _pcf8574(0x21),
@@ -104,11 +107,11 @@ void CrowPanelApplication::loop() {
     // Update statistics
     // _receiver.updateStats();
 
-    // Knob rotation — DISABLED: encoder isolation (screen glitch debug step 1)
-    // this->handleKnobRotation();
+    // Knob rotation
+    this->handleKnobRotation();
 
-    // Button press — DISABLED: encoder isolation (screen glitch debug step 1)
-    // this->handleKnobButtonPress();
+    // Button press
+    this->handleKnobButtonPress();
 
     // UI update
     this->handleUIUpdate(now);
