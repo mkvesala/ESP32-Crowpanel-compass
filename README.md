@@ -281,18 +281,6 @@ struct BatteryDelta {
 
 **NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0 or newer.
 
-### Diagnostics/debug
-
-Four lines printed to Serial every 5 seconds:
-```
-[DIAG] PPS: 18.9 | UI updates: 44 | UI avg: 0.62 ms | UI max: 0.76 ms
-[DIAG] LVGL calls: 88 | avg: 47.96 ms | max: 164.03 ms
-[DIAG] Flush calls: 176 | avg: 4.61 ms | max: 4.91 ms
-[DIAG] Heap free: 8051531 | min: 8044127 | Stack loop: 5100 | enc: 1316 | btn: 716
-```
-
-Compass rose `lv_image_set_rotation()` is the main performance bottleneck on the compass screen (no GPU, no hardware rotation in the display controller). Optimized in v0.4.0: 240x240 source image with zoom=512, no alpha, antialias off - then further with larger draw buffer and adaptive LVGL tick scheduling in v1.0.0.
-
 ## Project structure
 
 | File(s) | Description |
@@ -386,6 +374,8 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 | Compass (stable heading) | 48-74 | 1-7 ms | — | 0.5° threshold prevents unnecessary re-renders |
 | Attitude (data flowing) | ~80 | 4-13 ms | — | Horizon line 680x4 px is cheap to render |
 | Attitude (stable) | ~83 | <1 ms | — | Nothing to render |
+
+Compass rose `lv_image_set_rotation()` is the main performance bottleneck (only on the compass screen). PNG image stored in the image object is 240x240 pixels, no alpha, scaled with LVGL factor 512 to 480x480 pixels. Antialiasing is off. LVGL rendering is based on partial mode, using buffer of 480x120.
 
 Flash usage: ~40%.
 
