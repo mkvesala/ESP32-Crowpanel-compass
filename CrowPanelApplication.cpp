@@ -102,7 +102,7 @@ void CrowPanelApplication::loop() {
     this->handleLvglTick(now);
 
     // Update statistics
-    _receiver.updateStats();
+    // _receiver.updateStats();
 
     // Knob rotation
     this->handleKnobRotation();
@@ -114,7 +114,7 @@ void CrowPanelApplication::loop() {
     this->handleUIUpdate(now);
 
     // Diagnostics print
-    this->handleDiagnostics(now);
+    // this->handleDiagnostics(now);
 
 }
 

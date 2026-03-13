@@ -20,13 +20,14 @@ lv_obj_t* AttitudeUI::getLvglScreen() const {
 void AttitudeUI::begin() {
     if (_initialized) return;
 
+    // Override SquareLine-generated LV_IMAGE_ALIGN_TILE: TILE mode silently disables
+    // lv_image_set_rotation() in LVGL 9 (rotation is not applied in the tile draw path).
+    // Must be called BEFORE lv_image_set_pivot — set_inner_align resets pivot to (0,0) in LVGL 9.
+    lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_DEFAULT);
+
     // Set rotation pivot to the center of ImageHorizon element
     // PNG is 680x4, center point is 340, 2
     lv_image_set_pivot(ui_ImageHorizon, 340, 2);
-
-    // Override SquareLine-generated LV_IMAGE_ALIGN_TILE: TILE mode silently disables
-    // lv_image_set_rotation() in LVGL 9 (rotation is not applied in the tile draw path).
-    lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_DEFAULT);
 
     // Set ContainerLevelingDialog hidden
     lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
