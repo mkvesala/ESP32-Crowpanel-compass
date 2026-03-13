@@ -19,10 +19,8 @@ static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_m
 
     int32_t w = area->x2 - area->x1 + 1;
     int32_t h = area->y2 - area->y1 + 1;
-    // lv_draw_sw_rgb565_swap(px_map, w * h); // Not needed?
-    // gfx->flush(true); // DIRECT rendering mode
+    
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h); // PARTIAL rendering mode
-    // gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h); // PARTIAL rendering mode, Big endian
 
     uint32_t ft = micros() - t0;
     s_flush_total += ft;
@@ -166,23 +164,23 @@ void CrowPanelApplication::initDisplay() {
     _gfx.fillScreen(RGB565_BLACK);
 
     // Color order debug for GFX:
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_WHITE);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_RED);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_GREEN);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_BLUE);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_YELLOW);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_CYAN);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_MAGENTA);
-    // delay(2000);
-    // _gfx.fillScreen(RGB565_BLACK);
-    // delay(2000);
+    delay(2000);
+    _gfx.fillScreen(RGB565_WHITE);
+    delay(2000);
+    _gfx.fillScreen(RGB565_RED);
+    delay(2000);
+    _gfx.fillScreen(RGB565_GREEN);
+    delay(2000);
+    _gfx.fillScreen(RGB565_BLUE);
+    delay(2000);
+    _gfx.fillScreen(RGB565_YELLOW);
+    delay(2000);
+    _gfx.fillScreen(RGB565_CYAN);
+    delay(2000);
+    _gfx.fillScreen(RGB565_MAGENTA);
+    delay(2000);
+    _gfx.fillScreen(RGB565_BLACK);
+    delay(2000);
 }
 
 // Screen backlight
@@ -198,22 +196,12 @@ void CrowPanelApplication::initLvgl() {
     lv_tick_set_cb(millis);
 
     _buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL); // PARTIAL rendering mode
-    // _buf1 = _gfx.getFramebuffer(); // DIRECT rendering mode
     if (!_buf1) {
         while (1) delay(1000);  // Halt: out of SRAM
     }
 
     _lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
-    
-    // lv_display_set_color_format(_lvgl_disp, LV_COLOR_FORMAT_RGB565);
-    
-    // DIRECT rendering mode:
-    // lv_display_set_buffers(_lvgl_disp,
-    //                        (void*)_buf1,
-    //                        nullptr,
-    //                        SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t),
-    //                        LV_DISPLAY_RENDER_MODE_DIRECT);
 
     // PARTIAL rendering mode
     lv_display_set_buffers(_lvgl_disp,
