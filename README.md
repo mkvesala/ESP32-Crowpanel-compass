@@ -3,10 +3,10 @@
 # ESP32 CrowPanel Compass & Multi-Function Display
 
 [![Platform: ESP32-S3](https://img.shields.io/badge/Platform-ESP32--S3-blue)](https://www.espressif.com/en/sdks/esp-arduino)
-[![Display: CrowPanel 2.1"](https://img.shields.io/badge/Display-CrowPanel%202.1%22-lightgrey)](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
+[![Display: CrowPanel 2.1" Rotary Knob](https://img.shields.io/badge/Display-CrowPanel%202.1%22%20Rotary%20Knob-lightgrey)](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-orange)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![UI: LVGL9](https://img.shields.io/badge/ui-lvgl9-grey)](https://lvgl.io)
+[![UI: LVGL9](https://img.shields.io/badge/UI-LVGL9-black)](https://lvgl.io)
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
@@ -27,6 +27,8 @@ Developed and tested on:
 - [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - [LVGL](https://lvgl.io/) (9.5.0)
+- [Arduino GFX Library](https://github.com/moononournation/Arduino_GFX) (1.6.5)
+- [PFC8574 Library](https://github.com/xreef/PCF8574_library) (2.4.0)
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
@@ -46,7 +48,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.0.0 | Latest release. Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. See [CHANGELOG](CHANGELOG.md) for details.
+| v3.0.0 | Latest release. Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
