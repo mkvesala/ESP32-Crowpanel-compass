@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v3.0.0] - 2026-03-13
+## [v3.0.0] - 2026-03-15
 
 ### Changed
 
@@ -26,7 +26,7 @@ Arduino_ST7701_RGBPanel _gfx;
 // v3.0.0 (Arduino_GFX 1.6.5)
 Arduino_SWSPI _init_bus;       // SPI init-command bus for ST7701S
 Arduino_ESP32RGBPanel _bus;    // RGB parallel data bus
-Arduino_RGB_Display _gfx;      // display object; auto_flush=true
+Arduino_RGB_Display _gfx;      // display object
 ```
 
 `Arduino_SWSPI` handles the SPI command/data sequence sent to ST7701S on startup (CS=16, SCK=2, MOSI=1). `Arduino_RGB_Display::begin()` now returns `bool` — halts in `while(1)` if initialization fails.
@@ -39,7 +39,7 @@ The GFX library's built-in `st7701_type5` init sequence sets `0x36 = 0x08` (BGR 
 
 ```cpp
 WRITE_C8_D8, 0x36, 0x00,  // was 0x08 (BGR) → 0x00 (RGB)
-WRITE_C8_D8, 0x3A, 0x60,  // RGB666 mode (compatible with RGB565 data stream)
+WRITE_C8_D8, 0x3A, 0x60,  // RGB666 mode (for unknown reason 0x50 = RGB565 caused wrong color order)
 ```
 
 All other entries are identical to `st7701_type5`. The constructor references this table directly:
@@ -69,13 +69,13 @@ _bus(40 /* DE */, 7 /* VSYNC */, 15 /* HSYNC */, 41 /* PCLK */,
      4800 /* bounce_buffer_size_px */)
 ```
 
-**`hsync_polarity = 1` / `vsync_polarity = 1`:** Must be 1 (active-high). Polarity 0 caused a periodic vertical stripe pattern across the entire display — the RGB panel DMA read the framebuffer offset from the correct position relative to the sync edges.
+**`hsync_polarity = 1` / `vsync_polarity = 1`:** Must be 1 (active-high). Polarity 0 caused a random vertical stripe pattern across the entire display — the RGB panel DMA read the framebuffer offset from the correct position relative to the sync edges.
 
 **`hsync_back_porch = 24` / `vsync_back_porch = 24`:** Empirically tuned; values in the range 20–24 affect display stability on this panel. Back porch contributes to H/V total pixel count and thus the effective frame rate at a given pixel clock.
 
 **`prefer_speed = 10000000` (10 MHz):** Overrides the library default (12 MHz for OPI PSRAM targets). The lower clock rate was found empirically to reduce display glitching. The Elecrow CrowPanel 2.1" uses ESP32-S3 with OPI PSRAM; without `prefer_speed`, the library defaults to 12 MHz (`#ifndef CONFIG_SPIRAM_MODE_QUAD`).
 
-**`bounce_buffer_size_px = 4800` (10 lines × 480 px, 9 600 bytes SRAM):** LCD_CAM DMA normally reads the RGB565 framebuffer directly from PSRAM (`fb_in_psram = true` in `esp_lcd_rgb_panel_config_t`). Under PSRAM bus load (CPU writes, heap allocations, WiFi stack), this causes wait-cycles in the DMA stream that manifest as a brief periodic display shift. With a non-zero `bounce_buffer_size_px`, the ESP-IDF RGB panel driver maintains a small SRAM staging buffer filled continuously by a background GDMA channel; the LCD DMA reads from SRAM only. Confirmed to eliminate the periodic visual glitch that occurred even with LVGL fully disabled.
+**`bounce_buffer_size_px = 4800` (10 lines × 480 px, 9 600 bytes SRAM):** LCD_CAM DMA seems to read the RGB565 framebuffer directly from PSRAM (`fb_in_psram = true` in `esp_lcd_rgb_panel_config_t`). Under PSRAM bus load (CPU writes, heap allocations, WiFi stack), this probably caused wait-cycles in the DMA stream that manifested as a brief periodic display shift. With a non-zero `bounce_buffer_size_px`, the ESP-IDF RGB panel driver maintains a small SRAM staging buffer filled continuously by a background GDMA channel; the LCD DMA reads from SRAM only. Confirmed to eliminate the periodic visual glitch that occurred even with LVGL fully disabled.
 
 ---
 
@@ -137,7 +137,7 @@ lv_display_set_buffers(_lvgl_disp, _buf1, nullptr,
 lv_display_set_user_data(_lvgl_disp, &_gfx);
 ```
 
-DIRECT rendering mode (`LV_DISPLAY_RENDER_MODE_DIRECT`) was evaluated but is unusable on this hardware: `Arduino_RGB_Display` exposes the PSRAM framebuffer directly (`getFramebuffer()`), and with `auto_flush=true` the DMA continuously scans it while LVGL writes to it — no vsync mechanism is available, resulting in severe torn-frame flickering.
+DIRECT rendering mode (`LV_DISPLAY_RENDER_MODE_DIRECT`) was evaluated but is unusable on this hardware, screen flickering was severe.
 
 ---
 
@@ -194,6 +194,12 @@ All SquareLine-generated files (`ui.h/.c`, `ui_*Screen.h/.c`, `ui_helpers.h/.c`)
 
 ---
 
+#### AttitudeScreen
+
+Ship silhouette scaled bigger for better readability.
+
+---
+
 ### Fixed
 
 #### `AttitudeUI` — horizon line rotation (roll axis) not working in LVGL 9
@@ -230,7 +236,7 @@ Pivot geometry: `ui_ImageHorizon` is 680×4 px positioned at (−100, 238) on th
 | v2.0.0 (LVGL 8) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | — |
 | v3.0.0 (LVGL 9, PARTIAL) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | ~4.6 ms |
 
-LVGL 9 PARTIAL rendering performance is identical to LVGL 8. Each frame: LVGL renders RGB565 pixels into a 120-line SRAM buffer (BUF_PIXELS = 57 600), `draw16bitRGBBitmap()` blits to the PSRAM framebuffer; LCD_CAM DMA streams the framebuffer to the display continuously.
+LVGL 9 PARTIAL rendering performance is identical to LVGL 8.
 
 ### Developer Notes
 
@@ -249,10 +255,6 @@ Arduino_ESP32RGBPanel(
     pclk_idle_high,              // 0 = PCLK idles low
     bounce_buffer_size_px)       // >0 = SRAM bounce buffer for LCD DMA
 ```
-
-#### DIRECT rendering mode — why it fails
-
-With `Arduino_RGB_Display(auto_flush=true)` and `LV_DISPLAY_RENDER_MODE_DIRECT`, LVGL writes rendered pixels directly into the PSRAM framebuffer (~170 ms per frame). The ESP32-S3 LCD_CAM DMA reads this framebuffer continuously at the pixel clock rate (~60 Hz). Since there is no hardware vsync interrupt or double-buffer flip mechanism in this driver configuration, any in-progress LVGL write overlaps with DMA reads on every frame, producing constant torn-frame artifacts. PARTIAL mode avoids this entirely — the SRAM draw buffer is never read by the DMA.
 
 ---
 
