@@ -4,6 +4,258 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.0.0] - 2026-03-13
+
+### Changed
+
+#### Library upgrades — ESP32 Core 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX 1.3.1 → 1.6.5
+
+Major library upgrade across all three core dependencies. All changes are backwards-incompatible at the API level; no functional behavior visible to the end user is changed.
+
+---
+
+#### Arduino GFX Library 1.3.1 → 1.6.5 — display driver restructured
+
+`Arduino_ST7701_RGBPanel` is not available in the Arduino Library Manager distribution of v1.6.5 (present only in the GitHub source). Replaced with the equivalent three-object structure:
+
+```cpp
+// v2.x (Arduino_GFX 1.3.1)
+Arduino_ESP32RGBPanel _bus;
+Arduino_ST7701_RGBPanel _gfx;
+
+// v3.0.0 (Arduino_GFX 1.6.5)
+Arduino_SWSPI _init_bus;       // SPI init-command bus for ST7701S
+Arduino_ESP32RGBPanel _bus;    // RGB parallel data bus
+Arduino_RGB_Display _gfx;      // display object; auto_flush=true
+```
+
+`Arduino_SWSPI` handles the SPI command/data sequence sent to ST7701S on startup (CS=16, SCK=2, MOSI=1). `Arduino_RGB_Display::begin()` now returns `bool` — halts in `while(1)` if initialization fails.
+
+---
+
+#### `Crowpanel_ST7701_Init.h/.cpp` — new project-specific ST7701S init table
+
+The GFX library's built-in `st7701_type5` init sequence sets `0x36 = 0x08` (BGR byte order), causing channels to render in wrong order. A project-specific init table is added to the repository with two corrected values:
+
+```cpp
+WRITE_C8_D8, 0x36, 0x00,  // was 0x08 (BGR) → 0x00 (RGB)
+WRITE_C8_D8, 0x3A, 0x60,  // RGB666 mode (compatible with RGB565 data stream)
+```
+
+All other entries are identical to `st7701_type5`. The constructor references this table directly:
+
+```cpp
+_gfx(480, 480, &_bus, 0, true,
+     &_init_bus, GFX_NOT_DEFINED,
+     crowpanel_st7701_type5_init_operations,
+     crowpanel_st7701_type5_init_operations_len)
+```
+
+---
+
+#### `_bus` constructor — timing parameters and pixel clock
+
+`Arduino_ESP32RGBPanel` constructor extended with explicit trailing parameters. All values are significant for display stability.
+
+```cpp
+_bus(40 /* DE */, 7 /* VSYNC */, 15 /* HSYNC */, 41 /* PCLK */,
+     /* R4–R0, G5–G0, B4–B0 pins ... */
+     1, 10, 4, 24,   /* hsync: polarity, front_porch, pulse_width, back_porch */
+     1, 10, 4, 24,   /* vsync: polarity, front_porch, pulse_width, back_porch */
+     0  /* pclk_active_neg */,
+     10000000 /* prefer_speed: 10 MHz pixel clock */,
+     false /* useBigEndian */,
+     0 /* de_idle_high */, 0 /* pclk_idle_high */,
+     4800 /* bounce_buffer_size_px */)
+```
+
+**`hsync_polarity = 1` / `vsync_polarity = 1`:** Must be 1 (active-high). Polarity 0 caused a periodic vertical stripe pattern across the entire display — the RGB panel DMA read the framebuffer offset from the correct position relative to the sync edges.
+
+**`hsync_back_porch = 24` / `vsync_back_porch = 24`:** Empirically tuned; values in the range 20–24 affect display stability on this panel. Back porch contributes to H/V total pixel count and thus the effective frame rate at a given pixel clock.
+
+**`prefer_speed = 10000000` (10 MHz):** Overrides the library default (12 MHz for OPI PSRAM targets). The lower clock rate was found empirically to reduce display glitching. The Elecrow CrowPanel 2.1" uses ESP32-S3 with OPI PSRAM; without `prefer_speed`, the library defaults to 12 MHz (`#ifndef CONFIG_SPIRAM_MODE_QUAD`).
+
+**`bounce_buffer_size_px = 4800` (10 lines × 480 px, 9 600 bytes SRAM):** LCD_CAM DMA normally reads the RGB565 framebuffer directly from PSRAM (`fb_in_psram = true` in `esp_lcd_rgb_panel_config_t`). Under PSRAM bus load (CPU writes, heap allocations, WiFi stack), this causes wait-cycles in the DMA stream that manifest as a brief periodic display shift. With a non-zero `bounce_buffer_size_px`, the ESP-IDF RGB panel driver maintains a small SRAM staging buffer filled continuously by a background GDMA channel; the LCD DMA reads from SRAM only. Confirmed to eliminate the periodic visual glitch that occurred even with LVGL fully disabled.
+
+---
+
+#### ESP32 Core 3.x — LEDC PWM API (`CrowPanelApplication.cpp`, `BrightnessUI.cpp`)
+
+```cpp
+// v2.x (Core 2.x)
+ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+ledcAttachPin(SCREEN_BACKLIGHT_PIN, PWM_CHANNEL);
+ledcWrite(PWM_CHANNEL, duty);
+
+// v3.0.0 (Core 3.x)
+ledcAttach(SCREEN_BACKLIGHT_PIN, PWM_FREQ, PWM_RESOLUTION);
+ledcWrite(SCREEN_BACKLIGHT_PIN, duty);  // pin, not channel
+```
+
+`_pwm_channel` member removed from `BrightnessUI`; constructor parameter changed from `int pwm_channel` to `uint8_t backlight_pin`.
+
+---
+
+#### ESP32 Core 3.x — ESP-NOW receive callback (`ESPNowReceiver.h/.cpp`)
+
+```cpp
+// v2.x (Core 2.x)
+static void onDataRecv(const uint8_t* mac_addr, const uint8_t* data, int data_len);
+
+// v3.0.0 (Core 3.x)
+static void onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int data_len);
+```
+
+Callback body unchanged — `mac_addr` was not used. Coordinated with CMPS14-ESP32-SignalK-gateway which already uses the Core 3.x signature.
+
+---
+
+#### LVGL 8 → 9 — display driver API rewritten (`CrowPanelApplication.h/.cpp`)
+
+Buffer type corrected: `lv_color_t` is 3 bytes in LVGL 9 (RGB888 internal format); draw buffer must be `uint16_t` for RGB565.
+
+```cpp
+// v2.x (LVGL 8)
+lv_color_t* _buf1;
+_buf1 = (lv_color_t*)heap_caps_malloc(sizeof(lv_color_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+lv_disp_draw_buf_init(&_draw_buf, _buf1, NULL, BUF_PIXELS);
+lv_disp_drv_t disp_drv;
+lv_disp_drv_init(&disp_drv);
+disp_drv.flush_cb = lvglFlushCb;
+disp_drv.draw_buf = &_draw_buf;
+disp_drv.user_data = &_gfx;
+lv_disp_drv_register(&disp_drv);
+
+// v3.0.0 (LVGL 9)
+uint16_t* _buf1;
+_buf1 = (uint16_t*)heap_caps_malloc(sizeof(uint16_t) * BUF_PIXELS, MALLOC_CAP_INTERNAL);
+_lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
+lv_display_set_flush_cb(_lvgl_disp, lvglFlushCb);
+lv_display_set_buffers(_lvgl_disp, _buf1, nullptr,
+                       sizeof(uint16_t) * BUF_PIXELS,
+                       LV_DISPLAY_RENDER_MODE_PARTIAL);
+lv_display_set_user_data(_lvgl_disp, &_gfx);
+```
+
+DIRECT rendering mode (`LV_DISPLAY_RENDER_MODE_DIRECT`) was evaluated but is unusable on this hardware: `Arduino_RGB_Display` exposes the PSRAM framebuffer directly (`getFramebuffer()`), and with `auto_flush=true` the DMA continuously scans it while LVGL writes to it — no vsync mechanism is available, resulting in severe torn-frame flickering.
+
+---
+
+#### LVGL 8 → 9 — flush callback (`CrowPanelApplication.cpp`)
+
+```cpp
+// v2.x (LVGL 8)
+static void lvglFlushCb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
+    auto* gfx = static_cast<Arduino_ST7701_RGBPanel*>(disp->user_data);
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)&color_p->full, w, h);
+    lv_disp_flush_ready(disp);
+}
+
+// v3.0.0 (LVGL 9)
+static void lvglFlushCb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
+    auto* gfx = static_cast<Arduino_RGB_Display*>(lv_display_get_user_data(disp));
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)px_map, w, h);
+    lv_display_flush_ready(disp);
+}
+```
+
+---
+
+#### LVGL 8 → 9 — tick source (`CrowPanelApplication.cpp`)
+
+`LV_TICK_CUSTOM = 1` macro and `LV_TICK_CUSTOM_SYS_TIME_EXPR = (millis())` no longer exist in LVGL 9's `lv_conf.h`. Replaced with a runtime call:
+
+```cpp
+lv_tick_set_cb(millis);  // called once in initLvgl()
+```
+
+---
+
+#### LVGL 8 → 9 — image widget API (`CompassUI.cpp`, `AttitudeUI.cpp`)
+
+| LVGL 8 | LVGL 9 |
+|--------|--------|
+| `lv_img_set_zoom(img, 512)` | `lv_image_set_scale(img, 512)` |
+| `lv_img_set_angle(img, angle)` | `lv_image_set_rotation(img, angle)` |
+| `lv_img_set_antialias(img, false)` | `lv_image_set_antialias(img, false)` |
+| `lv_img_set_pivot(img, x, y)` | `lv_image_set_pivot(img, x, y)` |
+
+---
+
+#### LVGL 9 — `lv_conf.h` relocated to project root
+
+`lv_conf.h` moved to the project root directory. The Arduino-LVGL integration finds it via `__has_include` before falling back to the version bundled in `libraries/`. All values in the project-level file match LVGL 9 defaults; the file is committed to the repository.
+
+---
+
+#### LVGL 9 — SquareLine Studio re-export (LVGL 9.3 target)
+
+All SquareLine-generated files (`ui.h/.c`, `ui_*Screen.h/.c`, `ui_helpers.h/.c`) re-exported targeting LVGL 9.3. Generated code uses `lv_image_*` API throughout.
+
+---
+
+### Fixed
+
+#### `AttitudeUI` — horizon line rotation (roll axis) not working in LVGL 9
+
+**Root cause:** SquareLine Studio 1.6.0 with LVGL 9 target emits `lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_TILE)` for the horizon line image. In LVGL 9, the TILE draw path does not apply `img->rotation` to the draw descriptor — `lv_image_set_rotation()` calls have no effect in TILE mode. This was not an issue in LVGL 8 where `lv_image_set_inner_align()` did not exist.
+
+**Fix** in `AttitudeUI::begin()`:
+```cpp
+lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_DEFAULT); // override TILE
+lv_image_set_pivot(ui_ImageHorizon, 340, 2);
+```
+
+---
+
+#### `AttitudeUI` — horizon line rotation pivot at wrong position after LVGL 9 migration
+
+**Root cause:** In LVGL 9, `lv_image_set_inner_align()` silently resets the image pivot to (0, 0) when called. If `lv_image_set_pivot()` is called first, the pivot is subsequently discarded.
+
+**Fix:** Call order enforced in `AttitudeUI::begin()` — `lv_image_set_inner_align()` must precede `lv_image_set_pivot()`:
+
+```cpp
+lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_DEFAULT); // FIRST — resets pivot to (0,0)
+lv_image_set_pivot(ui_ImageHorizon, 340, 2);                        // SECOND — sets final pivot
+```
+
+Pivot geometry: `ui_ImageHorizon` is 680×4 px positioned at (−100, 238) on the screen. Pivot (340, 2) in widget-local coordinates maps to screen coordinate (240, 240) — exact screen center.
+
+---
+
+### Performance
+
+| Config | UI avg | UI max | LVGL avg | LVGL max | Flush avg |
+|--------|--------|--------|----------|----------|-----------|
+| v2.0.0 (LVGL 8) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | — |
+| v3.0.0 (LVGL 9, PARTIAL) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | ~4.6 ms |
+
+LVGL 9 PARTIAL rendering performance is identical to LVGL 8. Each frame: LVGL renders RGB565 pixels into a 120-line SRAM buffer (BUF_PIXELS = 57 600), `draw16bitRGBBitmap()` blits to the PSRAM framebuffer; LCD_CAM DMA streams the framebuffer to the display continuously.
+
+### Developer Notes
+
+#### `_bus` constructor parameter reference
+
+```
+Arduino_ESP32RGBPanel(
+    de, vsync, hsync, pclk,
+    r0–r4, g0–g5, b0–b4,        // 16 data pins
+    hsync_polarity, hsync_front_porch, hsync_pulse_width, hsync_back_porch,
+    vsync_polarity, vsync_front_porch, vsync_pulse_width, vsync_back_porch,
+    pclk_active_neg,             // 0 = sample on rising edge
+    prefer_speed,                // pixel clock Hz; GFX_NOT_DEFINED = 12 MHz (OPI PSRAM)
+    useBigEndian,                // false = normal RGB565 GPIO bit order
+    de_idle_high,                // 0 = DE idles low
+    pclk_idle_high,              // 0 = PCLK idles low
+    bounce_buffer_size_px)       // >0 = SRAM bounce buffer for LCD DMA
+```
+
+#### DIRECT rendering mode — why it fails
+
+With `Arduino_RGB_Display(auto_flush=true)` and `LV_DISPLAY_RENDER_MODE_DIRECT`, LVGL writes rendered pixels directly into the PSRAM framebuffer (~170 ms per frame). The ESP32-S3 LCD_CAM DMA reads this framebuffer continuously at the pixel clock rate (~60 Hz). Since there is no hardware vsync interrupt or double-buffer flip mechanism in this driver configuration, any in-progress LVGL write overlaps with DMA reads on every frame, producing constant torn-frame artifacts. PARTIAL mode avoids this entirely — the SRAM draw buffer is never read by the DMA.
+
+---
+
 ## [v2.1.0] - 2026-03-07
 
 ### Added
@@ -435,6 +687,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v3.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.0.0
 [v2.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.1.0
 [v2.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v1.0.0
