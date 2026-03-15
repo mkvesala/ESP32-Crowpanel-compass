@@ -10,13 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 #### Library upgrades — ESP32 Core 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX 1.3.1 → 1.6.5
 
-Major library upgrade across all three core dependencies. All changes are backwards-incompatible at the API level; no functional behavior visible to the end user is changed.
+Major library upgrade across all three core dependencies. All changes are backwards-incompatible at the API level. No functional behavior visible to the end user is changed.
 
 ---
 
 #### Arduino GFX Library 1.3.1 → 1.6.5 — display driver restructured
 
-`Arduino_ST7701_RGBPanel` is not available in the Arduino Library Manager distribution of v1.6.5 (present only in the GitHub source). Replaced with the equivalent three-object structure:
+`Arduino_ST7701_RGBPanel` is not available in the Arduino Library Manager distribution of version 1.6.5. Replaced with the equivalent three-object structure:
 
 ```cpp
 // v2.x (Arduino_GFX 1.3.1)
