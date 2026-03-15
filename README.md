@@ -28,7 +28,7 @@ Developed and tested on:
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - [LVGL](https://lvgl.io/) (9.5.0)
 - [Arduino GFX Library](https://github.com/moononournation/Arduino_GFX) (1.6.5)
-- [PFC8574 Library](https://github.com/xreef/PCF8574_library) (2.4.0)
+- [PCF8574 Library](https://github.com/xreef/PCF8574_library) (2.4.0)
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
@@ -60,7 +60,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 The classes on the UML class diagram are presented with their full public API. The private attributes only to demostrate the class relationships. The diagram includes the `ESPNowBroker` class of the CMPS14-ESP32-SignalK-gateway.
 
 **`CrowPanelApplication`:**
-- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
+- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
