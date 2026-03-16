@@ -196,7 +196,7 @@ All SquareLine-generated files (`ui.h/.c`, `ui_*Screen.h/.c`, `ui_helpers.h/.c`)
 
 #### AttitudeScreen
 
-Ship silhouette scaled bigger for better readability.
+Ship silhouette scaled bigger for better readability. The red and green small panels (navigation lights) on starboard and portside of the ship silhouette are hidden when disconnected and show again when new data received from the compass.
 
 ---
 

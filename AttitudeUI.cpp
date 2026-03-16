@@ -46,12 +46,16 @@ void AttitudeUI::update() {
 
     if (!is_connected) {
         if (_last_connected) {
-            // Transition: connected → disconnected
-            this->showWaiting();
+            // Hide "navigation lights" from ship silhouette
+            lv_obj_add_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
             _last_connected = false;
         }
     } else {
         _last_connected = true;
+        // Show "navigation lights" of ship silhouette
+        lv_obj_remove_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
 
         if (_receiver.hasNewData()) {
             HeadingData data = _receiver.getData();
