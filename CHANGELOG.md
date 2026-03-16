@@ -231,12 +231,7 @@ Pivot geometry: `ui_ImageHorizon` is 680×4 px positioned at (−100, 238) on th
 
 ### Performance
 
-| Config | UI avg | UI max | LVGL avg | LVGL max | Flush avg |
-|--------|--------|--------|----------|----------|-----------|
-| v2.0.0 (LVGL 8) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | — |
-| v3.0.0 (LVGL 9, PARTIAL) | ~0.6 ms | ~0.8 ms | ~48 ms | ~164 ms | ~4.6 ms |
-
-LVGL 9 PARTIAL rendering performance is identical to LVGL 8.
+LVGL 9 PARTIAL rendering performance is somewhat identical to LVGL 8.
 
 ### Developer Notes
 
