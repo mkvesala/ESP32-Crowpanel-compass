@@ -130,6 +130,7 @@ The classes on the UML class diagram are presented with their full public API. T
 - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
 - Pitch and roll value labels
 - Ship silhouette overlay on the artificial horizon
+- The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass
 - Attitude leveling via knob button — two-press confirmation dialog with state machine:
   1. Knob press → confirm dialog ("Level attitude? Press knob again to confirm.", yellow)
   2. Second press → sends `LevelCommand` broadcast via ESP-NOW ("Leveling...", white)
