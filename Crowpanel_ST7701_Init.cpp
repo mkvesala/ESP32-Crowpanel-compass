@@ -4,6 +4,14 @@
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 
+// Initialization table for Arduino_RGB_Display instance
+// Extends the init table assortment in Arduino_RGB_Display.h of GFX_library_for_Arduino
+// Changed for CrowPanel 2.1" HMI Rotary Display:
+//   WRITE_C8_D8, 0x36, 0x00, // 0x00: BGR = 0 -> RGB
+//   WRITE_C8_D8, 0x3A, 0x60, // 0x60: RGB666 (for unknown reason 0x50 RGB565 did not render correcty)
+// Usage in CrowPanelApplication constructor's member initialization:
+//   _gfx(480, 480, &_bus, 0, true, &_init_bus, GFX_NOT_DEFINED, crowpanel_st7701_type5_init_operations, crowpanel_st7701_type5_init_operations_len)
+
 const uint8_t crowpanel_st7701_type5_init_operations[] = {
     BEGIN_WRITE,
     WRITE_COMMAND_8, 0xFF,
