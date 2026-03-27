@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.1.0] - 2026-04
+
+Lorem ipsum.
+
 ## [v3.0.0] - 2026-03-15
 
 ### Changed
@@ -684,6 +688,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v3.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.0
 [v3.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.0.0
 [v2.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.1.0
 [v2.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v2.0.0
