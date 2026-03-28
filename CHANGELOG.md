@@ -6,7 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [v3.1.0] - 2026-04
 
-Lorem ipsum.
+### Changed
+
+#### AttitudeScreen (UI)
+
+New structure of the screen ui objects
+
+- ContainerHorizonGroup 
+  - ImageHorizon (the artificial horizon)
+- ContainerAttitudeGroup
+  - PanelPitch
+    - LabelPitchTitle
+    - LabelPitch (pitch value)
+  - PanelRoll
+    - LabelRollTitle
+    - LabelRoll (roll value)
+- ContainerMinMax
+  - PanelMaxPitch (the yellow artificial horizon showing highest pitch = bow highest up)
+  - PanelMinPitch (the blue artificial horizon showing lowest pitch = bow lowest down)
+  - PanelMaxRoll (the green artificial horizon showing maximum roll = furthest roll to starboard)
+  - PanelMinRoll (the red artificial horizon showing minimum roll = furthest roll to portside)
+  - PanelPitchMinMax
+    - LabelPitchTitleMinMax
+    - LabelMaxPitch (max pitch value)
+    - LabelMinPitch (min pitch value)
+  - PanelRollMinMax
+    - LabelRollTitleMinMax
+    - LabelMaxRoll (max roll value)
+    - LabelMinRoll (min roll value)
+- ContainerVessel (ship silhouette)
+  - PanelHull
+  - PanelDeck
+  - PanelBridge
+  - PanelMast
+  - PanelStarboard (also works as connected indicator)
+  - PanelPortside (also works as connected indicator)
+- ContainerLevelingDialog
+  - PanelLevelingDialog
+    - LabelLevelingDialog (Indicates leveling countdown, success and failed messages)
+    - LabelLevelingCancel (Informs to press knob to cancel)
+    - ImageBubbleLevel
 
 ## [v3.0.0] - 2026-03-15
 
