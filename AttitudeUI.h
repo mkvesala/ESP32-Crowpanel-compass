@@ -9,18 +9,19 @@
 //
 // - Class AttitudeUI - responsible for managing SquareLine generated UI elements on AttitudeScreen
 // - Realizes: IScreenUI
-// - Fetches data from ESPNowReceiver in update())
+// - Fetches data from ESPNowReceiver in update()
 // - Initialize: _attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
-//   - Handle knob button press (activates attitude leveling) via onButtonPress()
-//   - Cancel attitude leveling on screen leave via onLeave()
-// - UI logic:
-//   - Pitch: bow down, pitch down - artificial horizon up and vice versa
-//   - Roll: roll port side, roll down - artificial horizon tilted starboard and vice versa
-//   - Knob press: CONFIRM_WAIT (show dialog)
-//   - Knob press again: SENDING (send command to compass)
-//   - Response or timeout: SUCCESS/FAILED → IDLE
+//   - Cycle internal views (ATTITUDE → MINMAX → LEVELING) via onButtonPress()
+//   - Cancel leveling on screen leave via onLeave()
+// - Views (cycled with knob button press):
+//   1. ATTITUDE  — live horizon + pitch/roll labels + ship silhouette
+//   2. MINMAX    — 4 static min/max lines + numeric labels + ship silhouette
+//   3. LEVELING  — countdown dialog, auto-sends command at 0, knob press cancels
+// - Pitch: bow down → pitch negative → horizon moves up
+// - Roll:  roll port → roll negative → horizon tilts starboard (clockwise)
+// - Min/max: runtime only, not persisted to NVS, resets on reboot
 // - Owned by: CrowPanelApplication
 
 class AttitudeUI : public IScreenUI {
@@ -30,20 +31,31 @@ public:
     explicit AttitudeUI(ESPNowReceiver &receiver);
 
     void begin() override;
-    lv_obj_t* getLvglScreen() const override;   
-    void update() override;                     
-    void onButtonPress() override;              
-    void onLeave() override;                   
+    lv_obj_t* getLvglScreen() const override;
+    void update() override;
+    void onButtonPress() override;
+    void onLeave() override;
 
 private:
 
-    // State machine for AttitudeScreen
+    // === V I E W ===
+
+    // Internal view (cycled with knob button press)
+    enum class AttitudeView {
+        ATTITUDE,   // Live horizon, pitch/roll labels, ship silhouette
+        MINMAX,     // Static min/max lines, numeric labels, ship silhouette
+        LEVELING    // Countdown dialog (auto-sends command)
+    };
+
+    // === L E V E L  S T A T E ===
+
+    // Leveling sub-state machine (active only in LEVELING view)
     enum class LevelState {
-        IDLE,           // Normal operation, dialog hidden
-        CONFIRM_WAIT,   // "Level? Press knob to confirm." visible, waiting for 2nd press
-        SENDING,        // "Leveling..." visible, waiting for response
-        SUCCESS,        // "Success!" visible briefly
-        FAILED          // "Failed!" visible briefly
+        IDLE,       // No leveling in progress
+        COUNTDOWN,  // Countdown running (5 s), label updated every second
+        SENDING,    // Command sent, waiting for response
+        SUCCESS,    // "Success!" visible briefly
+        FAILED      // "Failed!" visible briefly
     };
 
     ESPNowReceiver &_receiver;
@@ -51,38 +63,60 @@ private:
     // Connection timeout before showing waiting state
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
 
-    // Methods for updating the SquareLine generated UI elements
-    void showWaiting();
-    void updatePitchLabel(int16_t pitch_deg);
-    void updateRollLabel(int16_t roll_deg);
-    void updateHorizon(int16_t pitch_x10, int16_t roll_x10);
-
-    // Scaling, pixels per degree (pitch)
+    // Scaling: pixels per degree (pitch vertical displacement)
     static constexpr int16_t PITCH_SCALE = 3;
 
-    // Cached values
-    int16_t _last_pitch_x10;
-    int16_t _last_roll_x10;
-    int16_t _last_pitch_deg;
-    int16_t _last_roll_deg;
-    bool _last_connected = false;
+    // Sentinel for unset min/max (int16_t, out of range for pitch ±900 and roll ±1800)
+    static constexpr int16_t SENTINEL = 0x7FFF;
 
-    bool _initialized = false;
+    // === S T A T E ===
+
+    AttitudeView _active_view = AttitudeView::ATTITUDE;
+    LevelState   _level_state = LevelState::IDLE;
+    uint32_t     _state_start_time = 0;
+    bool         _initialized = false;
+
+    // Cached live horizon values (sentinels = not yet set)
+    int16_t _last_pitch_x10  = SENTINEL;
+    int16_t _last_roll_x10   = SENTINEL;
+    int16_t _last_pitch_deg  = SENTINEL;
+    int16_t _last_roll_deg   = SENTINEL;
+    bool    _last_connected  = false;
+
+    // Session min/max (SENTINEL = no data yet)
+    int16_t _min_pitch_x10 = SENTINEL;
+    int16_t _max_pitch_x10 = SENTINEL;
+    int16_t _min_roll_x10  = SENTINEL;
+    int16_t _max_roll_x10  = SENTINEL;
+
+    // Countdown display — last rendered second (avoid redundant label updates)
+    uint8_t _last_countdown_s = 0;
+
+    // === T I M E O U T S  (ms) ===
+    static constexpr uint32_t LEVELING_COUNTDOWN_MS = 5000;
+    static constexpr uint32_t SENDING_TIMEOUT_MS    = 3000;
+    static constexpr uint32_t SUCCESS_DISPLAY_MS    = 2000;
+    static constexpr uint32_t FAILED_DISPLAY_MS     = 2000;
+
+    // === P R I V A T E  M E T H O D S ===
+
+    // View management
+    void showView(AttitudeView view);
+
+    // Live horizon updates
+    void showWaiting();
+    void updateHorizon(int16_t pitch_x10, int16_t roll_x10);
+    void updatePitchLabel(int16_t pitch_deg);
+    void updateRollLabel(int16_t roll_deg);
+
+    // Min/max tracking and display
+    void updateMinMax(int16_t pitch_x10, int16_t roll_x10);
+    void updateMinMaxPanels();
+    void updateMinMaxLabels();
 
     // Level state machine
-    LevelState _level_state = LevelState::IDLE;
-    uint32_t _state_start_time = 0;
-
-    // Level state machine - internal methods (all private)
-    void cancelLevelOperation();
-    void updateLevelState();
     void setLevelState(LevelState new_state);
+    void updateLevelState();
     void updateLevelDialog();
-
-    // Timeouts (ms)
-    static constexpr uint32_t CONFIRM_TIMEOUT_MS = 3000;
-    static constexpr uint32_t SENDING_TIMEOUT_MS = 3000;
-    static constexpr uint32_t SUCCESS_DISPLAY_MS = 2000;
-    static constexpr uint32_t FAILED_DISPLAY_MS  = 2000;
 
 };

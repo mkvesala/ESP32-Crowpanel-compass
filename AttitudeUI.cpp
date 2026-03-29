@@ -5,11 +5,7 @@
 
 // Constructor
 AttitudeUI::AttitudeUI(ESPNowReceiver &receiver)
-    : _receiver(receiver)
-    , _last_pitch_x10(0x7FFF)
-    , _last_roll_x10(0x7FFF)
-    , _last_pitch_deg(0x7FFF)
-    , _last_roll_deg(0x7FFF) {}
+    : _receiver(receiver) {}
 
 // Realizes getLvglScreen(): Return the LVGL screen object for this UI
 lv_obj_t* AttitudeUI::getLvglScreen() const {
@@ -29,16 +25,37 @@ void AttitudeUI::begin() {
     // PNG is 680x4, center point is 340, 2
     lv_image_set_pivot(ui_ImageHorizon, 340, 2);
 
-    // Set ContainerLevelingDialog hidden
-    lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+    // Initialize roll min/max panel transform rotation to 0.
+    // Default pivot is (50%, 50%) = center of 484×4 panel = screen center (panels are LV_ALIGN_CENTER).
+    lv_obj_set_style_transform_rotation(ui_PanelMaxRoll, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_transform_rotation(ui_PanelMinRoll, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Reset session min/max (runtime only, not persisted)
+    _min_pitch_x10 = SENTINEL;
+    _max_pitch_x10 = SENTINEL;
+    _min_roll_x10  = SENTINEL;
+    _max_roll_x10  = SENTINEL;
+
+    // Initialize min/max labels to "---"
+    lv_label_set_text(ui_LabelMaxPitch, "---");
+    lv_label_set_text(ui_LabelMinPitch, "---");
+    lv_label_set_text(ui_LabelMaxRoll,  "---");
+    lv_label_set_text(ui_LabelMinRoll,  "---");
+
+    // Initialize min/max panels at center (no displacement, no rotation)
+    lv_obj_set_y(ui_PanelMaxPitch, 0);
+    lv_obj_set_y(ui_PanelMinPitch, 0);
 
     _level_state = LevelState::IDLE;
     _initialized = true;
 
+    // Apply initial view (sets container visibility)
+    this->showView(AttitudeView::ATTITUDE);
+
     this->showWaiting();
 }
 
-// Realizes update(): fetch data from receiver and update UI
+// Realizes update(): Fetch data from receiver and update UI
 void AttitudeUI::update() {
     if (!_initialized) return;
 
@@ -46,193 +63,313 @@ void AttitudeUI::update() {
 
     if (!is_connected) {
         if (_last_connected) {
-            // Hide "navigation lights" from ship silhouette
+            // Disconnected: hide navigation lights, show waiting state
             lv_obj_add_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
+            this->showWaiting();
             _last_connected = false;
         }
     } else {
-        _last_connected = true;
-        // Show "navigation lights" of ship silhouette
-        lv_obj_remove_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_remove_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
+        if (!_last_connected) {
+            // Reconnected: show navigation lights
+            lv_obj_remove_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
+            _last_connected = true;
+        }
 
         if (_receiver.hasNewData()) {
             HeadingData data = _receiver.getData();
             this->updateHorizon(data.pitch_x10, data.roll_x10);
             this->updatePitchLabel(data.getPitchDeg());
             this->updateRollLabel(data.getRollDeg());
+            this->updateMinMax(data.pitch_x10, data.roll_x10);
+            this->updateMinMaxPanels();
+            this->updateMinMaxLabels();
         }
     }
 
-    // Always tick the level state machine regardless of connection
+    // Always tick the level state machine regardless of connection state
     this->updateLevelState();
 }
 
-// Realizes onButtonPress(): level state machine — handle knob press
+// Realizes onButtonPress(): Cycle through internal views
 void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
 
-    switch (_level_state) {
-        case LevelState::IDLE:
-            // First press: show confirmation dialog
-            this->setLevelState(LevelState::CONFIRM_WAIT);
+    switch (_active_view) {
+        case AttitudeView::ATTITUDE:
+            this->showView(AttitudeView::MINMAX);
             break;
-
-        case LevelState::CONFIRM_WAIT:
-            // Second press: send level command
-            if (_receiver.sendLevelCommand()) this->setLevelState(LevelState::SENDING);
-            else this->setLevelState(LevelState::FAILED);
+        case AttitudeView::MINMAX:
+            this->showView(AttitudeView::LEVELING);
             break;
-
-        case LevelState::SENDING:
-        case LevelState::SUCCESS:
-        case LevelState::FAILED:
-            // Ignore presses during these states
+        case AttitudeView::LEVELING:
+            // Cancel countdown/leveling and return to ATTITUDE view
+            this->showView(AttitudeView::ATTITUDE);
             break;
     }
 }
 
-// Realizes onLeave(): cancel level operation when leaving screen
+// Realizes onLeave(): Called when screen carousel switches away
 void AttitudeUI::onLeave() {
-    this->cancelLevelOperation();
+    // Cancel any leveling operation and reset to ATTITUDE view
+    this->showView(AttitudeView::ATTITUDE);
 }
 
 // === P R I V A T E ===
 
-// Level state machine — cancel operation and return to idle
-void AttitudeUI::cancelLevelOperation() {
-    if (_level_state != LevelState::IDLE) this->setLevelState(LevelState::IDLE);
+// Set active view and update container visibility + level state
+void AttitudeUI::showView(AttitudeView view) {
+    _active_view = view;
+
+    const bool is_attitude = (view == AttitudeView::ATTITUDE);
+    const bool is_minmax   = (view == AttitudeView::MINMAX);
+    const bool is_leveling = (view == AttitudeView::LEVELING);
+
+    // ContainerHorizonGroup (live horizon line): visible in ATTITUDE only
+    if (is_attitude)
+        lv_obj_remove_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
+
+    // ContainerAttitudeGroup (live pitch/roll labels): visible in ATTITUDE only
+    if (is_attitude)
+        lv_obj_remove_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
+
+    // ContainerMinMax (4 min/max lines + numeric labels): visible in MINMAX only
+    if (is_minmax)
+        lv_obj_remove_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
+
+    // ContainerVessel (ship silhouette): visible in ATTITUDE and MINMAX
+    if (!is_leveling)
+        lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
+
+    // ContainerLevelingDialog: visible in LEVELING only
+    if (is_leveling)
+        lv_obj_remove_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+
+    // Level state transitions
+    if (is_leveling) {
+        // Entering LEVELING view: start the countdown
+        this->setLevelState(LevelState::COUNTDOWN);
+    } else {
+        // Leaving LEVELING view (or initializing to ATTITUDE/MINMAX): cancel any operation
+        if (_level_state != LevelState::IDLE) {
+            _level_state = LevelState::IDLE;
+            _state_start_time = millis();
+        }
+    }
 }
 
-// Level state machine — advance timeouts and check responses
+// Update AttitudeScreen live horizon to "waiting for data" state
+void AttitudeUI::showWaiting() {
+    if (!_initialized) return;
+
+    // Live pitch/roll labels to "---"
+    lv_label_set_text(ui_LabelPitch, "---");
+    lv_label_set_text(ui_LabelRoll,  "---");
+
+    // Horizon to neutral position
+    lv_obj_set_y(ui_ImageHorizon, 0);
+    lv_image_set_rotation(ui_ImageHorizon, 0);
+
+    // Reset cached live values
+    _last_pitch_x10 = SENTINEL;
+    _last_roll_x10  = SENTINEL;
+    _last_pitch_deg = SENTINEL;
+    _last_roll_deg  = SENTINEL;
+
+    // NOTE: Session min/max is NOT reset on disconnect — preserved until reboot
+}
+
+// Update live artificial horizon based on pitch and roll
+void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
+    if (pitch_x10 == _last_pitch_x10 && roll_x10 == _last_roll_x10) return;
+    _last_pitch_x10 = pitch_x10;
+    _last_roll_x10  = roll_x10;
+
+    // PITCH: Move ImageHorizon vertically
+    // Bow down (negative pitch) → horizon moves up (negative y in LVGL)
+    int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
+    lv_obj_set_y(ui_ImageHorizon, y_offset);
+
+    // ROLL: Rotate ImageHorizon
+    // Roll port (negative roll) → horizon tilts starboard (clockwise = positive angle in LVGL)
+    lv_image_set_rotation(ui_ImageHorizon, -roll_x10);
+}
+
+// Update live pitch label
+void AttitudeUI::updatePitchLabel(int16_t pitch_deg) {
+    if (pitch_deg == _last_pitch_deg) return;
+    _last_pitch_deg = pitch_deg;
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%+04d°", pitch_deg);
+    lv_label_set_text(ui_LabelPitch, buf);
+}
+
+// Update live roll label
+void AttitudeUI::updateRollLabel(int16_t roll_deg) {
+    if (roll_deg == _last_roll_deg) return;
+    _last_roll_deg = roll_deg;
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%+04d°", roll_deg);
+    lv_label_set_text(ui_LabelRoll, buf);
+}
+
+// Update session min/max tracking
+void AttitudeUI::updateMinMax(int16_t pitch_x10, int16_t roll_x10) {
+    if (_max_pitch_x10 == SENTINEL || pitch_x10 > _max_pitch_x10) _max_pitch_x10 = pitch_x10;
+    if (_min_pitch_x10 == SENTINEL || pitch_x10 < _min_pitch_x10) _min_pitch_x10 = pitch_x10;
+    if (_max_roll_x10  == SENTINEL || roll_x10  > _max_roll_x10)  _max_roll_x10  = roll_x10;
+    if (_min_roll_x10  == SENTINEL || roll_x10  < _min_roll_x10)  _min_roll_x10  = roll_x10;
+}
+
+// Update min/max panel positions and rotations in ContainerMinMax
+void AttitudeUI::updateMinMaxPanels() {
+    // PanelMaxPitch (yellow): highest pitch = bow highest up → horizon lowest on screen
+    // Same formula as live ImageHorizon: positive pitch_x10 → positive y_offset → panel moves down
+    if (_max_pitch_x10 != SENTINEL)
+        lv_obj_set_y(ui_PanelMaxPitch, (_max_pitch_x10 * PITCH_SCALE) / 10);
+
+    // PanelMinPitch (blue): lowest pitch = bow lowest down → horizon highest on screen
+    if (_min_pitch_x10 != SENTINEL)
+        lv_obj_set_y(ui_PanelMinPitch, (_min_pitch_x10 * PITCH_SCALE) / 10);
+
+    // PanelMaxRoll (green): maximum roll to starboard (positive roll_x10)
+    // Rotation convention matches live horizon: panel tilts opposite to ship roll direction
+    // Default pivot (50%/50%) = center of 484×4 panel = screen center (LV_ALIGN_CENTER)
+    if (_max_roll_x10 != SENTINEL)
+        lv_obj_set_style_transform_rotation(ui_PanelMaxRoll, -_max_roll_x10,
+                                            LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // PanelMinRoll (red): maximum roll to portside (negative roll_x10)
+    if (_min_roll_x10 != SENTINEL)
+        lv_obj_set_style_transform_rotation(ui_PanelMinRoll, -_min_roll_x10,
+                                            LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+// Update min/max numeric labels in ContainerMinMax
+void AttitudeUI::updateMinMaxLabels() {
+    char buf[16];
+
+    if (_max_pitch_x10 == SENTINEL) {
+        lv_label_set_text(ui_LabelMaxPitch, "---");
+    } else {
+        snprintf(buf, sizeof(buf), "Max %+d°", _max_pitch_x10 / 10);
+        lv_label_set_text(ui_LabelMaxPitch, buf);
+    }
+
+    if (_min_pitch_x10 == SENTINEL) {
+        lv_label_set_text(ui_LabelMinPitch, "---");
+    } else {
+        snprintf(buf, sizeof(buf), "Min %+d°", _min_pitch_x10 / 10);
+        lv_label_set_text(ui_LabelMinPitch, buf);
+    }
+
+    if (_max_roll_x10 == SENTINEL) {
+        lv_label_set_text(ui_LabelMaxRoll, "---");
+    } else {
+        snprintf(buf, sizeof(buf), "Max %+d°", _max_roll_x10 / 10);
+        lv_label_set_text(ui_LabelMaxRoll, buf);
+    }
+
+    if (_min_roll_x10 == SENTINEL) {
+        lv_label_set_text(ui_LabelMinRoll, "---");
+    } else {
+        snprintf(buf, sizeof(buf), "Min %+d°", _min_roll_x10 / 10);
+        lv_label_set_text(ui_LabelMinRoll, buf);
+    }
+}
+
+// Level state machine — advance timeouts and auto-send
 void AttitudeUI::updateLevelState() {
     if (_level_state == LevelState::IDLE) return;
 
     uint32_t elapsed = millis() - _state_start_time;
 
     switch (_level_state) {
-        case LevelState::CONFIRM_WAIT:
-            if (elapsed >= CONFIRM_TIMEOUT_MS) this->setLevelState(LevelState::IDLE);
+        case LevelState::COUNTDOWN: {
+            if (elapsed >= LEVELING_COUNTDOWN_MS) {
+                // Countdown complete: send command
+                if (_receiver.sendLevelCommand()) this->setLevelState(LevelState::SENDING);
+                else                               this->setLevelState(LevelState::FAILED);
+            } else {
+                // Update countdown label once per second
+                uint8_t remaining_s = (uint8_t)((LEVELING_COUNTDOWN_MS - elapsed + 999) / 1000);
+                if (remaining_s != _last_countdown_s) {
+                    _last_countdown_s = remaining_s;
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "Leveling in\n%d s", remaining_s);
+                    lv_label_set_text(ui_LabelLevelingDialog, buf);
+                }
+            }
             break;
+        }
 
         case LevelState::SENDING:
             if (_receiver.hasLevelResponse()) {
                 bool success = _receiver.getLevelResult();
                 this->setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
-            } else if (elapsed >= SENDING_TIMEOUT_MS) this->setLevelState(LevelState::FAILED);
+            } else if (elapsed >= SENDING_TIMEOUT_MS) {
+                this->setLevelState(LevelState::FAILED);
+            }
             break;
 
         case LevelState::SUCCESS:
-            if (elapsed >= SUCCESS_DISPLAY_MS) this->setLevelState(LevelState::IDLE);
+            if (elapsed >= SUCCESS_DISPLAY_MS) this->showView(AttitudeView::ATTITUDE);
             break;
 
         case LevelState::FAILED:
-            if (elapsed >= FAILED_DISPLAY_MS) this->setLevelState(LevelState::IDLE);
+            if (elapsed >= FAILED_DISPLAY_MS)  this->showView(AttitudeView::ATTITUDE);
             break;
 
         case LevelState::IDLE:
-            // Already handled above
             break;
     }
 }
 
-// Update AttitudeScreen to show "waiting for data"
-void AttitudeUI::showWaiting() {
-    if (!_initialized) return;
-
-    // Pitch and roll UI labels to show "---"
-    lv_label_set_text(ui_LabelPitch, "---");
-    lv_label_set_text(ui_LabelRoll, "---");
-
-    // Horizon to the neutral position
-    lv_obj_set_y(ui_ImageHorizon, 0);
-    lv_image_set_rotation(ui_ImageHorizon, 0);
-
-    // Reset cached values
-    _last_pitch_x10 = 0x7FFF;
-    _last_roll_x10  = 0x7FFF;
-    _last_pitch_deg = 0x7FFF;
-    _last_roll_deg  = 0x7FFF;
-}
-
-// Update artificial horizon based on pitch and roll values
-void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
-    // Update only if changed
-    if (pitch_x10 == _last_pitch_x10 && roll_x10 == _last_roll_x10) return;
-    _last_pitch_x10 = pitch_x10;
-    _last_roll_x10  = roll_x10;
-
-    // PITCH: Move ImageHorizon UI element vertically
-    // Bow down - pitch down - horizon up
-    // lv_obj_set_y: positive value moves object down in relation to align-point
-    // ImageHorizon is ALIGN_CENTER, y=0 is the center point
-    int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
-    lv_obj_set_y(ui_ImageHorizon, y_offset);
-
-    // ROLL: Rotate ImageHorizon UI element
-    // Roll port side → horizon rotates starboard
-    // lv_image_set_rotation: positive angle = clockwise, uses 0.1° resolution
-
-    lv_image_set_rotation(ui_ImageHorizon, -roll_x10);
-}
-
-// Update UI label element for pitch value
-void AttitudeUI::updatePitchLabel(int16_t pitch_deg) {
-    if (pitch_deg == _last_pitch_deg) return;
-    _last_pitch_deg = pitch_deg;
-
-    char buf[16];
-    // Format: "+003°" or "-012°"
-    snprintf(buf, sizeof(buf), "%+04d°", pitch_deg);
-    lv_label_set_text(ui_LabelPitch, buf);
-}
-
-// Update UI label element for roll value
-void AttitudeUI::updateRollLabel(int16_t roll_deg) {
-    if (roll_deg == _last_roll_deg) return;
-    _last_roll_deg = roll_deg;
-
-    char buf[16];
-    // Format: "+003°" or "-012°"
-    snprintf(buf, sizeof(buf), "%+04d°", roll_deg);
-    lv_label_set_text(ui_LabelRoll, buf);
-}
-
-// Level state machine — update UI dialog element
+// Level state machine — update dialog label and color for the new state
 void AttitudeUI::updateLevelDialog() {
     switch (_level_state) {
         case LevelState::IDLE:
-            lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+            // Dialog hidden by showView() — nothing to update
             break;
 
-        case LevelState::CONFIRM_WAIT:
-            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
-            lv_label_set_text(ui_LabelLevelingDialog, "Level attitude?\n\nPress knob again\nto confirm.");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFF00), 0);  // Yellow
+        case LevelState::COUNTDOWN:
+            // Label text updated each second in updateLevelState()
+            // Set initial text and color here (state entry)
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);
+            _last_countdown_s = 0;  // Force label update on first tick
             break;
 
         case LevelState::SENDING:
-            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
             lv_label_set_text(ui_LabelLevelingDialog, "Leveling...");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);  // White
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);
             break;
 
         case LevelState::SUCCESS:
-            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
             lv_label_set_text(ui_LabelLevelingDialog, "Success!");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0x00FF00), 0);  // Green
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0x00FF00), 0);
             break;
 
         case LevelState::FAILED:
-            lv_obj_clear_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
             lv_label_set_text(ui_LabelLevelingDialog, "Failed!");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFF0000), 0);  // Red
+            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFF0000), 0);
             break;
     }
 }
 
-// Level state machine — set new state and update dialog
+// Level state machine — set new state, record timestamp, update dialog
 void AttitudeUI::setLevelState(LevelState new_state) {
     _level_state = new_state;
     _state_start_time = millis();
