@@ -103,17 +103,18 @@ private:
     static constexpr uint32_t FAILED_DISPLAY_MS     = 2000;
 
     // Programmatically created image lines (lv_image — lv_image_set_rotation() proven safe in LVGL 9).
-    // All three horizon lines share the same source image (ui_img_horizonline_png, 680×4 px)
-    // and pivot (340, 2) — maps to screen center via their respective 680×680 containers.
+    // All three horizon lines share the same source descriptor (s_horizonline_dsc, 680×4 px,
+    // white RGB565 rectangle defined in AttitudeUI.cpp) and pivot (340, 2) —
+    // maps to screen center via their respective 680×680 containers. No PNG file required.
     //
     // _img_horizon: live artificial horizon (child of ui_ContainerHorizonGroup).
     //   Created here instead of SquareLine to ensure LV_IMAGE_ALIGN_DEFAULT (not TILE) and
     //   correct pivot from the start — avoiding the two fixup calls that were needed before.
     //
     // _img_max_roll / _img_min_roll: MINMAX roll lines (children of _container_roll_lines).
-    //   ui_PanelMaxRoll / ui_PanelMinRoll (lv_obj) are permanently hidden —
+    //   ui_PanelMaxRoll / ui_PanelMinRoll were removed from SquareLine —
     //   lv_obj_set_style_transform_rotation() on plain lv_obj causes lv_timer_handler() hang
-    //   in LVGL 9 PARTIAL mode.
+    //   in LVGL 9 PARTIAL mode. Roll lines are entirely programmatic lv_image objects.
     lv_obj_t* _img_horizon          = nullptr;  // white, live horizon, child of ContainerHorizonGroup
     lv_obj_t* _container_roll_lines = nullptr;  // 680×680 transparent, shown in MINMAX only
     lv_obj_t* _img_max_roll         = nullptr;  // green, lv_image_set_rotation()
