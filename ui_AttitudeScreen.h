@@ -23,6 +23,20 @@ extern lv_obj_t *ui_LabelPitch;
 extern lv_obj_t *ui_PanelRoll;
 extern lv_obj_t *ui_LabelRollTitle;
 extern lv_obj_t *ui_LabelRoll;
+extern lv_obj_t *ui_ContainerMinMax;
+extern lv_obj_t *ui_PanelMaxPitch;
+extern lv_obj_t *ui_PanelMinPitch;
+extern lv_obj_t *ui_PanelMaxRoll;
+extern lv_obj_t *ui_PanelMinRoll;
+extern lv_obj_t *ui_PanelPitchMinMax;
+extern lv_obj_t *ui_LabelPitchTitleMinMax;
+extern lv_obj_t *ui_LabelMaxPitch;
+extern lv_obj_t *ui_LabelMinPitch;
+extern lv_obj_t *ui_PanelRollMinMax;
+extern lv_obj_t *ui_LabelRollTitleMinMax;
+extern lv_obj_t *ui_LabelMaxRoll;
+extern lv_obj_t *ui_LabelMinRoll;
+extern lv_obj_t *ui_ContainerVessel;
 extern lv_obj_t *ui_PanelHull;
 extern lv_obj_t *ui_PanelDeck;
 extern lv_obj_t *ui_PanelBridge;
@@ -32,6 +46,8 @@ extern lv_obj_t *ui_PanelPortside;
 extern lv_obj_t *ui_ContainerLevelingDialog;
 extern lv_obj_t *ui_PanelLevelingDialog;
 extern lv_obj_t *ui_LabelLevelingDialog;
+extern lv_obj_t *ui_LabelLevelingCancel;
+extern lv_obj_t *ui_ImageBubbleLevel;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

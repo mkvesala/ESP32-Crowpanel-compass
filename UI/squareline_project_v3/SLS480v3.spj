@@ -1553,7 +1553,7 @@
               {
                 "nid": 100,
                 "strtype": "CONTAINER/Hidden",
-                "strval": "True",
+                "strval": "False",
                 "InheritedType": 2
               },
               {
@@ -3051,7 +3051,7 @@
               {
                 "nid": 100,
                 "strtype": "CONTAINER/Hidden",
-                "strval": "True",
+                "strval": "False",
                 "InheritedType": 2
               },
               {
@@ -7343,7 +7343,7 @@
               {
                 "nid": 100,
                 "strtype": "CONTAINER/Hidden",
-                "strval": "True",
+                "strval": "False",
                 "InheritedType": 2
               },
               {
@@ -7977,6 +7977,12 @@
                         "nid": 90,
                         "strtype": "OBJECT/Flags",
                         "InheritedType": 1
+                      },
+                      {
+                        "nid": 100,
+                        "strtype": "IMAGE/Hidden",
+                        "strval": "False",
+                        "InheritedType": 2
                       },
                       {
                         "nid": 110,
@@ -20079,7 +20085,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 969,
+    "backup_cnt": 973,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
