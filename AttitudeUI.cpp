@@ -25,10 +25,49 @@ void AttitudeUI::begin() {
     // PNG is 680x4, center point is 340, 2
     lv_image_set_pivot(ui_ImageHorizon, 340, 2);
 
-    // Initialize roll min/max panel transform rotation to 0.
-    // Default pivot is (50%, 50%) = center of 484×4 panel = screen center (panels are LV_ALIGN_CENTER).
-    lv_obj_set_style_transform_rotation(ui_PanelMaxRoll, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_transform_rotation(ui_PanelMinRoll, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // Permanently hide SquareLine-generated roll panels.
+    // lv_obj_set_style_transform_rotation() on a plain lv_obj (484×4 px) causes
+    // lv_timer_handler() to hang in LVGL 9 PARTIAL rendering mode — device freezes.
+    // Roll lines are replaced by programmatic lv_image objects below.
+    lv_obj_add_flag(ui_PanelMaxRoll, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_PanelMinRoll, LV_OBJ_FLAG_HIDDEN);
+
+    // Create 680×680 transparent container for roll min/max image lines.
+    // Same size as ContainerHorizonGroup: ensures the 680-px-wide image lines cover the
+    // full screen width at any rotation angle without clipping at the corners.
+    _container_roll_lines = lv_obj_create(ui_AttitudeScreen);
+    lv_obj_remove_style_all(_container_roll_lines);
+    lv_obj_set_size(_container_roll_lines, 680, 680);
+    lv_obj_set_align(_container_roll_lines, LV_ALIGN_CENTER);
+    lv_obj_remove_flag(_container_roll_lines,
+                       LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK |
+                       LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE |
+                       LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE |
+                       LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
+                       LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+    // Z-index 0: drawn first (behind ContainerMinMax labels and ContainerVessel)
+    lv_obj_move_to_index(_container_roll_lines, 0);
+
+    // Create green max-roll image line (recolored copy of ui_img_horizonline_png)
+    _img_max_roll = lv_image_create(_container_roll_lines);
+    lv_image_set_src(_img_max_roll, &ui_img_horizonline_png);
+    lv_obj_set_align(_img_max_roll, LV_ALIGN_CENTER);
+    lv_image_set_inner_align(_img_max_roll, LV_IMAGE_ALIGN_DEFAULT);  // avoid TILE (LVGL 9 quirk)
+    lv_image_set_pivot(_img_max_roll, 340, 2);                        // center of 680×4 image
+    lv_image_set_antialias(_img_max_roll, false);
+    lv_obj_set_style_image_recolor(_img_max_roll, lv_color_hex(0x00FF00), 0);
+    lv_obj_set_style_image_recolor_opa(_img_max_roll, 255, 0);
+
+    // Create red min-roll image line
+    _img_min_roll = lv_image_create(_container_roll_lines);
+    lv_image_set_src(_img_min_roll, &ui_img_horizonline_png);
+    lv_obj_set_align(_img_min_roll, LV_ALIGN_CENTER);
+    lv_image_set_inner_align(_img_min_roll, LV_IMAGE_ALIGN_DEFAULT);
+    lv_image_set_pivot(_img_min_roll, 340, 2);
+    lv_image_set_antialias(_img_min_roll, false);
+    lv_obj_set_style_image_recolor(_img_min_roll, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_image_recolor_opa(_img_min_roll, 255, 0);
 
     // Reset session min/max (runtime only, not persisted)
     _min_pitch_x10 = SENTINEL;
@@ -156,6 +195,12 @@ void AttitudeUI::showView(AttitudeView view) {
     else
         lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
 
+    // Roll image lines container: visible in MINMAX only
+    if (is_minmax)
+        lv_obj_remove_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+
     // Level state transitions
     if (is_leveling) {
         // Entering LEVELING view: start the countdown
@@ -245,17 +290,14 @@ void AttitudeUI::updateMinMaxPanels() {
     if (_min_pitch_x10 != SENTINEL)
         lv_obj_set_y(ui_PanelMinPitch, (_min_pitch_x10 * PITCH_SCALE) / 10);
 
-    // PanelMaxRoll (green): maximum roll to starboard (positive roll_x10)
-    // Rotation convention matches live horizon: panel tilts opposite to ship roll direction
-    // Default pivot (50%/50%) = center of 484×4 panel = screen center (LV_ALIGN_CENTER)
+    // Roll image lines: use lv_image_set_rotation() — same proven API as live ImageHorizon.
+    // Pivot (340, 2) = center of 680×4 image = screen center (LV_ALIGN_CENTER in 680×680 container).
+    // Convention: -roll_x10 so ship roll right (positive) tilts line left (negative LVGL angle).
     if (_max_roll_x10 != SENTINEL)
-        lv_obj_set_style_transform_rotation(ui_PanelMaxRoll, -_max_roll_x10,
-                                            LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_image_set_rotation(_img_max_roll, -_max_roll_x10);
 
-    // PanelMinRoll (red): maximum roll to portside (negative roll_x10)
     if (_min_roll_x10 != SENTINEL)
-        lv_obj_set_style_transform_rotation(ui_PanelMinRoll, -_min_roll_x10,
-                                            LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_image_set_rotation(_img_min_roll, -_min_roll_x10);
 }
 
 // Update min/max numeric labels in ContainerMinMax

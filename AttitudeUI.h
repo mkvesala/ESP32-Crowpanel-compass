@@ -98,6 +98,14 @@ private:
     static constexpr uint32_t SUCCESS_DISPLAY_MS    = 2000;
     static constexpr uint32_t FAILED_DISPLAY_MS     = 2000;
 
+    // Programmatically created roll min/max image lines (lv_image, proven API)
+    // ui_PanelMaxRoll / ui_PanelMinRoll (lv_obj) are permanently hidden —
+    // lv_obj_set_style_transform_rotation() on plain lv_obj causes lv_timer_handler() hang
+    // in LVGL 9 PARTIAL mode. Use lv_image_set_rotation() instead (same as ImageHorizon).
+    lv_obj_t* _container_roll_lines = nullptr;  // 680×680 transparent, shown in MINMAX only
+    lv_obj_t* _img_max_roll = nullptr;          // green, lv_image_set_rotation()
+    lv_obj_t* _img_min_roll = nullptr;          // red,   lv_image_set_rotation()
+
     // === P R I V A T E  M E T H O D S ===
 
     // View management
