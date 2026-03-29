@@ -16,14 +16,25 @@ lv_obj_t* AttitudeUI::getLvglScreen() const {
 void AttitudeUI::begin() {
     if (_initialized) return;
 
-    // Override SquareLine-generated LV_IMAGE_ALIGN_TILE: TILE mode silently disables
-    // lv_image_set_rotation() in LVGL 9 (rotation is not applied in the tile draw path).
-    // Must be called BEFORE lv_image_set_pivot — set_inner_align resets pivot to (0,0) in LVGL 9.
-    lv_image_set_inner_align(ui_ImageHorizon, LV_IMAGE_ALIGN_DEFAULT);
-
-    // Set rotation pivot to the center of ImageHorizon element
-    // PNG is 680x4, center point is 340, 2
-    lv_image_set_pivot(ui_ImageHorizon, 340, 2);
+    // Create live horizon image line programmatically.
+    // Parent: ui_ContainerHorizonGroup (680×680, LV_ALIGN_CENTER on screen).
+    // Source: ui_img_horizonline_png (680×4 px, LV_COLOR_FORMAT_NATIVE_WITH_ALPHA).
+    // inner_align: LV_IMAGE_ALIGN_DEFAULT — LVGL 9 defaults to TILE which silently disables
+    //   lv_image_set_rotation(); must be set explicitly BEFORE lv_image_set_pivot (pivot resets to
+    //   (0,0) when inner_align is changed in LVGL 9).
+    // Pivot (340, 2): center of 680×4 image → maps to container center → screen center (240, 240).
+    // lv_obj_set_align(LV_ALIGN_CENTER) + lv_obj_set_y(y_offset): y_offset is relative to the
+    //   aligned (centered) position; 0 = neutral horizon, positive = bow up, negative = bow down.
+    _img_horizon = lv_image_create(ui_ContainerHorizonGroup);
+    lv_image_set_src(_img_horizon, &ui_img_horizonline_png);
+    lv_obj_set_align(_img_horizon, LV_ALIGN_CENTER);
+    lv_image_set_inner_align(_img_horizon, LV_IMAGE_ALIGN_DEFAULT);
+    lv_image_set_pivot(_img_horizon, 340, 2);
+    lv_obj_remove_flag(_img_horizon,
+                       (lv_obj_flag_t)(LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE |
+                                       LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE |
+                                       LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC |
+                                       LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN));
 
     // Permanently hide SquareLine-generated roll panels.
     // lv_obj_set_style_transform_rotation() on a plain lv_obj (484×4 px) causes
@@ -223,8 +234,8 @@ void AttitudeUI::showWaiting() {
     lv_label_set_text(ui_LabelRoll,  "---");
 
     // Horizon to neutral position
-    lv_obj_set_y(ui_ImageHorizon, 0);
-    lv_image_set_rotation(ui_ImageHorizon, 0);
+    lv_obj_set_y(_img_horizon, 0);
+    lv_image_set_rotation(_img_horizon, 0);
 
     // Reset cached live values
     _last_pitch_x10 = SENTINEL;
@@ -244,11 +255,11 @@ void AttitudeUI::updateHorizon(int16_t pitch_x10, int16_t roll_x10) {
     // PITCH: Move ImageHorizon vertically
     // Bow down (negative pitch) → horizon moves up (negative y in LVGL)
     int16_t y_offset = (pitch_x10 * PITCH_SCALE) / 10;
-    lv_obj_set_y(ui_ImageHorizon, y_offset);
+    lv_obj_set_y(_img_horizon, y_offset);
 
     // ROLL: Rotate ImageHorizon
     // Roll port (negative roll) → horizon tilts starboard (clockwise = positive angle in LVGL)
-    lv_image_set_rotation(ui_ImageHorizon, -roll_x10);
+    lv_image_set_rotation(_img_horizon, -roll_x10);
 }
 
 // Update live pitch label

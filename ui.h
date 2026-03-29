@@ -31,7 +31,6 @@ extern lv_obj_t *ui____initial_actions0;
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE( ui_img_1776051799);   // assets/Compass-12.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
-LV_IMG_DECLARE( ui_img_horizonline_png);   // assets/horizonline.png
 LV_IMG_DECLARE( ui_img_level_png);   // assets/level.png
 LV_IMG_DECLARE( ui_img_sun3_png);   // assets/sun3.png
 LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png

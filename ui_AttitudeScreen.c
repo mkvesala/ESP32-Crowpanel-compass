@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_AttitudeScreen = NULL;lv_obj_t *ui_ContainerHorizonGroup = NULL;lv_obj_t *ui_ImageHorizon = NULL;lv_obj_t *ui_ContainerAttitudeGroup = NULL;lv_obj_t *ui_PanelPitch = NULL;lv_obj_t *ui_LabelPitchTitle = NULL;lv_obj_t *ui_LabelPitch = NULL;lv_obj_t *ui_PanelRoll = NULL;lv_obj_t *ui_LabelRollTitle = NULL;lv_obj_t *ui_LabelRoll = NULL;lv_obj_t *ui_ContainerMinMax = NULL;lv_obj_t *ui_PanelMaxPitch = NULL;lv_obj_t *ui_PanelMinPitch = NULL;lv_obj_t *ui_PanelMaxRoll = NULL;lv_obj_t *ui_PanelMinRoll = NULL;lv_obj_t *ui_PanelPitchMinMax = NULL;lv_obj_t *ui_LabelPitchTitleMinMax = NULL;lv_obj_t *ui_LabelMaxPitch = NULL;lv_obj_t *ui_LabelMinPitch = NULL;lv_obj_t *ui_PanelRollMinMax = NULL;lv_obj_t *ui_LabelRollTitleMinMax = NULL;lv_obj_t *ui_LabelMaxRoll = NULL;lv_obj_t *ui_LabelMinRoll = NULL;lv_obj_t *ui_ContainerVessel = NULL;lv_obj_t *ui_PanelHull = NULL;lv_obj_t *ui_PanelDeck = NULL;lv_obj_t *ui_PanelBridge = NULL;lv_obj_t *ui_PanelMast = NULL;lv_obj_t *ui_PanelStarboard = NULL;lv_obj_t *ui_PanelPortside = NULL;lv_obj_t *ui_ContainerLevelingDialog = NULL;lv_obj_t *ui_PanelLevelingDialog = NULL;lv_obj_t *ui_LabelLevelingDialog = NULL;lv_obj_t *ui_LabelLevelingCancel = NULL;lv_obj_t *ui_ImageBubbleLevel = NULL;
+lv_obj_t *ui_AttitudeScreen = NULL;lv_obj_t *ui_ContainerHorizonGroup = NULL;lv_obj_t *ui_ContainerAttitudeGroup = NULL;lv_obj_t *ui_PanelPitch = NULL;lv_obj_t *ui_LabelPitchTitle = NULL;lv_obj_t *ui_LabelPitch = NULL;lv_obj_t *ui_PanelRoll = NULL;lv_obj_t *ui_LabelRollTitle = NULL;lv_obj_t *ui_LabelRoll = NULL;lv_obj_t *ui_ContainerMinMax = NULL;lv_obj_t *ui_PanelMaxPitch = NULL;lv_obj_t *ui_PanelMinPitch = NULL;lv_obj_t *ui_PanelPitchMinMax = NULL;lv_obj_t *ui_LabelPitchTitleMinMax = NULL;lv_obj_t *ui_LabelMaxPitch = NULL;lv_obj_t *ui_LabelMinPitch = NULL;lv_obj_t *ui_PanelRollMinMax = NULL;lv_obj_t *ui_LabelRollTitleMinMax = NULL;lv_obj_t *ui_LabelMaxRoll = NULL;lv_obj_t *ui_LabelMinRoll = NULL;lv_obj_t *ui_ContainerVessel = NULL;lv_obj_t *ui_PanelHull = NULL;lv_obj_t *ui_PanelDeck = NULL;lv_obj_t *ui_PanelBridge = NULL;lv_obj_t *ui_PanelMast = NULL;lv_obj_t *ui_PanelStarboard = NULL;lv_obj_t *ui_PanelPortside = NULL;lv_obj_t *ui_ContainerLevelingDialog = NULL;lv_obj_t *ui_PanelLevelingDialog = NULL;lv_obj_t *ui_LabelLevelingDialog = NULL;lv_obj_t *ui_LabelLevelingCancel = NULL;lv_obj_t *ui_ImageBubbleLevel = NULL;
 // event funtions
 
 // build funtions
@@ -23,13 +23,6 @@ lv_obj_set_width( ui_ContainerHorizonGroup, 680);
 lv_obj_set_height( ui_ContainerHorizonGroup, 680);
 lv_obj_set_align( ui_ContainerHorizonGroup, LV_ALIGN_CENTER );
 lv_obj_remove_flag( ui_ContainerHorizonGroup, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-
-ui_ImageHorizon = lv_image_create(ui_ContainerHorizonGroup);
-lv_image_set_src(ui_ImageHorizon, &ui_img_horizonline_png);
-lv_obj_set_width( ui_ImageHorizon, LV_SIZE_CONTENT);  /// 680
-lv_obj_set_height( ui_ImageHorizon, LV_SIZE_CONTENT);   /// 4
-lv_obj_set_align( ui_ImageHorizon, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_ImageHorizon, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 
 ui_ContainerAttitudeGroup = lv_obj_create(ui_AttitudeScreen);
 lv_obj_remove_style_all(ui_ContainerAttitudeGroup);
@@ -131,26 +124,6 @@ lv_obj_set_style_bg_color(ui_PanelMinPitch, lv_color_hex(0x0000FF), LV_PART_MAIN
 lv_obj_set_style_bg_opa(ui_PanelMinPitch, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_color(ui_PanelMinPitch, lv_color_hex(0x0000FF), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_border_opa(ui_PanelMinPitch, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_PanelMaxRoll = lv_obj_create(ui_ContainerMinMax);
-lv_obj_set_width( ui_PanelMaxRoll, 484);
-lv_obj_set_height( ui_PanelMaxRoll, 4);
-lv_obj_set_align( ui_PanelMaxRoll, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_PanelMaxRoll, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_bg_color(ui_PanelMaxRoll, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_PanelMaxRoll, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_PanelMaxRoll, lv_color_hex(0x00FF00), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_PanelMaxRoll, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_PanelMinRoll = lv_obj_create(ui_ContainerMinMax);
-lv_obj_set_width( ui_PanelMinRoll, 484);
-lv_obj_set_height( ui_PanelMinRoll, 4);
-lv_obj_set_align( ui_PanelMinRoll, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_PanelMinRoll, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_bg_color(ui_PanelMinRoll, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_PanelMinRoll, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_PanelMinRoll, lv_color_hex(0xFF0000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_PanelMinRoll, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_PanelPitchMinMax = lv_obj_create(ui_ContainerMinMax);
 lv_obj_set_width( ui_PanelPitchMinMax, 280);
@@ -389,7 +362,6 @@ void ui_AttitudeScreen_screen_destroy(void)
 // NULL screen variables
 ui_AttitudeScreen= NULL;
 ui_ContainerHorizonGroup= NULL;
-ui_ImageHorizon= NULL;
 ui_ContainerAttitudeGroup= NULL;
 ui_PanelPitch= NULL;
 ui_LabelPitchTitle= NULL;
@@ -400,8 +372,6 @@ ui_LabelRoll= NULL;
 ui_ContainerMinMax= NULL;
 ui_PanelMaxPitch= NULL;
 ui_PanelMinPitch= NULL;
-ui_PanelMaxRoll= NULL;
-ui_PanelMinRoll= NULL;
 ui_PanelPitchMinMax= NULL;
 ui_LabelPitchTitleMinMax= NULL;
 ui_LabelMaxPitch= NULL;
