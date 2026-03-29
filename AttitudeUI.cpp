@@ -40,11 +40,11 @@ void AttitudeUI::begin() {
     lv_obj_set_size(_container_roll_lines, 680, 680);
     lv_obj_set_align(_container_roll_lines, LV_ALIGN_CENTER);
     lv_obj_remove_flag(_container_roll_lines,
-                       LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK |
-                       LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE |
-                       LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE |
-                       LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
-                       LV_OBJ_FLAG_SCROLL_CHAIN);
+                       (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK |
+                                       LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE |
+                                       LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE |
+                                       LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
+                                       LV_OBJ_FLAG_SCROLL_CHAIN));
     lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
     // Z-index 0: drawn first (behind ContainerMinMax labels and ContainerVessel)
     lv_obj_move_to_index(_container_roll_lines, 0);
@@ -102,10 +102,10 @@ void AttitudeUI::update() {
 
     if (!is_connected) {
         if (_last_connected) {
-            // Disconnected: hide navigation lights, show waiting state
+            // Disconnected: hide navigation lights only.
+            // Last known pitch/roll values and horizon position are preserved.
             lv_obj_add_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
-            this->showWaiting();
             _last_connected = false;
         }
     } else {
@@ -279,25 +279,35 @@ void AttitudeUI::updateMinMax(int16_t pitch_x10, int16_t roll_x10) {
     if (_min_roll_x10  == SENTINEL || roll_x10  < _min_roll_x10)  _min_roll_x10  = roll_x10;
 }
 
-// Update min/max panel positions and rotations in ContainerMinMax
+// Update min/max panel positions and rotations in ContainerMinMax.
+// Visual positions are clamped to ±MINMAX_LINE_CLAMP_X10 (±30.0°) for readability.
+// Labels in updateMinMaxLabels() always show the true session values (no clamping).
 void AttitudeUI::updateMinMaxPanels() {
     // PanelMaxPitch (yellow): highest pitch = bow highest up → horizon lowest on screen
     // Same formula as live ImageHorizon: positive pitch_x10 → positive y_offset → panel moves down
-    if (_max_pitch_x10 != SENTINEL)
-        lv_obj_set_y(ui_PanelMaxPitch, (_max_pitch_x10 * PITCH_SCALE) / 10);
+    if (_max_pitch_x10 != SENTINEL) {
+        int16_t clamped = constrain(_max_pitch_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+        lv_obj_set_y(ui_PanelMaxPitch, (clamped * PITCH_SCALE) / 10);
+    }
 
     // PanelMinPitch (blue): lowest pitch = bow lowest down → horizon highest on screen
-    if (_min_pitch_x10 != SENTINEL)
-        lv_obj_set_y(ui_PanelMinPitch, (_min_pitch_x10 * PITCH_SCALE) / 10);
+    if (_min_pitch_x10 != SENTINEL) {
+        int16_t clamped = constrain(_min_pitch_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+        lv_obj_set_y(ui_PanelMinPitch, (clamped * PITCH_SCALE) / 10);
+    }
 
     // Roll image lines: use lv_image_set_rotation() — same proven API as live ImageHorizon.
     // Pivot (340, 2) = center of 680×4 image = screen center (LV_ALIGN_CENTER in 680×680 container).
     // Convention: -roll_x10 so ship roll right (positive) tilts line left (negative LVGL angle).
-    if (_max_roll_x10 != SENTINEL)
-        lv_image_set_rotation(_img_max_roll, -_max_roll_x10);
+    if (_max_roll_x10 != SENTINEL) {
+        int16_t clamped = constrain(_max_roll_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+        lv_image_set_rotation(_img_max_roll, -clamped);
+    }
 
-    if (_min_roll_x10 != SENTINEL)
-        lv_image_set_rotation(_img_min_roll, -_min_roll_x10);
+    if (_min_roll_x10 != SENTINEL) {
+        int16_t clamped = constrain(_min_roll_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+        lv_image_set_rotation(_img_min_roll, -clamped);
+    }
 }
 
 // Update min/max numeric labels in ContainerMinMax

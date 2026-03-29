@@ -66,6 +66,10 @@ private:
     // Scaling: pixels per degree (pitch vertical displacement)
     static constexpr int16_t PITCH_SCALE = 3;
 
+    // Visual clamp for MINMAX lines: lines stop moving at this angle for readability.
+    // Labels always show the true session min/max values regardless of clamping.
+    static constexpr int16_t MINMAX_LINE_CLAMP_X10 = 300;  // ±30.0°
+
     // Sentinel for unset min/max (int16_t, out of range for pitch ±900 and roll ±1800)
     static constexpr int16_t SENTINEL = 0x7FFF;
 
