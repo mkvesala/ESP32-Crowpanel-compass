@@ -1,6 +1,8 @@
 #include "AttitudeUI.h"
 #include "ui.h"
 
+// === S T A T I C ===
+
 // Shared image descriptor for all three horizon image lines
 static uint8_t s_horizonline_buf[680 * 4 * 2];
 static lv_image_dsc_t s_horizonline_dsc;
@@ -93,8 +95,8 @@ void AttitudeUI::begin() {
     // Initialize min/max labels to "---"
     lv_label_set_text(ui_LabelMaxPitch, "---");
     lv_label_set_text(ui_LabelMinPitch, "---");
-    lv_label_set_text(ui_LabelMaxRoll,  "---");
-    lv_label_set_text(ui_LabelMinRoll,  "---");
+    lv_label_set_text(ui_LabelMaxRoll, "---");
+    lv_label_set_text(ui_LabelMinRoll, "---");
 
     // Initialize min/max panels at center (no displacement, no rotation)
     lv_obj_set_y(ui_PanelMaxPitch, 0);
@@ -119,14 +121,14 @@ void AttitudeUI::update() {
         if (_last_connected) {
             // Disconnected: hide navigation lights
             lv_obj_add_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
             _last_connected = false;
         }
     } else {
         if (!_last_connected) {
             // Reconnected: show navigation lights
             lv_obj_remove_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_remove_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(ui_PanelPortside, LV_OBJ_FLAG_HIDDEN);
             _last_connected = true;
         }
 
@@ -180,40 +182,28 @@ void AttitudeUI::showView(AttitudeView view) {
     const bool is_leveling = (view == AttitudeView::LEVELING);
 
     // ContainerHorizonGroup (live horizon line): visible in ATTITUDE only
-    if (is_attitude)
-        lv_obj_remove_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
+    if (is_attitude) lv_obj_remove_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
 
     // ContainerAttitudeGroup (live pitch/roll labels): visible in ATTITUDE only
-    if (is_attitude)
-        lv_obj_remove_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
+    if (is_attitude) lv_obj_remove_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerAttitudeGroup, LV_OBJ_FLAG_HIDDEN);
 
     // ContainerMinMax (4 min/max lines + numeric labels): visible in MINMAX only
-    if (is_minmax)
-        lv_obj_remove_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
+    if (is_minmax) lv_obj_remove_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
 
     // ContainerVessel (ship silhouette): visible in ATTITUDE and MINMAX
-    if (!is_leveling)
-        lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
+    if (!is_leveling) lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
 
     // ContainerLevelingDialog: visible in LEVELING only
-    if (is_leveling)
-        lv_obj_remove_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+    if (is_leveling) lv_obj_remove_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
 
     // Roll image lines container: visible in MINMAX only
-    if (is_minmax)
-        lv_obj_remove_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+    if (is_minmax) lv_obj_remove_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
 
     // Level state transitions
     if (is_leveling) {
@@ -234,7 +224,7 @@ void AttitudeUI::showWaiting() {
 
     // Live pitch/roll labels to "---"
     lv_label_set_text(ui_LabelPitch, "---");
-    lv_label_set_text(ui_LabelRoll,  "---");
+    lv_label_set_text(ui_LabelRoll, "---");
 
     // Horizon to neutral position
     lv_obj_set_y(_img_horizon, 0);
@@ -365,7 +355,7 @@ void AttitudeUI::updateLevelState() {
             if (elapsed >= LEVELING_COUNTDOWN_MS) {
                 // Countdown complete: send command
                 if (_receiver.sendLevelCommand()) this->setLevelState(LevelState::SENDING);
-                else                               this->setLevelState(LevelState::FAILED);
+                else this->setLevelState(LevelState::FAILED);
             } else {
                 // Update countdown label once per second
                 uint8_t remaining_s = (uint8_t)((LEVELING_COUNTDOWN_MS - elapsed + 999) / 1000);

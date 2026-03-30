@@ -21,7 +21,7 @@
 //   3. LEVELING  — countdown dialog, auto-sends command at 0, knob press cancels
 // - Pitch: bow down → pitch negative → horizon moves up
 // - Roll:  roll port → roll negative → horizon tilts starboard (clockwise)
-// - Min/max: runtime only, not persisted to NVS, resets on reboot
+// - Min/max: runtime only, not persisted to NVS, resets on reboot and by leveling command
 // - Owned by: CrowPanelApplication
 
 class AttitudeUI : public IScreenUI {
