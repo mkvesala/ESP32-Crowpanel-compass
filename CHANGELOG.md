@@ -49,6 +49,10 @@ Live horizon (`ContainerHorizonGroup`) is hidden in MINMAX view.
 
 Entering LEVELING view starts a 5-second countdown. The countdown label (`LabelLevelingDialog`) updates every second. At zero the level command is sent automatically via `ESPNowReceiver::sendLevelCommand()`. Knob press or carousel rotation cancels immediately and returns to ATTITUDE view. States: `IDLE → COUNTDOWN → SENDING → SUCCESS/FAILED → ATTITUDE`.
 
+On `SUCCESS`, all four session min/max values are reset to `SENTINEL` — the sensor's reference point has changed so the old extremes are no longer meaningful. Cancellation and `FAILED` leave min/max values intact.
+
+[Bubble level icons created by vectorsmarket15 - Flaticon](https://www.flaticon.com/free-icons/bubble-level)
+
 ---
 
 ### Changed

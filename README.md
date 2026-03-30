@@ -147,6 +147,7 @@ The classes on the UML class diagram are presented with their full public API. T
   - Knob button press or rotation cancels count-down and returns to ATTITUDE view or switches to another screen 
   - When executing the command, "Leveling..." message is shown
   - "Success!" or "Failed!" message shown based on the success of the leveling operation
+  - Successful leveling resets pitch and roll min/max values
 - Ship silhouette overlay on ATTITUDE and MINMAX view
   - The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass
 
@@ -321,7 +322,7 @@ struct BatteryDelta {
 | `ui_BrightnessScreen.h/.c` | SquareLine Studio generated |
 | `ui_helpers.h/.c` | SquareLine Studio generated |
 | `ui_font_*.c` | Custom fonts |
-| `ui_img_*.c` | Images (compass rose, horizon line, sun icon) |
+| `ui_img_*.c` | Images (compass rose, icons) |
 | `UI/` | SquareLine Studio project |
 | `docs/`| Other documents |
 
@@ -392,7 +393,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 Compass rose `lv_image_set_rotation()` is the main performance bottleneck (only on the compass screen). PNG image stored in the image object is 240x240 pixels, no alpha, scaled with LVGL factor 512 to 480x480 pixels. Antialiasing is off. LVGL rendering is based on partial mode, using buffer of 480x120.
 
-Flash usage: ~53%.
+Flash usage: ~54%.
 
 ## Security
 

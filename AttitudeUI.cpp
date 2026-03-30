@@ -1,14 +1,9 @@
 #include "AttitudeUI.h"
 #include "ui.h"
 
-// Shared image descriptor for all three horizon image lines (_img_horizon, _img_max_roll,
-// _img_min_roll). No PNG file needed — the pixel data is a plain 680×4 white rectangle.
-// LV_COLOR_FORMAT_RGB565: 2 bytes per pixel, no alpha channel (all lines are fully opaque;
-// recolor_opa=255 replaces the color entirely so the original white value is irrelevant).
-// All bytes 0xFF = 0xFFFF per pixel = white in RGB565.
-// Initialized once in begin(); all three lv_image objects share the same read-only descriptor.
-static uint8_t        s_horizonline_buf[680 * 4 * 2];  // 5 440 bytes, filled with 0xFF in begin()
-static lv_image_dsc_t s_horizonline_dsc;               // initialized in begin()
+// Shared image descriptor for all three horizon image lines
+static uint8_t s_horizonline_buf[680 * 4 * 2];
+static lv_image_dsc_t s_horizonline_dsc;
 
 // === P U B L I C ===
 
@@ -25,9 +20,7 @@ lv_obj_t* AttitudeUI::getLvglScreen() const {
 void AttitudeUI::begin() {
     if (_initialized) return;
 
-    // Initialize shared image descriptor (all three horizon lines use the same source data).
-    // 680×4 white rectangle, LV_COLOR_FORMAT_NATIVE_WITH_ALPHA (3 bytes/pixel).
-    // Stride = 680×3 bytes. All pixels 0xFF = white, fully opaque.
+    // Initialize shared image descriptor
     memset(s_horizonline_buf, 0xFF, sizeof(s_horizonline_buf));
     s_horizonline_dsc.header.magic  = LV_IMAGE_HEADER_MAGIC;
     s_horizonline_dsc.header.cf     = LV_COLOR_FORMAT_RGB565;
@@ -37,8 +30,8 @@ void AttitudeUI::begin() {
     s_horizonline_dsc.data_size     = sizeof(s_horizonline_buf);
     s_horizonline_dsc.data          = s_horizonline_buf;
 
-    // Create live horizon image line programmatically.
-    // Parent: ui_ContainerHorizonGroup (680×680, LV_ALIGN_CENTER on screen).
+    // Create live horizon image line
+    // Parent: ui_ContainerHorizonGroup (680×680, LV_ALIGN_CENTER)
     // inner_align: LV_IMAGE_ALIGN_DEFAULT — LVGL 9 defaults to TILE which silently disables
     //   lv_image_set_rotation(); must be set explicitly BEFORE lv_image_set_pivot (pivot resets to
     //   (0,0) when inner_align is changed in LVGL 9).
@@ -56,12 +49,7 @@ void AttitudeUI::begin() {
                                        LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC |
                                        LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN));
 
-    // Create 680×680 transparent container for roll min/max image lines.
-    // (ui_PanelMaxRoll / ui_PanelMinRoll were removed from SquareLine — they were plain lv_obj
-    // widgets whose lv_obj_set_style_transform_rotation() caused lv_timer_handler() to hang in
-    // LVGL 9 PARTIAL rendering mode. Roll lines are entirely programmatic lv_image objects.)
-    // Same size as ContainerHorizonGroup: ensures the 680-px-wide image lines cover the
-    // full screen width at any rotation angle without clipping at the corners.
+    // Create another 680×680 transparent container for roll min/max image lines
     _container_roll_lines = lv_obj_create(ui_AttitudeScreen);
     lv_obj_remove_style_all(_container_roll_lines);
     lv_obj_set_size(_container_roll_lines, 680, 680);
@@ -80,8 +68,8 @@ void AttitudeUI::begin() {
     _img_max_roll = lv_image_create(_container_roll_lines);
     lv_image_set_src(_img_max_roll, &s_horizonline_dsc);
     lv_obj_set_align(_img_max_roll, LV_ALIGN_CENTER);
-    lv_image_set_inner_align(_img_max_roll, LV_IMAGE_ALIGN_DEFAULT);  // avoid TILE (LVGL 9 quirk)
-    lv_image_set_pivot(_img_max_roll, 340, 2);                        // center of 680×4 image
+    lv_image_set_inner_align(_img_max_roll, LV_IMAGE_ALIGN_DEFAULT);  // avoid TILE (LVGL 9)
+    lv_image_set_pivot(_img_max_roll, 340, 2); 
     lv_image_set_antialias(_img_max_roll, false);
     lv_obj_set_style_image_recolor(_img_max_roll, lv_color_hex(0x00FF00), 0);
     lv_obj_set_style_image_recolor_opa(_img_max_roll, 255, 0);
@@ -129,8 +117,7 @@ void AttitudeUI::update() {
 
     if (!is_connected) {
         if (_last_connected) {
-            // Disconnected: hide navigation lights only.
-            // Last known pitch/roll values and horizon position are preserved.
+            // Disconnected: hide navigation lights
             lv_obj_add_flag(ui_PanelStarboard, LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(ui_PanelPortside,  LV_OBJ_FLAG_HIDDEN);
             _last_connected = false;
@@ -259,7 +246,6 @@ void AttitudeUI::showWaiting() {
     _last_pitch_deg = SENTINEL;
     _last_roll_deg  = SENTINEL;
 
-    // NOTE: Session min/max is NOT reset on disconnect — preserved until reboot
 }
 
 // Update live artificial horizon based on pitch and roll
@@ -323,9 +309,7 @@ void AttitudeUI::updateMinMaxPanels() {
         lv_obj_set_y(ui_PanelMinPitch, (clamped * PITCH_SCALE) / 10);
     }
 
-    // Roll image lines: use lv_image_set_rotation() — same proven API as live ImageHorizon.
-    // Pivot (340, 2) = center of 680×4 image = screen center (LV_ALIGN_CENTER in 680×680 container).
-    // Convention: -roll_x10 so ship roll right (positive) tilts line left (negative LVGL angle).
+    // Roll image lines: -roll_x10 so ship roll right (positive) tilts line left (negative LVGL angle).
     if (_max_roll_x10 != SENTINEL) {
         int16_t clamped = constrain(_max_roll_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
         lv_image_set_rotation(_img_max_roll, -clamped);
@@ -452,5 +436,12 @@ void AttitudeUI::updateLevelDialog() {
 void AttitudeUI::setLevelState(LevelState new_state) {
     _level_state = new_state;
     _state_start_time = millis();
+    // Reset the min/max after successful leveling operation
+    if (new_state == LevelState::SUCCESS) {
+        _min_pitch_x10 = SENTINEL;
+        _max_pitch_x10 = SENTINEL;
+        _min_roll_x10  = SENTINEL;
+        _max_roll_x10  = SENTINEL;
+    }
     this->updateLevelDialog();
 }
