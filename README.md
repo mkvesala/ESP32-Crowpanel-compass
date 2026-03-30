@@ -48,7 +48,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.1.0 | Latest release. AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate).
+| v3.1.0 | Latest release. AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details.
 | v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
@@ -126,7 +126,7 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Attitude screen
 
-<img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudescreen3.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui.3jpeg" height="240">
+<img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudescreen3.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240">
 
 - Pitch and roll min/max values recorded runtime, no persistent storage in NVS
 - Pressing the knob button toggles between ATTITUDE → MINMAX → LEVELING → ATTITUDE view
@@ -348,10 +348,10 @@ struct BatteryDelta {
 1. Arduino IDE 2.3.8
 2. Espressif Systems esp32 board package 3.3.7
 3. Additional libraries:
-   - [LVGL](https://lvgl.io/) 9.5.0
-   - [Arduino_GFX_Library](https://github.com/moononournation/Arduino_GFX) (by Moon On Our Nation) 1.6.5
-   - [PCF8574](https://github.com/xreef/PCF8574_library) (by Renzo Mischianti) 2.4.0
-4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
+   - LVGL 9.5.0
+   - Arduino GFX Library (by Moon On Our Nation) 1.6.5
+   - PCF8574 (by Renzo Mischianti) 2.4.0
+4. SquareLine Studio 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
 6. BME280-ESP32-SignalK-gateway v1.0.0
 
@@ -402,6 +402,8 @@ This device receives data only via ESP-NOW broadcast on a local WiFi channel. Th
 
 ## Credits
 
+Software and libraries used are documented in the above sections.
+
 Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowPanel-2.1inch-HMI-ESP32-Rotary-Display-480-480-IPS-Round-Touch-Knob-Screen).
 
 [Humidity icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/humidity)
@@ -415,13 +417,6 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
 [Bubble level icons created by vectorsmarket15 - Flaticon](https://www.flaticon.com/free-icons/bubble-level)
-
-Developed and tested using:
-- Elecrow CrowPanel 2.1" HMI
-- Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
-- LVGL 9.5.0 and SquareLine Studio 1.6.0
-- CMPS14-ESP32-SignalK-gateway v1.3.0
-- BME280-ESP32-SignalK-gateway v1.0.0
 
 This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
