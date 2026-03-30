@@ -6,46 +6,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [v3.1.0] - 2026-04
 
+### Added
+
+#### AttitudeScreen — 3-view cycling (ATTITUDE → MINMAX → LEVELING)
+
+Knob button press cycles through three internal views. `AttitudeView` enum drives a `showView()` method that is the single point of control for all container visibility. `onLeave()` always resets to ATTITUDE view.
+
+| View | Visible containers |
+|---|---|
+| ATTITUDE | ContainerHorizonGroup, ContainerAttitudeGroup, ContainerVessel |
+| MINMAX | ContainerMinMax, ContainerVessel, roll-line container |
+| LEVELING | ContainerLevelingDialog |
+
+---
+
+#### AttitudeScreen — session min/max tracking for pitch and roll
+
+Runtime-only session min/max for pitch and roll (resets on reboot, not persisted to NVS). Tracked as `int16_t` in tenths-of-degrees. Sentinel value `0x7FFF` indicates no data yet (impossible for pitch ±900 or roll ±1800).
+
+---
+
+#### AttitudeScreen — MINMAX view
+
+Four static colored horizon lines show session extremes:
+
+| Line | Color | Meaning |
+|---|---|---|
+| PanelMaxPitch | Yellow | Highest pitch (bow up) |
+| PanelMinPitch | Blue | Lowest pitch (bow down) |
+| _img_max_roll | Green | Maximum roll (starboard) |
+| _img_min_roll | Red | Minimum roll (port) |
+
+Pitch lines (`PanelMaxPitch`, `PanelMinPitch`) are SquareLine-generated `lv_obj` panels displaced vertically with `lv_obj_set_y()`. Roll lines are programmatic `lv_image` objects rotated with `lv_image_set_rotation()` (see bug fix below).
+
+Visual positions are clamped to ±30° for readability (`MINMAX_LINE_CLAMP_X10 = 300`). Numeric labels always show the true session values without clamping.
+
+Live horizon (`ContainerHorizonGroup`) is hidden in MINMAX view.
+
+---
+
+#### AttitudeScreen — LEVELING view with auto-countdown
+
+Entering LEVELING view starts a 5-second countdown. The countdown label (`LabelLevelingDialog`) updates every second. At zero the level command is sent automatically via `ESPNowReceiver::sendLevelCommand()`. Knob press or carousel rotation cancels immediately and returns to ATTITUDE view. States: `IDLE → COUNTDOWN → SENDING → SUCCESS/FAILED → ATTITUDE`.
+
+---
+
 ### Changed
 
-#### AttitudeScreen (UI)
+#### AttitudeScreen — disconnect behavior
 
-New structure of the screen ui objects
+On disconnect only `PanelStarboard` and `PanelPortside` (navigation lights) are hidden. Last known pitch/roll values and horizon line position are preserved — no "---" reset and no horizon snap to neutral.
 
-- ContainerHorizonGroup 
-  - ImageHorizon (the artificial horizon)
-- ContainerAttitudeGroup
-  - PanelPitch
-    - LabelPitchTitle
-    - LabelPitch (pitch value)
-  - PanelRoll
-    - LabelRollTitle
-    - LabelRoll (roll value)
-- ContainerMinMax
-  - PanelMaxPitch (the yellow artificial horizon showing highest pitch = bow highest up)
-  - PanelMinPitch (the blue artificial horizon showing lowest pitch = bow lowest down)
-  - PanelMaxRoll (the green artificial horizon showing maximum roll = furthest roll to starboard)
-  - PanelMinRoll (the red artificial horizon showing minimum roll = furthest roll to portside)
-  - PanelPitchMinMax
-    - LabelPitchTitleMinMax
-    - LabelMaxPitch (max pitch value)
-    - LabelMinPitch (min pitch value)
-  - PanelRollMinMax
-    - LabelRollTitleMinMax
-    - LabelMaxRoll (max roll value)
-    - LabelMinRoll (min roll value)
-- ContainerVessel (ship silhouette)
-  - PanelHull
-  - PanelDeck
-  - PanelBridge
-  - PanelMast
-  - PanelStarboard (also works as connected indicator)
-  - PanelPortside (also works as connected indicator)
-- ContainerLevelingDialog
-  - PanelLevelingDialog
-    - LabelLevelingDialog (Indicates leveling countdown, success and failed messages)
-    - LabelLevelingCancel (Informs to press knob to cancel)
-    - ImageBubbleLevel
+---
+
+#### AttitudeScreen — all three horizon lines are now programmatic `lv_image` objects
+
+`ImageHorizon` was removed from SquareLine and is now created in `AttitudeUI::begin()` alongside the two roll min/max lines. All three share a single `lv_image_dsc_t` (`s_horizonline_dsc`) backed by a 5 440-byte static SRAM buffer (680×4 px, `LV_COLOR_FORMAT_RGB565`, all `0xFF` = white). No PNG asset file is needed. Roll and pitch min/max line colors are applied via `lv_obj_set_style_image_recolor_opa(255)`.
+
+Moving `ImageHorizon` to code ensures `LV_IMAGE_ALIGN_DEFAULT` and the correct pivot `(340, 2)` are set from the start, replacing the two fixup calls that were previously needed in `begin()`.
+
+---
+
+### Fixed
+
+#### AttitudeScreen — LVGL 9 PARTIAL mode freeze caused by `lv_obj_set_style_transform_rotation()`
+
+`lv_obj_set_style_transform_rotation()` on a plain `lv_obj` (the SquareLine-generated `PanelMaxRoll`/`PanelMinRoll`, 484×4 px) causes `lv_timer_handler()` to never return in LVGL 9 PARTIAL rendering mode, freezing the device. Root cause: LVGL 9 PARTIAL mode must iterate render bands to find dirty regions for a transformed object; a 484-px-wide object in a 480-px display triggers a degenerate band-search loop.
+
+Fix: `PanelMaxRoll` and `PanelMinRoll` were removed from SquareLine. Roll min/max lines are replaced by programmatic `lv_image` objects using `lv_image_set_rotation()`, which is the same API used for the live horizon line and is confirmed safe in LVGL 9 PARTIAL mode.
 
 ## [v3.0.0] - 2026-03-15
 

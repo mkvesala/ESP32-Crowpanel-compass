@@ -10,14 +10,14 @@
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
-- Temperature, air pressure and relative humidity from a BME280 based sender
+- Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from a VEDirect based sender
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
 Different screens selectable by rotating the knob:
 - **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
-- **Attitude screen** — artificial horizon, pitch and roll values, attitude leveling
+- **Attitude screen** — artificial horizon, pitch and roll values, pitch and roll min/max values, attitude leveling
 - **Weather screen** — toggle between temperature, pressure and humidity views
 - **Battery screen** - toggle between house voltage, house current, house SoC and starter voltage views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
@@ -33,7 +33,7 @@ Developed and tested on:
 
 Integrated via ESP-NOW with:
 - [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
-- BME280 based ESP-NOW sender for weather data
+- [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.0) weather data sender
 - VEDirect based ESP-NOW sender for battery data
 
 ## Purpose of the project
@@ -48,7 +48,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.0.0 | Latest release. Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
+| v3.1.0 | Latest release. AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate).
+| v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
@@ -125,17 +126,29 @@ The classes on the UML class diagram are presented with their full public API. T
 
 ### Attitude screen
 
-<img src="docs/attitudescreen.png" height="240"> <img src="docs/attitudeui.jpeg" height="240">
+<img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudescreen3.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui.3jpeg" height="240">
 
-- Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
-- Pitch and roll value labels
-- Ship silhouette overlay on the artificial horizon
-- The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass
-- Attitude leveling via knob button — two-press confirmation dialog with state machine:
-  1. Knob press → confirm dialog ("Level attitude? Press knob again to confirm.", yellow)
-  2. Second press → sends `LevelCommand` broadcast via ESP-NOW ("Leveling...", white)
-  3. Response received → "Success!" (green) or "Failed!" (red)
-  4. Timeout or screen switch → return to idle
+- Pitch and roll min/max values recorded runtime, no persistent storage in NVS
+- Pressing the knob button toggles between ATTITUDE → MINMAX → LEVELING → ATTITUDE view
+- Returning to the screen always loads ATTITUDE view
+- ATTITUDE view:
+  - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
+  - Pitch and roll value labels
+- MINMAX view:
+  - Four horizon lines, all 680 x 4 px images, to show recorded pitch and roll min/max values
+    - Yellow, placed horizontally to the max pitch, showing highest bow up position
+    - Blue, placed horizontally to the min pitch, showing lowest bow down position
+    - Green, pivot at the center, rotated to show max roll, furthest roll position to starboard
+    - Red, pivot at the center, rotated to show min roll, furthest roll position to port side
+  - Pitch and roll min/max value labels
+- LEVELING view:
+  - Bubble leveling tool 120 x 120 px icon 
+  - Count-down to leveling (default 5 s, set in `LEVELING_COUNTDOWN_MS` constant
+  - Knob button press or rotation cancels count-down and returns to ATTITUDE view or switches to another screen 
+  - When executing the command, "Leveling..." message is shown
+  - "Success!" or "Failed!" message shown based on the success of the leveling operation
+- Ship silhouette overlay on ATTITUDE and MINMAX view
+  - The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass
 
 ### Weather screen
 
@@ -181,7 +194,7 @@ The classes on the UML class diagram are presented with their full public API. T
 | Screen | Button press | Rotation (normal) | Rotation (special) |
 |--------|--------------|-------------------|--------------------|
 | Compass | Toggle T/M heading mode | Switch screen | — |
-| Attitude | Trigger level confirmation dialog | Switch screen | — |
+| Attitude | Toggle ATTITUDE/MINMAX/LEVELING view | Switch screen | — |
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | - |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
@@ -222,7 +235,7 @@ Sample types:
 enum class ESPNowMsgType : uint8_t {
    HEADING_DELTA   = 1,      // CMPS14-ESP32-SignalK-gateway
    BATTERY_DELTA   = 2,      // VEDirect based sender
-   WEATHER_DELTA   = 3,      // BME280 based sender
+   WEATHER_DELTA   = 3,      // BME280-ESP32-SignalK-gateway
    LEVEL_COMMAND   = 10,     // CMPS14-ESP32-SignalK-gateway
    LEVEL_RESPONSE  = 11,     // CMPS14-ESP32-SignalK-gateway
 };
@@ -258,7 +271,7 @@ struct BatteryDelta {
   - Payload: `HeadingDelta` struct (`heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad` - equal to what SignalK server gets from the gateway)
   - `HeadingDelta` converted into `HeadingData`, an internal data struct for CrowPanel implementation
 
-**Receives** at ~0.5 Hz, in °C, % and hPA (sent by BME280 based sender), as broadcast:
+**Receives** at ~0.5 Hz, in °C, % and hPA (sent by BME280-ESP32-SignalK-gateway), as broadcast:
 - `ESPNowPacket<WeatherDelta>`:
   - 20 B packet, 8 B header + 12 B payload
   - Payload: `WeatherDelta` struct (`temperature_c`, `humidity_p`, `pressure_hpa`)
@@ -280,7 +293,7 @@ struct BatteryDelta {
 
 **Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0 or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0 and BME280-ESP32-SignalK-gateway v1.0.0 or newer.
 
 ## Project structure
 
@@ -322,7 +335,7 @@ struct BatteryDelta {
    - Rotary encoder with push button (PCF8574 I2C GPIO expander at 0x21)
 2. WiFi router with fixed channel 6
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
-4. BME280 based ESP-NOW sender
+4. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
 5. VEDirect based ESP-NOW sender
 6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
@@ -340,6 +353,7 @@ struct BatteryDelta {
    - [PCF8574](https://github.com/xreef/PCF8574_library) (by Renzo Mischianti) 2.4.0
 4. [SquareLine Studio](https://squareline.io/) 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
+6. BME280-ESP32-SignalK-gateway v1.0.0
 
 ## Installation
 
@@ -355,7 +369,7 @@ struct BatteryDelta {
    ```
 5. Connect and power up the CrowPanel with USB
 6. Compile and upload with Arduino IDE (board: ESP32S3 Dev Module)
-7. Point the CMPS14-ESP32-SignalK-gateway and other ESP-NOW senders to the same WiFi channel
+7. Point the ESP-NOW senders to the same WiFi channel
 
 **Note** that `lv_conf.h` is in project root (with default values from the library template). If you are using LVGL elsewhere, this file is probably under `Arduino/libraries/` folder next to `lvgl` library folder. Check the settings and use either one to avoid conflicts.
 
@@ -400,13 +414,16 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
+[Bubble level icons created by vectorsmarket15 - Flaticon](https://www.flaticon.com/free-icons/bubble-level)
+
 Developed and tested using:
 - Elecrow CrowPanel 2.1" HMI
 - Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
 - LVGL 9.5.0 and SquareLine Studio 1.6.0
 - CMPS14-ESP32-SignalK-gateway v1.3.0
+- BME280-ESP32-SignalK-gateway v1.0.0
 
-Companion project: [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway). The full overview how these two projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
@@ -418,4 +435,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
