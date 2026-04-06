@@ -34,7 +34,7 @@ Developed and tested on:
 Integrated via ESP-NOW with:
 - [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.0) weather data sender
-- VEDirect based ESP-NOW sender for battery data
+- VEDirect-ESP32-SignalK-gateway (v1.0.0) battery data sender
 
 ## Purpose of the project
 
@@ -48,7 +48,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.1.0 | Latest release. AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details.
+| v3.1.1 | Latest release. Patching documentation only. |
+| v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details.
 | v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
@@ -56,9 +57,9 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 ## Classes
 
-<img src="docs/uml_diagram.png" width="480">
+Class diagram including the companion projects:
 
-The classes on the UML class diagram are presented with their full public API. The private attributes only to demostrate the class relationships. The diagram includes the `ESPNowBroker` class of the CMPS14-ESP32-SignalK-gateway.
+<img src="docs/full_uml_diagram.jpeg" width="480">
 
 **`CrowPanelApplication`:**
 - Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
@@ -337,7 +338,7 @@ struct BatteryDelta {
 2. WiFi router with fixed channel 6
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
 4. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
-5. VEDirect based ESP-NOW sender
+5. VEDirect-ESP32-SignalK-gateway as ESP-NOW sender
 6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
@@ -355,6 +356,7 @@ struct BatteryDelta {
 4. SquareLine Studio 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
 6. BME280-ESP32-SignalK-gateway v1.0.0
+7. VEDirect-ESP32-SignalK-gateway v1.0.0
 
 ## Installation
 
@@ -431,4 +433,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/uml_diagram.png" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
