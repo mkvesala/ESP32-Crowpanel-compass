@@ -36,6 +36,8 @@ public:
     bool hasNewBatteryData() const;
     WeatherDelta getWeatherData();
     BatteryDelta getBatteryData();
+    bool hasNewGnssData() const;
+    GnssData getGnssData();
 
     float getPacketsPerSecond() const { return _packets_per_second; }
 
@@ -62,6 +64,10 @@ private:
     // Static variables for battery data handling
     inline static BatteryDelta s_latest_battery = {};
     inline static volatile bool s_has_new_battery = false;
+
+    // Static variables for GNSS data handling
+    inline static GnssData s_latest_gnss = {};
+    inline static volatile bool s_has_new_gnss = false;
     
     // ESP-NOW mac address for broadcasting
     inline static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

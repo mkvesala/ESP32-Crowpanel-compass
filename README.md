@@ -10,13 +10,14 @@
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
+- GNSS position, speed over ground (SOG) and course over ground (COG) from UBLOX-ESP32-SignalK-gateway
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from a VEDirect based sender
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
 Different screens selectable by rotating the knob:
-- **Compass screen** — rotating compass rose, heading value, True/Magnetic toggle
+- **Compass screen** — rotating compass rose with HEADING (HDG T), COG and SOG views
 - **Attitude screen** — artificial horizon, pitch and roll values, pitch and roll min/max values, attitude leveling
 - **Weather screen** — toggle between temperature, pressure and humidity views
 - **Battery screen** - toggle between house voltage, house current, house SoC and starter voltage views
@@ -33,6 +34,7 @@ Developed and tested on:
 
 Integrated via ESP-NOW with:
 - [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
+- UBLOX-ESP32-SignalK-gateway (v1.0.0) GNSS sender
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.0) weather data sender
 - VEDirect-ESP32-SignalK-gateway (v1.0.0) battery data sender
 
@@ -48,7 +50,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.1.1 | Latest release. Patching documentation only. |
+| v3.2.0 | Latest release. CompassScreen redesigned with 3-view cycle (HEADING → COG → SOG). GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
+| v3.1.1 | Patching documentation only. |
 | v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details.
 | v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
 | v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
@@ -66,7 +69,7 @@ Class diagram including the companion projects:
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
-- Responsible for: receiving `HeadingData` broadcasts and sending attitude leveling commands via ESP-NOW
+- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta` and `BatteryDelta` broadcasts and sending attitude leveling commands via ESP-NOW
 - Owned by: `CrowPanelApplication`
 
 **`RotaryEncoder`:**
@@ -80,7 +83,7 @@ Class diagram including the companion projects:
 **`CompassUI`:**
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
-- Responsible for: updating LVGL UI objects on the compass screen based on heading data
+- Responsible for: updating LVGL UI objects on the compass screen based on heading and GNSS data; 3-view cycle (HEADING / COG / SOG)
 - Owned by: `CrowPanelApplication`
 
 **`AttitudeUI`:**
@@ -118,12 +121,17 @@ Class diagram including the companion projects:
 
 <img src="docs/compassscreen.png" height="240"> <img src="docs/compassui.jpeg" height="240">
 
-- Rotating compass rose image (240x240 px source, rendered at 480x480 with LVGL zoom=512, no alpha, antialias off)
-- Heading value label
-- True/Magnetic heading mode toggle with knob button press
-- T/M mode indicator label
-- Connected indicator panel (black = connected, red = disconnected)
-- Rotation threshold 0.5°: skips LVGL re-render when heading change is below threshold
+Pressing the knob button cycles between HEADING → COG → SOG → HEADING. Last view stored in NVS `onLeave()` (default: HEADING).
+
+- **HEADING view** — compass rose rotates to HDG(T) from CMPS14. Mode label: `HDG(T)`. Last known heading preserved on disconnect.
+- **COG view** — compass rose rotates to COG(T) from GNSS. Mode label: `COG(T)`. Shows `---°` when no valid GNSS fix or sender disconnected.
+- **SOG view** — speedometer arc and speed label from GNSS. Arc range 0–100 = 0.0–10.0 kn (arc value = knots × 10). Label format: one decimal place e.g. `7.1`. Shows `--.-` when no valid GNSS fix or sender disconnected.
+
+Common features:
+- Heading/COG label format: 3-digit with leading zero e.g. `090°`
+- Rotating compass rose image (240×240 px source, rendered at 480×480 with LVGL zoom=512, no alpha, antialias off)
+- Rotation threshold 0.5°: skips LVGL re-render when heading/COG change is below threshold
+- Connected indicator panel (black = connected, red = disconnected) — tracks active view's data source (CMPS14 for HEADING, GNSS sender for COG/SOG)
 
 ### Attitude screen
 
@@ -195,7 +203,7 @@ Class diagram including the companion projects:
 
 | Screen | Button press | Rotation (normal) | Rotation (special) |
 |--------|--------------|-------------------|--------------------|
-| Compass | Toggle T/M heading mode | Switch screen | — |
+| Compass | Cycle HEADING/COG/SOG view | Switch screen | — |
 | Attitude | Toggle ATTITUDE/MINMAX/LEVELING view | Switch screen | — |
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | - |
@@ -238,6 +246,7 @@ enum class ESPNowMsgType : uint8_t {
    HEADING_DELTA   = 1,      // CMPS14-ESP32-SignalK-gateway
    BATTERY_DELTA   = 2,      // VEDirect based sender
    WEATHER_DELTA   = 3,      // BME280-ESP32-SignalK-gateway
+   GNSS_DELTA      = 4,      // UBLOX-ESP32-SignalK-gateway
    LEVEL_COMMAND   = 10,     // CMPS14-ESP32-SignalK-gateway
    LEVEL_RESPONSE  = 11,     // CMPS14-ESP32-SignalK-gateway
 };
@@ -265,6 +274,18 @@ struct BatteryDelta {
    float house_soc;       // house bank soc percent
    float start_voltage;   // starter battery volts
 };
+
+struct GnssDelta {
+   float lat_deg;        // Latitude, decimal degrees
+   float lon_deg;        // Longitude, decimal degrees
+   float sog_ms;         // Speed over ground, m/s
+   float cog_true_rad;   // Course over ground (true), radians
+   float mag_var_rad;    // Magnetic variation (WMM), radians — NAN until first fix
+   uint8_t satellites;   // SIV
+   uint8_t fix_type;     // 0=no fix, 3=3D, 4=GNSS+DR
+   uint8_t fix_ok;       // getGnssFixOk() ? 1 : 0
+   uint8_t reserved;
+};
 ```
 
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway), as broadcast:
@@ -277,6 +298,12 @@ struct BatteryDelta {
 - `ESPNowPacket<WeatherDelta>`:
   - 20 B packet, 8 B header + 12 B payload
   - Payload: `WeatherDelta` struct (`temperature_c`, `humidity_p`, `pressure_hpa`)
+
+**Receives** at ~1 Hz (sent by UBLOX-ESP32-SignalK-gateway), as broadcast:
+- `ESPNowPacket<GnssDelta>`:
+  - 32 B packet, 8 B header + 24 B payload
+  - Payload: `GnssDelta` struct (`lat_deg`, `lon_deg`, `sog_ms`, `cog_true_rad`, `mag_var_rad`, `satellites`, `fix_type`, `fix_ok`)
+  - `GnssDelta` converted into `GnssData`, an internal data struct: `cog_true_x10` (0–3599), `sog_knots_x10` (knots × 10), `fix_ok`
 
 **Receives** at ~1 Hz, in V, A and % (sent by VEDirect based sender), as broadcast:
 - `ESPNowPacket<BatteryDelta>`:
@@ -295,7 +322,7 @@ struct BatteryDelta {
 
 **Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0 and BME280-ESP32-SignalK-gateway v1.0.0 or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0, UBLOX-ESP32-SignalK-gateway v1.0.0 and BME280-ESP32-SignalK-gateway v1.0.0 or newer.
 
 ## Project structure
 
@@ -303,7 +330,7 @@ struct BatteryDelta {
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `LevelCommand/Response` |
+| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta`, `LevelCommand/Response` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
 | `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive and level command sender |
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |
@@ -337,8 +364,9 @@ struct BatteryDelta {
    - Rotary encoder with push button (PCF8574 I2C GPIO expander at 0x21)
 2. WiFi router with fixed channel 6
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
-4. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
-5. VEDirect-ESP32-SignalK-gateway as ESP-NOW sender
+4. UBLOX-ESP32-SignalK-gateway as ESP-NOW sender
+5. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
+6. VEDirect-ESP32-SignalK-gateway as ESP-NOW sender
 6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
@@ -355,8 +383,9 @@ struct BatteryDelta {
    - PCF8574 (by Renzo Mischianti) 2.4.0
 4. SquareLine Studio 1.6.0 for UI design and code generation
 5. CMPS14-ESP32-SignalK-gateway v1.3.0
-6. BME280-ESP32-SignalK-gateway v1.0.0
-7. VEDirect-ESP32-SignalK-gateway v1.0.0
+6. UBLOX-ESP32-SignalK-gateway v1.0.0
+7. BME280-ESP32-SignalK-gateway v1.0.0
+8. VEDirect-ESP32-SignalK-gateway v1.0.0
 
 ## Installation
 

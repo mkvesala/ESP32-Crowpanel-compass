@@ -5,10 +5,7 @@
 
 // Constructor
 CompassUI::CompassUI(ESPNowReceiver &receiver)
-    : _receiver(receiver)
-    , _last_heading_x10(0xFFFF)
-    , _last_heading_deg(0xFFFF)
-    , _use_true_heading(true) {}
+    : _receiver(receiver) {}
 
 // Realizes getLvglScreen(): return the LVGL screen object for this UI
 lv_obj_t* CompassUI::getLvglScreen() const {
@@ -18,116 +15,197 @@ lv_obj_t* CompassUI::getLvglScreen() const {
 // Realizes begin(): initialize
 void CompassUI::begin() {
     if (_initialized) return;
-    // Rotating compass rose is expensive, remove antialiasing to make it cheaper
+
+    _active_view = this->loadView();
+
+    // Compass rose: disable antialiasing (rotation is expensive to render)
     lv_image_set_antialias(ui_ImageCompassRose, false);
+
+    // SOG arc: set range 0–100 (= 0.0–10.0 kn × 10)
+    lv_arc_set_range(ui_ArcSog, 0, SOG_ARC_MAX);
+
+    this->showView(_active_view);
+
     _initialized = true;
     this->showWaiting();
 }
 
-// Realizes update(): fetch data from receiver and update UI
+// Realizes update(): fetch data and update UI based on active view
 void CompassUI::update() {
     if (!_initialized) return;
 
-    bool is_connected = _receiver.isConnected(CONNECTION_TIMEOUT_MS);
-    this->setConnectionIndicator(is_connected);
+    if (_active_view == CompassView::HEADING) {
+        bool connected = _receiver.isConnected(HEADING_TIMEOUT_MS);
+        this->setConnectionIndicator(connected);
 
-    if (!is_connected) return;
+        if (!connected) return;  // Keep last known heading on disconnect
 
-    if (_receiver.hasNewData()) {
-        HeadingData data = _receiver.getData();
-        bool is_true = _use_true_heading;
-        uint16_t heading_x10 = is_true ? data.heading_true_x10 : data.heading_mag_x10;
-        uint16_t heading_deg = is_true ? data.getHeadingTrueDeg() : data.getHeadingMagDeg();
+        if (_receiver.hasNewData()) {
+            HeadingData data = _receiver.getData();
+            this->setCompassRotation(data.heading_true_x10);
+            this->updateHeadingLabel(data.getHeadingTrueDeg());
+        }
 
-        this->setCompassRotation(heading_x10);
-        this->updateHeadingLabel(heading_deg);
-        this->updateHeadingMode(is_true);
+    } else {
+        // COG and SOG both consume GNSS_DELTA packets
+        if (_receiver.hasNewGnssData()) {
+            GnssData gnss = _receiver.getGnssData();
+            _last_gnss_millis = millis();
+            _last_gnss_fix = gnss.hasFix();
+
+            if (_active_view == CompassView::COG) {
+                if (_last_gnss_fix) {
+                    this->setCompassRotation(gnss.cog_true_x10);
+                    this->updateHeadingLabel(gnss.getCogDeg());
+                } else {
+                    // Connected but no fix: reset to dashes
+                    lv_label_set_text(ui_LabelHeading, "---°");
+                    _last_rose_x10  = 0xFFFF;
+                    _last_label_deg = 0xFFFF;
+                }
+            } else {
+                this->updateSogDisplay(gnss.sog_knots_x10, _last_gnss_fix);
+            }
+        }
+
+        bool connected = (_last_gnss_millis > 0 && (millis() - _last_gnss_millis) < GNSS_TIMEOUT_MS);
+        if (!connected && _last_connected) this->showWaiting();
+        this->setConnectionIndicator(connected);
     }
 }
 
-// Realizes onButtonPress(): toggle TRUE/MAGNETIC heading mode
+// Realizes onButtonPress(): cycle to next view
 void CompassUI::onButtonPress() {
-    this->toggleHeadingMode();
+    if (!_initialized) return;
+
+    uint8_t next = (static_cast<uint8_t>(_active_view) + 1) % static_cast<uint8_t>(CompassView::COUNT);
+    this->showView(static_cast<CompassView>(next));
+}
+
+// Realizes onLeave(): save active view to NVS
+void CompassUI::onLeave() {
+    this->saveView();
 }
 
 // === P R I V A T E ===
 
-// Show "waiting for data" status on UI
-void CompassUI::showWaiting() {
-    if (!_initialized) return;
+// Show one view, hide the other; update mode label and reset render caches
+void CompassUI::showView(CompassView view) {
+    _active_view = view;
 
-    // Empty "--" and "-" values and "the red dot"
-    lv_label_set_text(ui_LabelHeading, "---");
-    lv_label_set_text(ui_LabelHeadingMode, "-");
+    // Reset render caches so UI updates immediately with first data
+    _last_rose_x10  = 0xFFFF;
+    _last_label_deg = 0xFFFF;
+    _last_sog_x10   = 0xFFFF;
+
+    // Force connection dot to red; setConnectionIndicator() will update on next update()
+    _last_connected = false;
     lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    // Reset cached values
-    _last_heading_x10 = 0xFFFF;
-    _last_heading_deg = 0xFFFF;
-    _last_is_true = false;
-    _last_connected = false;
+    switch (view) {
+        case CompassView::HEADING:
+            lv_obj_clear_flag(ui_ContainerCompass, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(ui_ContainerSog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelHeadingMode, "HDG(T)");
+            break;
+        case CompassView::COG:
+            lv_obj_clear_flag(ui_ContainerCompass, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(ui_ContainerSog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelHeadingMode, "COG(T)");
+            lv_label_set_text(ui_LabelHeading, "---°");
+            break;
+        case CompassView::SOG:
+            lv_obj_add_flag(ui_ContainerCompass, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(ui_ContainerSog, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(ui_LabelSog, "--.-");
+            lv_arc_set_value(ui_ArcSog, 0);
+            break;
+        default:
+            break;
+    }
 }
 
-// Show "disconnected" status on UI (internal helper)
-void CompassUI::showDisconnected() {
-    if (!_initialized) return;
-
-    // "The red dot"
-    lv_obj_set_style_bg_color(ui_PanelConnected, lv_color_hex(COLOR_DISCONNECTED), LV_PART_MAIN | LV_STATE_DEFAULT);
-    _last_connected = false;
-}
-
-// Toggle TRUE/MAGNETIC heading mode
-void CompassUI::toggleHeadingMode() {
-    _use_true_heading = !_use_true_heading;
-
-    // Force UI update on next update() call
-    _last_heading_x10 = 0xFFFF;
-    _last_heading_deg = 0xFFFF;
-    _last_is_true = !_use_true_heading;
-}
-
-// Rotate the compass rose UI image element based on heading
+// Rotate compass rose — deadband prevents re-render on sub-0.5° changes
 void CompassUI::setCompassRotation(uint16_t heading_x10) {
-    // Threshold to avoid heavy LVGL re-render on small changes
-    if (_last_heading_x10 != 0xFFFF) {
-        int16_t diff = (int16_t)heading_x10 - (int16_t)_last_heading_x10;
+    if (_last_rose_x10 != 0xFFFF) {
+        int16_t diff = (int16_t)heading_x10 - (int16_t)_last_rose_x10;
         if (diff > 1800) diff -= 3600;
         if (diff < -1800) diff += 3600;
         if (abs(diff) < ROTATION_THRESHOLD_X10) return;
     }
-
-    _last_heading_x10 = heading_x10;
-
-    // Rotate the rose to the opposite direction
-    int16_t angle = -(int16_t)heading_x10;
-    lv_image_set_rotation(ui_ImageCompassRose, angle);
+    _last_rose_x10 = heading_x10;
+    lv_image_set_rotation(ui_ImageCompassRose, -(int16_t)heading_x10);
 }
 
-// Update the heading value to the UI label element
-void CompassUI::updateHeadingLabel(uint16_t heading_deg) {
-    if (heading_deg == _last_heading_deg) return;
-    _last_heading_deg = heading_deg;
+// Update heading/COG label with 3-digit leading-zero format e.g. "090°"
+void CompassUI::updateHeadingLabel(uint16_t deg) {
+    if (deg == _last_label_deg) return;
+    _last_label_deg = deg;
 
-    char buf[16];
-    // UI font has to contain UTF-8 degree sign U+00B0
-    snprintf(buf, sizeof(buf), "%03d°", heading_deg);
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%03d°", deg);
     lv_label_set_text(ui_LabelHeading, buf);
 }
 
-// Update the heading mode value to the UI label element
-void CompassUI::updateHeadingMode(bool is_true) {
-    if (is_true == _last_is_true) return;
-    _last_is_true = is_true;
+// Update SOG arc and label; shows "--.-" when fix_ok is false
+void CompassUI::updateSogDisplay(uint16_t sog_knots_x10, bool fix_ok) {
+    if (!fix_ok) {
+        if (_last_sog_x10 != 0xFFFF) {
+            lv_label_set_text(ui_LabelSog, "--.-");
+            lv_arc_set_value(ui_ArcSog, 0);
+            _last_sog_x10 = 0xFFFF;
+        }
+        return;
+    }
 
-    lv_label_set_text(ui_LabelHeadingMode, is_true ? "T" : "M");
+    if (sog_knots_x10 == _last_sog_x10) return;
+    _last_sog_x10 = sog_knots_x10;
+
+    uint16_t arc_val = (sog_knots_x10 > SOG_ARC_MAX) ? SOG_ARC_MAX : sog_knots_x10;
+    lv_arc_set_value(ui_ArcSog, arc_val);
+
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%.1f", sog_knots_x10 / 10.0f);
+    lv_label_set_text(ui_LabelSog, buf);
 }
 
-// Set the color of connection indicator UI panel element, "the red dot"
+// Update connection indicator dot color
 void CompassUI::setConnectionIndicator(bool connected) {
     if (connected == _last_connected) return;
     _last_connected = connected;
 
     lv_color_t color = connected ? lv_color_hex(COLOR_CONNECTED) : lv_color_hex(COLOR_DISCONNECTED);
     lv_obj_set_style_bg_color(ui_PanelConnected, color, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+// Reset dynamic labels to waiting state (COG/SOG disconnect; initial state)
+void CompassUI::showWaiting() {
+    if (!_initialized) return;
+
+    lv_label_set_text(ui_LabelHeading, "---°");
+    lv_label_set_text(ui_LabelSog, "--.-");
+    lv_arc_set_value(ui_ArcSog, 0);
+
+    _last_rose_x10  = 0xFFFF;
+    _last_label_deg = 0xFFFF;
+    _last_sog_x10   = 0xFFFF;
+}
+
+// Save active view to NVS
+void CompassUI::saveView() {
+    Preferences prefs;
+    prefs.begin(NVS_NAMESPACE, false);
+    prefs.putUChar(NVS_KEY_VIEW, static_cast<uint8_t>(_active_view));
+    prefs.end();
+}
+
+// Load active view from NVS (default: HEADING)
+CompassUI::CompassView CompassUI::loadView() {
+    Preferences prefs;
+    prefs.begin(NVS_NAMESPACE, true);
+    uint8_t val = prefs.getUChar(NVS_KEY_VIEW, 0);
+    prefs.end();
+
+    if (val >= static_cast<uint8_t>(CompassView::COUNT)) val = 0;
+    return static_cast<CompassView>(val);
 }

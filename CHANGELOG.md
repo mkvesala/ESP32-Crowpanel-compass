@@ -4,6 +4,113 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.2.0] - 2026-04-23
+
+### Added
+
+#### CompassScreen — GNSS data integration (UBLOX-ESP32-SignalK-gateway)
+
+`GnssDelta` packets (`GNSS_DELTA = 4`) are now received and processed. `ESPNowReceiver` dispatches the new message type, converts the wire payload to an internal `GnssData` struct, and exposes it via `hasNewGnssData()` / `getGnssData()` — identical pattern to existing `WeatherDelta` and `BatteryDelta` handling.
+
+---
+
+#### CompassScreen — 3-view cycling (HEADING → COG → SOG)
+
+Knob button press cycles through three views. `CompassView` enum drives a `showView()` method that controls container visibility, mode label text, and render cache resets. Active view is persisted to NVS on `onLeave()` (namespace `"compass"`, key `"view"`).
+
+| View | Visible container | LabelHeadingMode | Data source |
+|------|-------------------|------------------|-------------|
+| HEADING | ContainerCompass | `HDG(T)` | CMPS14 (`HeadingDelta`) |
+| COG | ContainerCompass | `COG(T)` | GNSS (`GnssDelta`) |
+| SOG | ContainerSog | — (hidden) | GNSS (`GnssDelta`) |
+
+---
+
+#### CompassScreen — HEADING view
+
+Shows true heading from CMPS14. Compass rose rotates to HDG(T). Label format: 3-digit with leading zero, e.g. `090°`. On disconnect, last known heading and rose position are preserved (no reset to dashes) — consistent with v3.1.x behavior.
+
+Connection indicator (`PanelConnected`) tracks CMPS14 packet timing (`HEADING_TIMEOUT_MS = 3000 ms`).
+
+---
+
+#### CompassScreen — COG view
+
+Shows course over ground (true) from GNSS. Compass rose rotates to COG(T) using the same deadband logic as HEADING view (`ROTATION_THRESHOLD_X10 = 5`). Label format: 3-digit with leading zero, e.g. `090°`.
+
+Shows `---°` when `fix_ok = 0` (no valid GNSS fix) or when GNSS sender is disconnected.
+
+Connection indicator tracks GNSS packet timing (`GNSS_TIMEOUT_MS = 3000 ms`).
+
+---
+
+#### CompassScreen — SOG view
+
+Shows speed over ground as a speedometer. Arc (`ui_ArcSog`) range `0–100` maps to `0.0–10.0 kn` (value = knots × 10). Arc is clamped to 100 for speeds above 10 kn; label always shows true value. Label format: one decimal place, e.g. `7.1`.
+
+Shows `--.-` when `fix_ok = 0` or when GNSS sender is disconnected.
+
+Connection indicator tracks GNSS packet timing.
+
+---
+
+### Changed
+
+#### `espnow_protocol.h` — `GnssData` internal struct and `GNSS_DELTA` message type added
+
+`ESPNowMsgType::GNSS_DELTA = 4` added to the enum.
+
+`GnssData` internal struct (scaled integers, analogous to `HeadingData`):
+
+```cpp
+struct GnssData {
+    uint16_t cog_true_x10;   // COG true 0–3599 (0.0°–359.9°)
+    uint16_t sog_knots_x10;  // SOG in knots × 10 (e.g. 72 = 7.2 kn)
+    uint8_t  fix_ok;         // 1 = valid fix (getGnssFixOk())
+};
+```
+
+`convertGnssDeltaToData()` converts the wire `GnssDelta` (float radians / m·s⁻¹) to `GnssData`:
+- `cog_true_rad` → `cog_true_x10` via `RAD_TO_DEG_X10`
+- `sog_ms` → `sog_knots_x10` via `MS_TO_KNOTS_X10 = 1.94384 × 10`
+- `fix_ok` copied verbatim
+
+Sent by UBLOX-ESP32-SignalK-gateway. Wire packet: 32 B (`ESPNowHeader` 8 B + `GnssDelta` 24 B).
+
+---
+
+#### `ESPNowReceiver` — `GNSS_DELTA` dispatch added
+
+`onDataRecv()` switch extended with `GNSS_DELTA` case — converts `GnssDelta` to `GnssData` via `convertGnssDeltaToData()`, stores in `s_latest_gnss`, sets `s_has_new_gnss = true`. Does not update `s_last_rx_millis` / `s_packet_count` (those are CMPS14 connection indicators; `CompassUI` tracks GNSS timing independently via `_last_gnss_millis`).
+
+Added `hasNewGnssData() const` — thread-safe read of `s_has_new_gnss`.
+
+Added `getGnssData()` — thread-safe read of `s_latest_gnss`, clears `s_has_new_gnss`.
+
+Added `s_latest_gnss` / `s_has_new_gnss` `inline static` members.
+
+---
+
+#### `CompassUI` — refactored from toggle to 3-view cycle
+
+Previous behavior: knob button toggled between HDG(T) and HDG(M). Magnetic heading mode removed.
+
+New behavior: knob button cycles HEADING → COG → SOG → HEADING (modulo). `CompassView` enum replaces the `_use_true_heading` bool.
+
+`_last_heading_x10` / `_last_heading_deg` / `_last_is_true` replaced by:
+- `_last_rose_x10` — single cache for currently rendered compass rose rotation (reset on view switch, shared by HEADING and COG views)
+- `_last_label_deg` — heading/COG label cache (reset on view switch)
+- `_last_sog_x10` — SOG arc/label cache
+- `_last_gnss_millis` / `_last_gnss_fix` — GNSS connection tracking
+
+`showView()` is the single point of control for container visibility, mode label, cache resets, and forcing the connection dot to red on view switch.
+
+`onLeave()` added — saves active view to NVS (namespace `"compass"`, key `"view"`). Default on first boot: `HEADING`.
+
+`<Preferences.h>` include added to `CompassUI.h`.
+
+---
+
 ## [v3.1.1] - 2026-04-06
 
 ### Changed
@@ -765,6 +872,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v3.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.2.0
 [v3.1.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.1
 [v3.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.0
 [v3.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.0.0

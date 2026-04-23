@@ -196,6 +196,18 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             break;
         }
 
+        case ESPNowMsgType::GNSS_DELTA: {
+            if (hdr.payload_len != sizeof(GnssDelta)) return;
+            GnssDelta gnss;
+            memcpy(&gnss, payload, sizeof(GnssDelta));
+            GnssData converted = convertGnssDeltaToData(gnss);
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_gnss  = converted;
+            s_has_new_gnss = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
@@ -236,6 +248,25 @@ BatteryDelta ESPNowReceiver::getBatteryData() {
     portENTER_CRITICAL(&s_spinlock);
     data = s_latest_battery;
     s_has_new_battery = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns true if new GNSS data packet available, otherwise false
+bool ESPNowReceiver::hasNewGnssData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_gnss;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest GNSS data packet received via ESP-NOW
+GnssData ESPNowReceiver::getGnssData() {
+    GnssData data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_gnss;
+    s_has_new_gnss = false;
     portEXIT_CRITICAL(&s_spinlock);
     return data;
 }
