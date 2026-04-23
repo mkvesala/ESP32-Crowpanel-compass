@@ -22,7 +22,7 @@ class ESPNowReceiver {
 
 public:
     
-    ESPNowReceiver();
+    explicit ESPNowReceiver();
 
     bool begin(uint8_t channel = 1);
     bool hasNewData() const;
