@@ -140,6 +140,7 @@ void BatteryUI::showWaiting() {
 
 // Update house battery bank voltage (volts)
 void BatteryUI::updateHouseVoltage(float house_v) {
+    if (isnan(house_v)) return;
     _house_voltage = house_v;
 
     if (isnan(_min_house_v) || house_v < _min_house_v) _min_house_v = house_v;
@@ -181,6 +182,7 @@ void BatteryUI::updateHouseVoltage(float house_v) {
 
 // Update house battery bank current (amps)
 void BatteryUI::updateHouseCurrent(float house_a) {
+    if (isnan(house_a)) return;
     _house_current = house_a;
 
     if (isnan(_min_house_a) || house_a < _min_house_a) _min_house_a = house_a;
@@ -223,6 +225,7 @@ void BatteryUI::updateHouseCurrent(float house_a) {
 
 // Update house battery bank state-of-charge (%)
 void BatteryUI::updateHouseSoc(float soc_p) {
+    if (isnan(soc_p)) return;
     _house_soc = soc_p;
 
     if (isnan(_min_house_soc) || soc_p < _min_house_soc) _min_house_soc = soc_p;
@@ -264,6 +267,7 @@ void BatteryUI::updateHouseSoc(float soc_p) {
 
 // Update starter battery bank voltage (volts)
 void BatteryUI::updateStartVoltage(float start_v) {
+    if (isnan(start_v)) return;
     _start_voltage = start_v;
 
     if (isnan(_min_start_v) || start_v < _min_start_v) _min_start_v = start_v;

@@ -54,6 +54,18 @@ Connection indicator tracks GNSS packet timing.
 
 ---
 
+### Fixed
+
+#### `BatteryUI` / `WeatherUI` — NaN values rendered as `"nan"` in UI labels
+
+If a sender transmits a `NaN` float (e.g. before a measurement is available), `snprintf("%.1fV", NAN)` produces the string `"nan"` which LVGL renders directly.
+
+Fix: `isnan()` guard added at the top of every `update*` method in both classes. A `NaN` input causes an early return — the label retains its previous value (or `"---"` if no valid reading has arrived yet), min/max tracking is not updated, and the EMA state is not corrupted.
+
+Affected methods: `BatteryUI::updateHouseVoltage()`, `updateHouseCurrent()`, `updateHouseSoc()`, `updateStartVoltage()`; `WeatherUI::updateTemperature()`, `updatePressure()`, `updateHumidity()`.
+
+---
+
 ### Changed
 
 #### `espnow_protocol.h` — `GnssData` internal struct and `GNSS_DELTA` message type added

@@ -117,6 +117,7 @@ void WeatherUI::showWaiting() {
 
 // Update temperature value and session min/max
 void WeatherUI::updateTemperature(float temp_c) {
+    if (isnan(temp_c)) return;
     _temperature_c = temp_c;
 
     if (isnan(_min_temp) || temp_c < _min_temp) _min_temp = temp_c;
@@ -158,6 +159,7 @@ void WeatherUI::updateTemperature(float temp_c) {
 
 // Update pressure value, session min/max, and trend indicator
 void WeatherUI::updatePressure(float pres_hpa) {
+    if (isnan(pres_hpa)) return;
     _pressure_hpa = pres_hpa;
 
     if (isnan(_min_pressure) || pres_hpa < _min_pressure) _min_pressure = pres_hpa;
@@ -200,6 +202,7 @@ void WeatherUI::updatePressure(float pres_hpa) {
 
 // Update humidity value and session min/max
 void WeatherUI::updateHumidity(float hum_p) {
+    if (isnan(hum_p)) return;
     _humidity_p = hum_p;
 
     if (isnan(_min_humidity) || hum_p < _min_humidity) _min_humidity = hum_p;
