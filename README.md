@@ -25,7 +25,7 @@ Different screens selectable by rotating the knob:
 
 Developed and tested on:
 - [Elecrow CrowPanel 2.1" HMI ESP32 Rotary Display](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html)
-- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
+- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.8)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - [LVGL](https://lvgl.io/) (9.5.0)
 - [Arduino GFX Library](https://github.com/moononournation/Arduino_GFX) (1.6.5)
@@ -33,10 +33,10 @@ Developed and tested on:
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
-- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.0) compass sender
+- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.1) compass sender
 - UBLOX-ESP32-SignalK-gateway (v1.0.0) GNSS sender
-- [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.0) weather data sender
-- VEDirect-ESP32-SignalK-gateway (v1.0.0) battery data sender
+- [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
+- [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
 
 ## Purpose of the project
 
@@ -119,7 +119,7 @@ Class diagram including the companion projects:
 
 ### Compass screen
 
-<img src="docs/compassscreen.png" height="240"> <img src="docs/compassui.jpeg" height="240">
+<img src="docs/compassscreen.png" height="240"> <img src="docs/cog.png" height="240"> <img src="docs/sog.png" height="240"> <img src="docs/compassui.jpeg" height="240">
 
 Pressing the knob button cycles between HEADING → COG → SOG → HEADING. Last view stored in NVS `onLeave()` (default: HEADING).
 
@@ -366,7 +366,7 @@ struct GnssDelta {
 3. [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) as ESP-NOW sender
 4. UBLOX-ESP32-SignalK-gateway as ESP-NOW sender
 5. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
-6. VEDirect-ESP32-SignalK-gateway as ESP-NOW sender
+6. [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) as ESP-NOW sender
 6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
@@ -376,15 +376,15 @@ struct GnssDelta {
 ## Software
 
 1. Arduino IDE 2.3.8
-2. Espressif Systems esp32 board package 3.3.7
+2. Espressif Systems esp32 board package 3.3.8
 3. Additional libraries:
    - LVGL 9.5.0
    - Arduino GFX Library (by Moon On Our Nation) 1.6.5
    - PCF8574 (by Renzo Mischianti) 2.4.0
 4. SquareLine Studio 1.6.0 for UI design and code generation
-5. CMPS14-ESP32-SignalK-gateway v1.3.0
+5. CMPS14-ESP32-SignalK-gateway v1.3.1
 6. UBLOX-ESP32-SignalK-gateway v1.0.0
-7. BME280-ESP32-SignalK-gateway v1.0.0
+7. BME280-ESP32-SignalK-gateway v1.0.1
 8. VEDirect-ESP32-SignalK-gateway v1.0.0
 
 ## Installation
@@ -450,7 +450,7 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Bubble level icons created by vectorsmarket15 - Flaticon](https://www.flaticon.com/free-icons/bubble-level)
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) and UBLOX-ESP32-SignalK-gateway. Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
@@ -462,4 +462,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted develo
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/cog.png" width="240"> <img src="docs/sog.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
