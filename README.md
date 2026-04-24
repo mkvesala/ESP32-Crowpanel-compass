@@ -12,7 +12,7 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
 - GNSS position, speed over ground (SOG) and course over ground (COG) from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
-- House battery bank voltage, current and SoC as well as starter battery voltage from a VEDirect based sender
+- House battery bank voltage, current and SoC as well as starter battery voltage from [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway)
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
