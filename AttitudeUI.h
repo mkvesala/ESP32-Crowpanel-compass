@@ -57,7 +57,7 @@ private:
     ESPNowReceiver &_receiver;
 
     // Connection timeout before showing waiting state
-    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 3000;
+    static constexpr uint32_t CONNECTION_TIMEOUT_MS = 5000;
 
     // Scaling: pixels per degree (pitch vertical displacement)
     static constexpr int16_t PITCH_SCALE = 3;

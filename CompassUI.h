@@ -82,8 +82,8 @@ private:
     // SOG arc maximum (10 knots × 10)
     static constexpr uint16_t SOG_ARC_MAX = 100;
 
-    static constexpr uint32_t HEADING_TIMEOUT_MS = 3000;
-    static constexpr uint32_t GNSS_TIMEOUT_MS    = 3000;
+    static constexpr uint32_t HEADING_TIMEOUT_MS = 5000;
+    static constexpr uint32_t GNSS_TIMEOUT_MS    = 5000;
 
     static constexpr uint32_t COLOR_CONNECTED    = 0x000000;
     static constexpr uint32_t COLOR_DISCONNECTED = 0xFF0000;
