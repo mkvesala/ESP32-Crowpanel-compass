@@ -456,9 +456,9 @@ This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.
 
 No paid partnerships.
 
-Developed by Matti Vesala in collaboration with Claude. Claude was used for code review, bug finding and C++ design advice throughout the project.
+Developed by Matti Vesala in collaboration with Claude.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on AI-assisted development.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on development.
 
 ## Gallery
 
