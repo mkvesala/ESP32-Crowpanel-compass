@@ -102,7 +102,6 @@ void AttitudeUI::begin() {
     lv_obj_set_y(ui_PanelMaxPitch, 0);
     lv_obj_set_y(ui_PanelMinPitch, 0);
 
-    _level_state = LevelState::IDLE;
     _initialized = true;
 
     // Apply initial view (sets container visibility)
@@ -143,43 +142,28 @@ void AttitudeUI::update() {
         }
     }
 
-    // Always tick the level state machine regardless of connection state
-    this->updateLevelState();
 }
 
-// Realizes onButtonPress(): Cycle through internal views
+// Realizes onButtonPress(): Toggle between ATTITUDE and MINMAX views
 void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
-
-    switch (_active_view) {
-        case AttitudeView::ATTITUDE:
-            this->showView(AttitudeView::MINMAX);
-            break;
-        case AttitudeView::MINMAX:
-            this->showView(AttitudeView::LEVELING);
-            break;
-        case AttitudeView::LEVELING:
-            // Cancel countdown/leveling and return to ATTITUDE view
-            this->showView(AttitudeView::ATTITUDE);
-            break;
-    }
+    if (_active_view == AttitudeView::ATTITUDE) this->showView(AttitudeView::MINMAX);
+    else this->showView(AttitudeView::ATTITUDE);
 }
 
-// Realizes onLeave(): Called when screen carousel switches away
+// Realizes onLeave(): Reset to ATTITUDE view when navigating away
 void AttitudeUI::onLeave() {
-    // Cancel any leveling operation and reset to ATTITUDE view
     this->showView(AttitudeView::ATTITUDE);
 }
 
 // === P R I V A T E ===
 
-// Set active view and update container visibility + level state
+// Set active view and update container visibility
 void AttitudeUI::showView(AttitudeView view) {
     _active_view = view;
 
     const bool is_attitude = (view == AttitudeView::ATTITUDE);
     const bool is_minmax   = (view == AttitudeView::MINMAX);
-    const bool is_leveling = (view == AttitudeView::LEVELING);
 
     // ContainerHorizonGroup (live horizon line): visible in ATTITUDE only
     if (is_attitude) lv_obj_remove_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
@@ -193,29 +177,12 @@ void AttitudeUI::showView(AttitudeView view) {
     if (is_minmax) lv_obj_remove_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
     else lv_obj_add_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
 
-    // ContainerVessel (ship silhouette): visible in ATTITUDE and MINMAX
-    if (!is_leveling) lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
-    else lv_obj_add_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
-
-    // ContainerLevelingDialog: visible in LEVELING only
-    if (is_leveling) lv_obj_remove_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
-    else lv_obj_add_flag(ui_ContainerLevelingDialog, LV_OBJ_FLAG_HIDDEN);
+    // ContainerVessel (ship silhouette): always visible
+    lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
 
     // Roll image lines container: visible in MINMAX only
     if (is_minmax) lv_obj_remove_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
     else lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
-
-    // Level state transitions
-    if (is_leveling) {
-        // Entering LEVELING view: start the countdown
-        this->setLevelState(LevelState::COUNTDOWN);
-    } else {
-        // Leaving LEVELING view (or initializing to ATTITUDE/MINMAX): cancel any operation
-        if (_level_state != LevelState::IDLE) {
-            _level_state = LevelState::IDLE;
-            _state_start_time = millis();
-        }
-    }
 }
 
 // Update AttitudeScreen live horizon to "waiting for data" state
@@ -344,94 +311,3 @@ void AttitudeUI::updateMinMaxLabels() {
     }
 }
 
-// Level state machine — advance timeouts and auto-send
-void AttitudeUI::updateLevelState() {
-    if (_level_state == LevelState::IDLE) return;
-
-    uint32_t elapsed = millis() - _state_start_time;
-
-    switch (_level_state) {
-        case LevelState::COUNTDOWN: {
-            if (elapsed >= LEVELING_COUNTDOWN_MS) {
-                // Countdown complete: send command
-                if (_receiver.sendLevelCommand()) this->setLevelState(LevelState::SENDING);
-                else this->setLevelState(LevelState::FAILED);
-            } else {
-                // Update countdown label once per second
-                uint8_t remaining_s = (uint8_t)((LEVELING_COUNTDOWN_MS - elapsed + 999) / 1000);
-                if (remaining_s != _last_countdown_s) {
-                    _last_countdown_s = remaining_s;
-                    char buf[32];
-                    snprintf(buf, sizeof(buf), "Leveling in\n%d s", remaining_s);
-                    lv_label_set_text(ui_LabelLevelingDialog, buf);
-                }
-            }
-            break;
-        }
-
-        case LevelState::SENDING:
-            if (_receiver.hasLevelResponse()) {
-                bool success = _receiver.getLevelResult();
-                this->setLevelState(success ? LevelState::SUCCESS : LevelState::FAILED);
-            } else if (elapsed >= SENDING_TIMEOUT_MS) {
-                this->setLevelState(LevelState::FAILED);
-            }
-            break;
-
-        case LevelState::SUCCESS:
-            if (elapsed >= SUCCESS_DISPLAY_MS) this->showView(AttitudeView::ATTITUDE);
-            break;
-
-        case LevelState::FAILED:
-            if (elapsed >= FAILED_DISPLAY_MS)  this->showView(AttitudeView::ATTITUDE);
-            break;
-
-        case LevelState::IDLE:
-            break;
-    }
-}
-
-// Level state machine — update dialog label and color for the new state
-void AttitudeUI::updateLevelDialog() {
-    switch (_level_state) {
-        case LevelState::IDLE:
-            // Dialog hidden by showView() — nothing to update
-            break;
-
-        case LevelState::COUNTDOWN:
-            // Label text updated each second in updateLevelState()
-            // Set initial text and color here (state entry)
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);
-            _last_countdown_s = 0;  // Force label update on first tick
-            break;
-
-        case LevelState::SENDING:
-            lv_label_set_text(ui_LabelLevelingDialog, "Leveling...");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFFFFFF), 0);
-            break;
-
-        case LevelState::SUCCESS:
-            lv_label_set_text(ui_LabelLevelingDialog, "Success!");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0x00FF00), 0);
-            break;
-
-        case LevelState::FAILED:
-            lv_label_set_text(ui_LabelLevelingDialog, "Failed!");
-            lv_obj_set_style_text_color(ui_LabelLevelingDialog, lv_color_hex(0xFF0000), 0);
-            break;
-    }
-}
-
-// Level state machine — set new state, record timestamp, update dialog
-void AttitudeUI::setLevelState(LevelState new_state) {
-    _level_state = new_state;
-    _state_start_time = millis();
-    // Reset the min/max after successful leveling operation
-    if (new_state == LevelState::SUCCESS) {
-        _min_pitch_x10 = SENTINEL;
-        _max_pitch_x10 = SENTINEL;
-        _min_roll_x10  = SENTINEL;
-        _max_roll_x10  = SENTINEL;
-    }
-    this->updateLevelDialog();
-}

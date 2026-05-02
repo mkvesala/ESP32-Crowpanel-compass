@@ -13,15 +13,14 @@
 // - Initialize: _attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
-//   - Cycle internal views (ATTITUDE → MINMAX → LEVELING) via onButtonPress()
-//   - Cancel leveling on screen leave via onLeave()
+//   - Cycle internal views (ATTITUDE → MINMAX) via onButtonPress()
+//   - Reset to ATTITUDE view on screen leave via onLeave()
 // - Views (cycled with knob button press):
 //   1. ATTITUDE  — live horizon + pitch/roll labels + ship silhouette
 //   2. MINMAX    — 4 static min/max lines + numeric labels + ship silhouette
-//   3. LEVELING  — countdown dialog, auto-sends command at 0, knob press cancels
 // - Pitch: bow down → pitch negative → horizon moves up
 // - Roll:  roll port → roll negative → horizon tilts starboard (clockwise)
-// - Min/max: runtime only, not persisted to NVS, resets on reboot and by leveling command
+// - Min/max: runtime only, not persisted to NVS, resets on reboot
 // - Owned by: CrowPanelApplication
 
 class AttitudeUI : public IScreenUI {
@@ -42,16 +41,6 @@ private:
     enum class AttitudeView {
         ATTITUDE,   // Live horizon, pitch/roll labels, ship silhouette
         MINMAX,     // Static min/max lines, numeric labels, ship silhouette
-        LEVELING    // Countdown dialog (auto-sends command)
-    };
-
-    // Leveling sub-state machine (active only in LEVELING view)
-    enum class LevelState {
-        IDLE,       // No leveling in progress
-        COUNTDOWN,  // Countdown running (5 s), label updated every second
-        SENDING,    // Command sent, waiting for response
-        SUCCESS,    // "Success!" visible briefly
-        FAILED      // "Failed!" visible briefly
     };
 
     ESPNowReceiver &_receiver;
@@ -71,8 +60,6 @@ private:
 
     // State
     AttitudeView _active_view = AttitudeView::ATTITUDE;
-    LevelState   _level_state = LevelState::IDLE;
-    uint32_t     _state_start_time = 0;
     bool         _initialized = false;
 
     // Cached live horizon values (sentinels = not yet set)
@@ -87,15 +74,6 @@ private:
     int16_t _max_pitch_x10 = SENTINEL;
     int16_t _min_roll_x10  = SENTINEL;
     int16_t _max_roll_x10  = SENTINEL;
-
-    // Countdown display — last rendered second
-    uint8_t _last_countdown_s = 0;
-
-    // Timers
-    static constexpr uint32_t LEVELING_COUNTDOWN_MS = 5000;
-    static constexpr uint32_t SENDING_TIMEOUT_MS    = 3000;
-    static constexpr uint32_t SUCCESS_DISPLAY_MS    = 2000;
-    static constexpr uint32_t FAILED_DISPLAY_MS     = 2000;
 
     // Programmatically created image lines (not part of SquareLine Studio export)
     // _img_horizon: live artificial horizon (child of ui_ContainerHorizonGroup)
@@ -119,9 +97,5 @@ private:
     void updateMinMaxPanels();
     void updateMinMaxLabels();
 
-    // Level state machine
-    void setLevelState(LevelState new_state);
-    void updateLevelState();
-    void updateLevelDialog();
-
 };
+

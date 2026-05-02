@@ -12,9 +12,8 @@ using namespace ESPNow;
 //
 // - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication
 //
-// - Provides public API to manage incoming instrument data and outbound attitude leveling command
-// - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), LEVEL_RESPONSE
-// - Sends: LEVEL_COMMAND (broadcast)
+// - Provides public API to manage incoming instrument data (receive-only)
+// - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), BATTERY_DELTA, GNSS_DELTA
 // - Init: _receiver.begin(channel)
 // - Owned by: CrowPanelApplication
 
@@ -29,9 +28,6 @@ public:
     HeadingData getData();
     bool isConnected(uint32_t timeout_ms = 500) const;
     void updateStats();
-    bool sendLevelCommand();
-    bool hasLevelResponse() const;
-    bool getLevelResult();
     bool hasNewWeatherData() const;
     bool hasNewBatteryData() const;
     WeatherDelta getWeatherData();
@@ -53,10 +49,6 @@ private:
     inline static volatile uint32_t s_last_rx_millis = 0;
     inline static volatile uint32_t s_packet_count = 0;
 
-    // Static variables for level response handling
-    inline static volatile bool s_level_response_received = false;
-    inline static volatile bool s_level_response_success = false;
-
     // Static variables for weather data handling
     inline static WeatherDelta s_latest_weather = {};
     inline static volatile bool s_has_new_weather = false;
@@ -69,9 +61,6 @@ private:
     inline static GnssData s_latest_gnss = {};
     inline static volatile bool s_has_new_gnss = false;
     
-    // ESP-NOW mac address for broadcasting
-    inline static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
     // Instance data
     uint8_t _channel = 6;
     float _packets_per_second = 0.0f;
