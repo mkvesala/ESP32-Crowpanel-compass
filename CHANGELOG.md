@@ -4,7 +4,58 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v3.2.0] - 2026-04-23
+## [v4.0.0] - 2026-05-02
+
+### Removed
+
+#### Leveling functionality — CrowPanel is now receive-only
+
+CrowPanel no longer sends any ESP-NOW packets. The attitude leveling command (sent to CMPS14-ESP32-SignalK-gateway) and the corresponding response handling have been removed entirely.
+
+**`ESPNowReceiver` — public API removed:**
+- `sendLevelCommand()` — built and broadcast `ESPNowPacket<LevelCommand>`; managed the broadcast peer registration
+- `hasLevelResponse()` — polled `s_level_response_received` flag
+- `getLevelResult()` — retrieved and cleared the level response success flag
+
+Static members removed: `s_level_response_received`, `s_level_response_success`, `BROADCAST_ADDR`.
+
+The `LEVEL_RESPONSE` case removed from `onDataRecv()` dispatch switch. All other cases (`HEADING_DELTA`, `BATTERY_DELTA`, `WEATHER_DELTA`, `GNSS_DELTA`) unchanged.
+
+---
+
+**`espnow_protocol.h` — protocol definitions removed:**
+
+`ESPNowMsgType` enum values removed:
+```cpp
+LEVEL_COMMAND   = 10,   // removed
+LEVEL_RESPONSE  = 11,   // removed
+```
+
+Payload structs removed:
+```cpp
+struct LevelCommand { uint8_t magic[4]; uint8_t reserved[4]; };    // removed
+struct LevelResponse { uint8_t magic[4]; uint8_t success; uint8_t reserved[3]; }; // removed
+```
+
+`ESPNowPacket<TPayload>` template and `initHeader()` helper are **retained** — they belong to the shared protocol definition and will be used by companion projects.
+
+---
+
+**`AttitudeUI` — LEVELING view removed:**
+
+`AttitudeView::LEVELING` removed from the enum; `AttitudeUI` now cycles between two views only. `LevelState` state machine (`IDLE`, `COUNTDOWN`, `SENDING`, `SUCCESS`, `FAILED`) removed entirely along with all associated members, constants, and private methods (`updateLevelState()`, `updateLevelDialog()`, `setLevelState()`).
+
+The min/max reset-on-leveling-success behavior is also removed — session min/max values now persist until reboot only.
+
+---
+
+### Changed
+
+#### `AttitudeUI` — 2-view cycling (ATTITUDE ↔ MINMAX)
+
+Knob button press now toggles between ATTITUDE and MINMAX views. Previously cycled through three views (ATTITUDE → MINMAX → LEVELING → ATTITUDE).
+
+---
 
 ### Added
 
@@ -884,7 +935,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
-[v3.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.2.0
+[v4.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.0.0
 [v3.1.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.1
 [v3.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.0
 [v3.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.0.0

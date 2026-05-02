@@ -18,7 +18,7 @@ Displays values on a round LVGL UI. User interaction via rotary knob (rotate or 
 
 Different screens selectable by rotating the knob:
 - **Compass screen** — rotating compass rose with HEADING (HDG T), COG and SOG views
-- **Attitude screen** — artificial horizon, pitch and roll values, pitch and roll min/max values, attitude leveling
+- **Attitude screen** — artificial horizon, pitch and roll values, pitch and roll min/max values
 - **Weather screen** — toggle between temperature, pressure and humidity views
 - **Battery screen** - toggle between house voltage, house current, house SoC and starter voltage views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
@@ -50,11 +50,11 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v3.2.0 | Latest release. CompassScreen redesigned with 3-view cycle (HEADING → COG → SOG). GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.0.0 | Latest release. Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
-| v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (now triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details.
-| v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details.
-| v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details.
+| v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details. |
+| v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details. |
+| v2.1.0 | Introduces BatteryScreen and `BatteryUI` UI adapter class. Minor modifications to WeatherScreen and `WeatherUI`. See [CHANGELOG](CHANGELOG.md) for details. |
 | v2.0.0 | Refactored for scalability in screen management. Introduces `IScreenUI` interface as an abstract base class for the actual UI adapter classes. Breaking change in ESP-NOW protocol: updated with framed packets, introducing `ESPNowPacket` and `ESPNowHeader` structs. Adds `WeatherUI` UI adapter class and WeatherScreen UI to show temperature, humidity and pressure. See [CHANGELOG](CHANGELOG.md) for details. |
 | v1.0.0 | First stable release. See [CHANGELOG](CHANGELOG.md) for details - including pre-releases. |
 
@@ -69,7 +69,7 @@ Class diagram including the companion projects:
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
-- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta` and `BatteryDelta` broadcasts and sending attitude leveling commands via ESP-NOW
+- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta` and `BatteryDelta` broadcasts via ESP-NOW (receive-only)
 - Owned by: `CrowPanelApplication`
 
 **`RotaryEncoder`:**
@@ -89,7 +89,7 @@ Class diagram including the companion projects:
 **`AttitudeUI`:**
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
-- Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data
+- Responsible for: updating LVGL UI objects on the attitude screen based on pitch and roll data; 2-view cycle (ATTITUDE / MINMAX)
 - Owned by: `CrowPanelApplication`
 
 **`WeatherUI`:**
@@ -138,7 +138,7 @@ Common features:
 <img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudescreen3.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240">
 
 - Pitch and roll min/max values recorded runtime, no persistent storage in NVS
-- Pressing the knob button toggles between ATTITUDE → MINMAX → LEVELING → ATTITUDE view
+- Pressing the knob button toggles between ATTITUDE ↔ MINMAX view
 - Returning to the screen always loads ATTITUDE view
 - ATTITUDE view:
   - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
@@ -150,13 +150,6 @@ Common features:
     - Green, pivot at the center, rotated to show max roll, furthest roll position to starboard
     - Red, pivot at the center, rotated to show min roll, furthest roll position to port side
   - Pitch and roll min/max value labels
-- LEVELING view:
-  - Bubble leveling tool 120 x 120 px icon 
-  - Count-down to leveling (default 5 s, set in `LEVELING_COUNTDOWN_MS` constant
-  - Knob button press or rotation cancels count-down and returns to ATTITUDE view or switches to another screen 
-  - When executing the command, "Leveling..." message is shown
-  - "Success!" or "Failed!" message shown based on the success of the leveling operation
-  - Successful leveling resets pitch and roll min/max values
 - Ship silhouette overlay on ATTITUDE and MINMAX view
   - The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass
 
@@ -204,7 +197,7 @@ Common features:
 | Screen | Button press | Rotation (normal) | Rotation (special) |
 |--------|--------------|-------------------|--------------------|
 | Compass | Cycle HEADING/COG/SOG view | Switch screen | — |
-| Attitude | Toggle ATTITUDE/MINMAX/LEVELING view | Switch screen | — |
+| Attitude | Toggle ATTITUDE/MINMAX view | Switch screen | — |
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | - |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
@@ -247,8 +240,6 @@ enum class ESPNowMsgType : uint8_t {
    BATTERY_DELTA   = 2,      // VEDirect based sender
    WEATHER_DELTA   = 3,      // BME280-ESP32-SignalK-gateway
    GNSS_DELTA      = 4,      // UBLOX-ESP32-SignalK-gateway
-   LEVEL_COMMAND   = 10,     // CMPS14-ESP32-SignalK-gateway
-   LEVEL_RESPONSE  = 11,     // CMPS14-ESP32-SignalK-gateway
 };
 ```
 Sample payloads:
@@ -310,17 +301,9 @@ struct GnssDelta {
   - 28 B packet, 8 B header + 20 B payload
   - Payload: `BatteryDelta` struct (`house_voltage`, `house_current`, `house_power`, `house_soc`, `start_voltage`)
 
-**Sends** attitude leveling command as broadcast:
-- `ESPNowPacket<LevelCommand>`:
-  - 16 B, 8 B header + 8 B payload
-
-**Receives** leveling response as unicast:
-- `ESPNowPacket<LevelResponse>`:
-  - 16 B, 8 B header + 8 B payload
-
 **Channel:** ESP-NOW evices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
-**Deadband:** Compass sender has 0.25° deadband — no packet sent if heading and attitude change less than 0.25°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
+**Deadband:** Compass sender has 0.05° deadband — no packet sent if heading and attitude change less than 0.05°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
 **NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0, UBLOX-ESP32-SignalK-gateway v1.0.0 and BME280-ESP32-SignalK-gateway v1.0.0 or newer.
 
@@ -330,11 +313,11 @@ struct GnssDelta {
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta`, `LevelCommand/Response` |
+| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
-| `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive and level command sender |
+| `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive (receive-only) |
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |
-| `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter + leveling state machine, realizes `IScreenUI` |
+| `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter, realizes `IScreenUI` |
 | `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
 | `BatteryUI.h/cpp` | Class `BatteryUI` - battery screen adapter, realizes `IScreenUI` |
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
@@ -447,8 +430,6 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 [Battery icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/battery)
 
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
-
-[Bubble level icons created by vectorsmarket15 - Flaticon](https://www.flaticon.com/free-icons/bubble-level)
 
 This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) and [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
