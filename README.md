@@ -33,7 +33,7 @@ Developed and tested on:
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
-- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.3.1) compass sender
+- [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) (v1.4.0) compass sender
 - [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) (v1.0.0) GNSS sender
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
 - [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
@@ -135,7 +135,7 @@ Common features:
 
 ### Attitude screen
 
-<img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudescreen3.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240">
+<img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240">
 
 - Pitch and roll min/max values recorded runtime, no persistent storage in NVS
 - Pressing the knob button toggles between ATTITUDE ↔ MINMAX view
@@ -365,7 +365,7 @@ struct GnssDelta {
    - Arduino GFX Library (by Moon On Our Nation) 1.6.5
    - PCF8574 (by Renzo Mischianti) 2.4.0
 4. SquareLine Studio 1.6.0 for UI design and code generation
-5. CMPS14-ESP32-SignalK-gateway v1.3.1
+5. CMPS14-ESP32-SignalK-gateway v1.4.0
 6. UBLOX-ESP32-SignalK-gateway v1.0.0
 7. BME280-ESP32-SignalK-gateway v1.0.1
 8. VEDirect-ESP32-SignalK-gateway v1.0.0
@@ -443,4 +443,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on development.
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/cog.png" width="240"> <img src="docs/sog.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/attitudescreen3.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/attitudeui3.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/cog.png" width="240"> <img src="docs/sog.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
