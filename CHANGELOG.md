@@ -19,7 +19,7 @@ CrowPanel no longer sends any ESP-NOW packets. The attitude leveling command (se
 
 Static members removed: `s_level_response_received`, `s_level_response_success`, `BROADCAST_ADDR`.
 
-The `LEVEL_RESPONSE` case removed from `onDataRecv()` dispatch switch. All other cases (`HEADING_DELTA`, `BATTERY_DELTA`, `WEATHER_DELTA`, `GNSS_DELTA`) unchanged.
+The `LEVEL_RESPONSE` case removed from `onDataRecv()` dispatch switch. Pre-existing cases (`HEADING_DELTA`, `BATTERY_DELTA`, `WEATHER_DELTA`) unchanged; `GNSS_DELTA` added as part of this release (see below).
 
 ---
 
@@ -55,6 +55,8 @@ The min/max reset-on-leveling-success behavior is also removed — session min/m
 
 Knob button press now toggles between ATTITUDE and MINMAX views. Previously cycled through three views (ATTITUDE → MINMAX → LEVELING → ATTITUDE).
 
+`CONNECTION_TIMEOUT_MS` increased from 3000 → 5000 ms.
+
 ---
 
 ### Added
@@ -81,7 +83,7 @@ Knob button press cycles through three views. `CompassView` enum drives a `showV
 
 Shows true heading from CMPS14. Compass rose rotates to HDG(T). Label format: 3-digit with leading zero, e.g. `090°`. On disconnect, last known heading and rose position are preserved (no reset to dashes) — consistent with v3.1.x behavior.
 
-Connection indicator (`PanelConnected`) tracks CMPS14 packet timing (`HEADING_TIMEOUT_MS = 3000 ms`).
+Connection indicator (`PanelConnected`) tracks CMPS14 packet timing (`HEADING_TIMEOUT_MS = 5000 ms`).
 
 ---
 
@@ -91,7 +93,7 @@ Shows course over ground (true) from GNSS. Compass rose rotates to COG(T) using 
 
 Shows `---°` when `fix_ok = 0` (no valid GNSS fix) or when GNSS sender is disconnected.
 
-Connection indicator tracks GNSS packet timing (`GNSS_TIMEOUT_MS = 3000 ms`).
+Connection indicator tracks GNSS packet timing (`GNSS_TIMEOUT_MS = 5000 ms`).
 
 ---
 
@@ -151,6 +153,8 @@ Added `hasNewGnssData() const` — thread-safe read of `s_has_new_gnss`.
 Added `getGnssData()` — thread-safe read of `s_latest_gnss`, clears `s_has_new_gnss`.
 
 Added `s_latest_gnss` / `s_has_new_gnss` `inline static` members.
+
+Constructor made `explicit`. Default channel parameter of `begin()` changed from `1` → `6` (matches the fixed router channel used by all companion gateways).
 
 ---
 
