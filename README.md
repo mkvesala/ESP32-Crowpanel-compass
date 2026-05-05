@@ -407,7 +407,7 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 Compass rose `lv_image_set_rotation()` is the main performance bottleneck (only on the compass screen). PNG image stored in the image object is 240x240 pixels, no alpha, scaled with LVGL factor 512 to 480x480 pixels. Antialiasing is off. LVGL rendering is based on partial mode, using buffer of 480x120.
 
-Flash usage: ~54%.
+Flash usage: ~74%.
 
 ## Security
 
