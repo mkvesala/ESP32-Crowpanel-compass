@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![UI: LVGL9](https://img.shields.io/badge/UI-LVGL9-black)](https://lvgl.io)
 
-Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480×480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
+Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480x480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
 - GNSS position, speed over ground (SOG) and course over ground (COG) from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
@@ -119,17 +119,17 @@ Class diagram including the companion projects:
 
 ### Compass screen
 
-<img src="docs/compassscreen.png" height="240"> <img src="docs/cog.png" height="240"> <img src="docs/sog.png" height="240"> <img src="docs/compassui.jpeg" height="240">
+<img src="docs/compassscreen.png" height="240"> <img src="docs/cog.png" height="240"> <img src="docs/sog.png" height="240"> <img src="docs/compassui.jpeg" height="240"> <img src="docs/cog.jpeg" height="240"> <img src="docs/sog.jpeg" height="240">
 
 Pressing the knob button cycles between HEADING → COG → SOG → HEADING. Last view stored in NVS `onLeave()` (default: HEADING).
 
 - **HEADING view** — compass rose rotates to HDG(T) from CMPS14. Mode label: `HDG(T)`. Last known heading preserved on disconnect.
 - **COG view** — compass rose rotates to COG(T) from GNSS. Mode label: `COG(T)`. Shows `---°` when no valid GNSS fix or sender disconnected.
-- **SOG view** — speedometer arc and speed label from GNSS. Arc range 0–100 = 0.0–10.0 kn (arc value = knots × 10). Label format: one decimal place e.g. `7.1`. Shows `--.-` when no valid GNSS fix or sender disconnected.
+- **SOG view** — speedometer arc and speed label from GNSS. Arc range 0-100 = 0.0-10.0 kn (arc value = knots x 10). Label format: one decimal place e.g. `7.1`. Shows `--.-` when no valid GNSS fix or sender disconnected.
 
 Common features:
 - Heading/COG label format: 3-digit with leading zero e.g. `090°`
-- Rotating compass rose image (240×240 px source, rendered at 480×480 with LVGL zoom=512, no alpha, antialias off)
+- Rotating compass rose image (240x240 px source, rendered at 480x480 with LVGL zoom=512, no alpha, antialias off)
 - Rotation threshold 0.5°: skips LVGL re-render when heading/COG change is below threshold
 - Connected indicator panel (black = connected, red = disconnected) — tracks active view's data source (CMPS14 for HEADING, GNSS sender for COG/SOG)
 
@@ -187,7 +187,7 @@ Common features:
 - Knob button press enters ADJUSTING mode: arc overlay appears
 - Knob rotation in ADJUSTING mode: ±2% brightness, updates arc, label and backlight in real-time
 - 3-second timeout after last rotation → saves to NVS and returns to idle
-- Brightness range: 2%–100% (2% minimum prevents screen going completely dark)
+- Brightness range: 2%-100% (2% minimum prevents screen going completely dark)
 - Default: 48% (~122/255)
 - Persistence: ESP32 Preferences (NVS), namespace `"display"`, key `"brightness"`
 - PWM: GPIO6, 5 kHz, 8-bit
@@ -294,7 +294,7 @@ struct GnssDelta {
 - `ESPNowPacket<GnssDelta>`:
   - 32 B packet, 8 B header + 24 B payload
   - Payload: `GnssDelta` struct (`lat_deg`, `lon_deg`, `sog_ms`, `cog_true_rad`, `mag_var_rad`, `satellites`, `fix_type`, `fix_ok`)
-  - `GnssDelta` converted into `GnssData`, an internal data struct: `cog_true_x10` (0–3599), `sog_knots_x10` (knots × 10), `fix_ok`
+  - `GnssDelta` converted into `GnssData`, an internal data struct: `cog_true_x10` (0-3599), `sog_knots_x10` (knots x 10), `fix_ok`
 
 **Receives** at ~1 Hz, in V, A and % (sent by VEDirect based sender), as broadcast:
 - `ESPNowPacket<BatteryDelta>`:
@@ -443,4 +443,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for further details on development.
 
 ## Gallery
 
-<img src="docs/compassscreen.png" width="240"> <img src="docs/cog.png" width="240"> <img src="docs/sog.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
+<img src="docs/compassscreen.png" width="240"> <img src="docs/cog.png" width="240"> <img src="docs/sog.png" width="240"> <img src="docs/attitudescreen1.png" width="240"> <img src="docs/attitudescreen2.png" width="240"> <img src="docs/weatherscreen1.png" width="240"> <img src="docs/weatherscreen2.png" width="240"> <img src="docs/weatherscreen3.png" width="240"> <img src="docs/batteryscreenhousev.png" width="240"> <img src="docs/batteryscreenhousea.png" width="240"> <img src="docs/batteryscreenhousesoc.png" width="240"> <img src="docs/batteryscreenstart.png" width="240"> <img src="docs/brightnessscreen.png" width="240"> <img src="docs/compassui.jpeg" width="240"> <img src="docs/cog.jpeg" width="240"> <img src="docs/sog.jpeg" width="240"> <img src="docs/attitudeui.jpeg" width="240"> <img src="docs/attitudeui2.jpeg" height="240"> <img src="docs/weatherui1.jpeg" width="240"> <img src="docs/weatherui2.jpeg" width="240"> <img src="docs/weatherui3.jpeg" width="240"> <img src="docs/batteryuihousev.jpeg" width="240"> <img src="docs/batteryuihousea.jpeg" width="240"> <img src="docs/batteryuihousesoc.jpeg" width="240"> <img src="docs/batteryuistart.jpeg" width="240"> <img src="docs/brightnessui.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/mountingframe.png" width="240">
