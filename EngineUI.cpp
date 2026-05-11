@@ -84,6 +84,7 @@ void EngineUI::onLeave() {
 void EngineUI::showView(EngineView view) {
     _active_view = view;
     _last_arc_value = -1;
+    _last_arc_color = 0xFFFFFFFF;
 
     lv_obj_add_flag(ui_PanelExhaustTemp,   LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_ContainerFuelGauge, LV_OBJ_FLAG_HIDDEN);
@@ -163,6 +164,15 @@ void EngineUI::updateFuelLevel(float ratio) {
     if (arc_val != _last_arc_value) {
         lv_arc_set_value(ui_ArcFuel, arc_val);
         _last_arc_value = arc_val;
+    }
+
+    uint32_t color = (ratio >= FUEL_THRESHOLD_YELLOW) ? FUEL_COLOR_GREEN
+                   : (ratio >= FUEL_THRESHOLD_RED)    ? FUEL_COLOR_YELLOW
+                                                      : FUEL_COLOR_RED;
+    if (color != _last_arc_color) {
+        lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(color), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(ui_ArcFuel,  lv_color_hex(color), LV_PART_KNOB      | LV_STATE_DEFAULT);
+        _last_arc_color = color;
     }
 
     char buf[8];

@@ -59,6 +59,7 @@ private:
     uint32_t _last_tank_millis   = 0;
     bool     _last_tank_connected = false;
     int      _last_arc_value     = -1;
+    uint32_t _last_arc_color     = 0xFFFFFFFF;  // sentinel: force color set on first update
 
     void showView(EngineView view);
     void showWaiting();
@@ -71,7 +72,14 @@ private:
     static constexpr uint32_t CONNECTION_TIMEOUT_MS  = 6000;
     static constexpr float    TANK_CAPACITY_L        = 400.0f;
     static constexpr float    EXHAUST_EMA_ALPHA       = 0.05f;
-    static constexpr float    EXHAUST_TREND_THRESHOLD = 0.5f;
+    static constexpr float    EXHAUST_TREND_THRESHOLD = 0.001f;
+
+    // Fuel arc color thresholds and colors
+    static constexpr float    FUEL_THRESHOLD_YELLOW = 0.25f;  // below this: yellow
+    static constexpr float    FUEL_THRESHOLD_RED    = 0.10f;  // below this: red
+    static constexpr uint32_t FUEL_COLOR_GREEN      = 0x28C850;
+    static constexpr uint32_t FUEL_COLOR_YELLOW     = 0xE6B400;
+    static constexpr uint32_t FUEL_COLOR_RED        = 0xDC2828;
 
     static constexpr const char* NVS_NAMESPACE = "engine";
     static constexpr const char* NVS_KEY_VIEW  = "view";
