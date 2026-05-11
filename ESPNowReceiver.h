@@ -35,6 +35,11 @@ public:
     bool hasNewGnssData() const;
     GnssData getGnssData();
 
+    bool hasNewEngineData() const;
+    HALMETEngineDelta getEngineData();
+    bool hasNewTankData() const;
+    HALMETTankDelta getTankData();
+
     float getPacketsPerSecond() const { return _packets_per_second; }
 
 private:
@@ -60,7 +65,15 @@ private:
     // Static variables for GNSS data handling
     inline static GnssData s_latest_gnss = {};
     inline static volatile bool s_has_new_gnss = false;
-    
+
+    // Static variables for HALMET engine data handling
+    inline static HALMETEngineDelta s_latest_engine = {};
+    inline static volatile bool     s_has_new_engine = false;
+
+    // Static variables for HALMET tank data handling
+    inline static HALMETTankDelta s_latest_tank = {};
+    inline static volatile bool   s_has_new_tank = false;
+
     // Instance data
     uint8_t _channel = 6;
     float _packets_per_second = 0.0f;

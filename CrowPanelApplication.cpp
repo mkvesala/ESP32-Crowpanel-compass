@@ -53,6 +53,7 @@ CrowPanelApplication::CrowPanelApplication():
     _attitudeUI(_receiver),
     _weatherUI(_receiver),
     _batteryUI(_receiver),
+    _engineUI(_receiver),
     _brightnessUI(SCREEN_BACKLIGHT_PIN),
     _encoder(_pcf8574),
     _screenMgr() {}
@@ -76,13 +77,15 @@ void CrowPanelApplication::begin() {
     _attitudeUI.begin();
     _weatherUI.begin();
     _batteryUI.begin();
+    _engineUI.begin();
     _brightnessUI.begin();
 
-    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BATTERY → BRIGHTNESS)
+    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → BRIGHTNESS)
     _screenMgr.addScreen(&_compassUI);
     _screenMgr.addScreen(&_attitudeUI);
     _screenMgr.addScreen(&_weatherUI);
     _screenMgr.addScreen(&_batteryUI);
+    _screenMgr.addScreen(&_engineUI);
     _screenMgr.addScreen(&_brightnessUI);
 
     // Screen manager init (loads first screen)

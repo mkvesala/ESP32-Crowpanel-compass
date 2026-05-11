@@ -21,9 +21,7 @@ extern lv_obj_t *ui_LabelMaxExhaustTemp;
 extern lv_obj_t *ui_LabelMinExhaustTemp;
 extern lv_obj_t *ui_LabelTrendExhaustTemp;
 extern lv_obj_t *ui_ContainerFuelGauge;
-extern lv_obj_t *ui_ImageFuelGauge;
 extern lv_obj_t *ui_PanelLitresBg;
-extern lv_obj_t *ui_ArcFuel;
 extern lv_obj_t *ui_LabelLitres;
 extern lv_obj_t *ui_LabelLitresTitle;
 extern lv_obj_t *ui_LabelEmpty;
@@ -32,6 +30,12 @@ extern lv_obj_t *ui_Label12;
 extern lv_obj_t *ui_Label34;
 extern lv_obj_t *ui_LabelFull;
 extern lv_obj_t *ui_ImageFuel;
+extern lv_obj_t *ui_ArcFuel;
+extern lv_obj_t *ui_Panel12;
+extern lv_obj_t *ui_Panel34;
+extern lv_obj_t *ui_Panel14;
+extern lv_obj_t *ui_PanelEmpty;
+extern lv_obj_t *ui_PanelFull;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

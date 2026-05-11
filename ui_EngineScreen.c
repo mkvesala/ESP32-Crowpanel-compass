@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_EngineScreen = NULL;lv_obj_t *ui_PanelExhaustTemp = NULL;lv_obj_t *ui_ImageExhaustTem = NULL;lv_obj_t *ui_LabelExhaustTemp = NULL;lv_obj_t *ui_LabelMaxExhaustTemp = NULL;lv_obj_t *ui_LabelMinExhaustTemp = NULL;lv_obj_t *ui_LabelTrendExhaustTemp = NULL;lv_obj_t *ui_ContainerFuelGauge = NULL;lv_obj_t *ui_ImageFuelGauge = NULL;lv_obj_t *ui_PanelLitresBg = NULL;lv_obj_t *ui_ArcFuel = NULL;lv_obj_t *ui_LabelLitres = NULL;lv_obj_t *ui_LabelLitresTitle = NULL;lv_obj_t *ui_LabelEmpty = NULL;lv_obj_t *ui_Label14 = NULL;lv_obj_t *ui_Label12 = NULL;lv_obj_t *ui_Label34 = NULL;lv_obj_t *ui_LabelFull = NULL;lv_obj_t *ui_ImageFuel = NULL;
+lv_obj_t *ui_EngineScreen = NULL;lv_obj_t *ui_PanelExhaustTemp = NULL;lv_obj_t *ui_ImageExhaustTem = NULL;lv_obj_t *ui_LabelExhaustTemp = NULL;lv_obj_t *ui_LabelMaxExhaustTemp = NULL;lv_obj_t *ui_LabelMinExhaustTemp = NULL;lv_obj_t *ui_LabelTrendExhaustTemp = NULL;lv_obj_t *ui_ContainerFuelGauge = NULL;lv_obj_t *ui_PanelLitresBg = NULL;lv_obj_t *ui_LabelLitres = NULL;lv_obj_t *ui_LabelLitresTitle = NULL;lv_obj_t *ui_LabelEmpty = NULL;lv_obj_t *ui_Label14 = NULL;lv_obj_t *ui_Label12 = NULL;lv_obj_t *ui_Label34 = NULL;lv_obj_t *ui_LabelFull = NULL;lv_obj_t *ui_ImageFuel = NULL;lv_obj_t *ui_ArcFuel = NULL;lv_obj_t *ui_Panel12 = NULL;lv_obj_t *ui_Panel34 = NULL;lv_obj_t *ui_Panel14 = NULL;lv_obj_t *ui_PanelEmpty = NULL;lv_obj_t *ui_PanelFull = NULL;
 // event funtions
 
 // build funtions
@@ -85,20 +85,11 @@ lv_obj_remove_style_all(ui_ContainerFuelGauge);
 lv_obj_set_width( ui_ContainerFuelGauge, 484);
 lv_obj_set_height( ui_ContainerFuelGauge, 484);
 lv_obj_set_align( ui_ContainerFuelGauge, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_ContainerFuelGauge, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_remove_flag( ui_ContainerFuelGauge, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
-ui_ImageFuelGauge = lv_image_create(ui_ContainerFuelGauge);
-lv_image_set_src(ui_ImageFuelGauge, &ui_img_fuel_gauge_bg2_png);
-lv_obj_set_width( ui_ImageFuelGauge, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_ImageFuelGauge, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_align( ui_ImageFuelGauge, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_ImageFuelGauge, LV_OBJ_FLAG_CLICKABLE );   /// Flags
-lv_obj_remove_flag( ui_ImageFuelGauge, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-
 ui_PanelLitresBg = lv_obj_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_PanelLitresBg, 200);
-lv_obj_set_height( ui_PanelLitresBg, 200);
+lv_obj_set_width( ui_PanelLitresBg, 482);
+lv_obj_set_height( ui_PanelLitresBg, 482);
 lv_obj_set_align( ui_PanelLitresBg, LV_ALIGN_CENTER );
 lv_obj_remove_flag( ui_PanelLitresBg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_obj_set_style_radius(ui_PanelLitresBg, 100, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -106,33 +97,6 @@ lv_obj_set_style_bg_color(ui_PanelLitresBg, lv_color_hex(0x000000), LV_PART_MAIN
 lv_obj_set_style_bg_opa(ui_PanelLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_color(ui_PanelLitresBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_border_opa(ui_PanelLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_ArcFuel = lv_arc_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_ArcFuel, 480);
-lv_obj_set_height( ui_ArcFuel, 480);
-lv_obj_set_align( ui_ArcFuel, LV_ALIGN_CENTER );
-lv_arc_set_value(ui_ArcFuel, 70);
-lv_arc_set_bg_angles(ui_ArcFuel,180,360);
-lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_arc_opa(ui_ArcFuel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_arc_width(ui_ArcFuel, 25, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_arc_rounded(ui_ArcFuel, false, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(0x28C850), LV_PART_INDICATOR | LV_STATE_DEFAULT );
-lv_obj_set_style_arc_opa(ui_ArcFuel, 255, LV_PART_INDICATOR| LV_STATE_DEFAULT);
-lv_obj_set_style_arc_width(ui_ArcFuel, 25, LV_PART_INDICATOR| LV_STATE_DEFAULT);
-lv_obj_set_style_arc_rounded(ui_ArcFuel, false, LV_PART_INDICATOR| LV_STATE_DEFAULT);
-
-lv_obj_set_style_bg_color(ui_ArcFuel, lv_color_hex(0x28C850), LV_PART_KNOB | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_ArcFuel, 255, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_ArcFuel, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_ArcFuel, 255, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_left(ui_ArcFuel, -30, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_right(ui_ArcFuel, -30, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_top(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_bottom(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_row(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
-lv_obj_set_style_pad_column(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
 
 ui_LabelLitres = lv_label_create(ui_ContainerFuelGauge);
 lv_obj_set_width( ui_LabelLitres, LV_SIZE_CONTENT);  /// 1
@@ -246,6 +210,105 @@ lv_obj_add_flag( ui_ImageFuel, LV_OBJ_FLAG_CLICKABLE );   /// Flags
 lv_obj_remove_flag( ui_ImageFuel, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_image_set_scale(ui_ImageFuel,192);
 
+ui_ArcFuel = lv_arc_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_ArcFuel, 480);
+lv_obj_set_height( ui_ArcFuel, 480);
+lv_obj_set_align( ui_ArcFuel, LV_ALIGN_CENTER );
+lv_arc_set_value(ui_ArcFuel, 70);
+lv_arc_set_bg_angles(ui_ArcFuel,180,360);
+lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_arc_opa(ui_ArcFuel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_width(ui_ArcFuel, 25, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_rounded(ui_ArcFuel, false, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(0x28C850), LV_PART_INDICATOR | LV_STATE_DEFAULT );
+lv_obj_set_style_arc_opa(ui_ArcFuel, 255, LV_PART_INDICATOR| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_width(ui_ArcFuel, 25, LV_PART_INDICATOR| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_rounded(ui_ArcFuel, false, LV_PART_INDICATOR| LV_STATE_DEFAULT);
+
+lv_obj_set_style_bg_color(ui_ArcFuel, lv_color_hex(0x28C850), LV_PART_KNOB | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_ArcFuel, 255, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_ArcFuel, lv_color_hex(0x000000), LV_PART_KNOB | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_ArcFuel, 255, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_left(ui_ArcFuel, -30, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_right(ui_ArcFuel, -30, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_top(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_bottom(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_row(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
+lv_obj_set_style_pad_column(ui_ArcFuel, 0, LV_PART_KNOB| LV_STATE_DEFAULT);
+
+ui_Panel12 = lv_obj_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_Panel12, 4);
+lv_obj_set_height( ui_Panel12, 35);
+lv_obj_set_x( ui_Panel12, 0 );
+lv_obj_set_y( ui_Panel12, -225 );
+lv_obj_set_align( ui_Panel12, LV_ALIGN_CENTER );
+lv_obj_remove_flag( ui_Panel12, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_Panel12, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_Panel12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_Panel12, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_Panel12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_Panel34 = lv_obj_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_Panel34, 4);
+lv_obj_set_height( ui_Panel34, 35);
+lv_obj_set_x( ui_Panel34, 170 );
+lv_obj_set_y( ui_Panel34, -155 );
+lv_obj_set_align( ui_Panel34, LV_ALIGN_CENTER );
+lv_obj_remove_flag( ui_Panel34, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_Panel34, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_Panel34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_Panel34, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_Panel34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_rotation(ui_Panel34, 450, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_x(ui_Panel34, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_y(ui_Panel34, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_Panel14 = lv_obj_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_Panel14, 4);
+lv_obj_set_height( ui_Panel14, 35);
+lv_obj_set_x( ui_Panel14, -170 );
+lv_obj_set_y( ui_Panel14, -155 );
+lv_obj_set_align( ui_Panel14, LV_ALIGN_CENTER );
+lv_obj_remove_flag( ui_Panel14, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_Panel14, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_Panel14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_Panel14, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_Panel14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_rotation(ui_Panel14, 3150, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_x(ui_Panel14, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_y(ui_Panel14, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_PanelEmpty = lv_obj_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_PanelEmpty, 4);
+lv_obj_set_height( ui_PanelEmpty, 35);
+lv_obj_set_x( ui_PanelEmpty, -205 );
+lv_obj_set_y( ui_PanelEmpty, 15 );
+lv_obj_set_align( ui_PanelEmpty, LV_ALIGN_CENTER );
+lv_obj_remove_flag( ui_PanelEmpty, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_PanelEmpty, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_PanelEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_PanelEmpty, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_PanelEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_rotation(ui_PanelEmpty, 900, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_x(ui_PanelEmpty, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_y(ui_PanelEmpty, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_PanelFull = lv_obj_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_PanelFull, 4);
+lv_obj_set_height( ui_PanelFull, 35);
+lv_obj_set_x( ui_PanelFull, 240 );
+lv_obj_set_y( ui_PanelFull, 15 );
+lv_obj_set_align( ui_PanelFull, LV_ALIGN_CENTER );
+lv_obj_remove_flag( ui_PanelFull, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_PanelFull, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_PanelFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_PanelFull, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_PanelFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_rotation(ui_PanelFull, 900, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_x(ui_PanelFull, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_transform_pivot_y(ui_PanelFull, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 }
 
 void ui_EngineScreen_screen_destroy(void)
@@ -261,9 +324,7 @@ ui_LabelMaxExhaustTemp= NULL;
 ui_LabelMinExhaustTemp= NULL;
 ui_LabelTrendExhaustTemp= NULL;
 ui_ContainerFuelGauge= NULL;
-ui_ImageFuelGauge= NULL;
 ui_PanelLitresBg= NULL;
-ui_ArcFuel= NULL;
 ui_LabelLitres= NULL;
 ui_LabelLitresTitle= NULL;
 ui_LabelEmpty= NULL;
@@ -272,5 +333,11 @@ ui_Label12= NULL;
 ui_Label34= NULL;
 ui_LabelFull= NULL;
 ui_ImageFuel= NULL;
+ui_ArcFuel= NULL;
+ui_Panel12= NULL;
+ui_Panel34= NULL;
+ui_Panel14= NULL;
+ui_PanelEmpty= NULL;
+ui_PanelFull= NULL;
 
 }

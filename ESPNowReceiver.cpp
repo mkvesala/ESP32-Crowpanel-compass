@@ -149,6 +149,28 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             break;
         }
 
+        case ESPNowMsgType::HALMET_ENGINE_DELTA: {
+            if (hdr.payload_len != sizeof(HALMETEngineDelta)) return;
+            HALMETEngineDelta eng;
+            memcpy(&eng, payload, sizeof(HALMETEngineDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_engine  = eng;
+            s_has_new_engine = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
+        case ESPNowMsgType::HALMET_TANK_DELTA: {
+            if (hdr.payload_len != sizeof(HALMETTankDelta)) return;
+            HALMETTankDelta tank;
+            memcpy(&tank, payload, sizeof(HALMETTankDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_tank  = tank;
+            s_has_new_tank = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
@@ -208,6 +230,44 @@ GnssData ESPNowReceiver::getGnssData() {
     portENTER_CRITICAL(&s_spinlock);
     data = s_latest_gnss;
     s_has_new_gnss = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns true if new HALMET engine data packet available, otherwise false
+bool ESPNowReceiver::hasNewEngineData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_engine;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest HALMET engine data packet received via ESP-NOW
+HALMETEngineDelta ESPNowReceiver::getEngineData() {
+    HALMETEngineDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_engine;
+    s_has_new_engine = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns true if new HALMET tank data packet available, otherwise false
+bool ESPNowReceiver::hasNewTankData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_tank;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest HALMET tank data packet received via ESP-NOW
+HALMETTankDelta ESPNowReceiver::getTankData() {
+    HALMETTankDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_tank;
+    s_has_new_tank = false;
     portEXIT_CRITICAL(&s_spinlock);
     return data;
 }
