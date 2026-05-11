@@ -31,10 +31,11 @@ ui_ImageTemperature = lv_image_create(ui_PanelTemperature);
 lv_image_set_src(ui_ImageTemperature, &ui_img_temperature2_png);
 lv_obj_set_width( ui_ImageTemperature, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_ImageTemperature, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_ImageTemperature, 0 );
-lv_obj_set_y( ui_ImageTemperature, 20 );
+lv_obj_set_x( ui_ImageTemperature, -5 );
+lv_obj_set_y( ui_ImageTemperature, 10 );
 lv_obj_set_align( ui_ImageTemperature, LV_ALIGN_TOP_MID );
 lv_obj_remove_flag( ui_ImageTemperature, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_image_set_scale(ui_ImageTemperature,192);
 
 ui_LabelTemp = lv_label_create(ui_PanelTemperature);
 lv_obj_set_width( ui_LabelTemp, LV_SIZE_CONTENT);  /// 1
@@ -100,6 +101,7 @@ lv_obj_set_x( ui_ImagePressure, 0 );
 lv_obj_set_y( ui_ImagePressure, 10 );
 lv_obj_set_align( ui_ImagePressure, LV_ALIGN_TOP_MID );
 lv_obj_remove_flag( ui_ImagePressure, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_image_set_scale(ui_ImagePressure,192);
 
 ui_LabelPressure = lv_label_create(ui_PanelPressure);
 lv_obj_set_width( ui_LabelPressure, LV_SIZE_CONTENT);  /// 1
@@ -174,9 +176,10 @@ lv_image_set_src(ui_ImageHumidity, &ui_img_humidity2_png);
 lv_obj_set_width( ui_ImageHumidity, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_ImageHumidity, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_ImageHumidity, 0 );
-lv_obj_set_y( ui_ImageHumidity, 20 );
+lv_obj_set_y( ui_ImageHumidity, 10 );
 lv_obj_set_align( ui_ImageHumidity, LV_ALIGN_TOP_MID );
 lv_obj_remove_flag( ui_ImageHumidity, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_image_set_scale(ui_ImageHumidity,192);
 
 ui_LabelHumidity = lv_label_create(ui_PanelHumidity);
 lv_obj_set_width( ui_LabelHumidity, LV_SIZE_CONTENT);  /// 1

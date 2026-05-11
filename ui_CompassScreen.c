@@ -74,7 +74,6 @@ lv_obj_remove_style_all(ui_ContainerSog);
 lv_obj_set_width( ui_ContainerSog, 484);
 lv_obj_set_height( ui_ContainerSog, 484);
 lv_obj_set_align( ui_ContainerSog, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_ContainerSog, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_remove_flag( ui_ContainerSog, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
 ui_ImageSogBg = lv_image_create(ui_ContainerSog);
@@ -97,19 +96,21 @@ lv_obj_set_style_border_color(ui_PanelSogBg, lv_color_hex(0x000000), LV_PART_MAI
 lv_obj_set_style_border_opa(ui_PanelSogBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ArcSog = lv_arc_create(ui_ContainerSog);
-lv_obj_set_width( ui_ArcSog, 330);
-lv_obj_set_height( ui_ArcSog, 330);
+lv_obj_set_width( ui_ArcSog, 480);
+lv_obj_set_height( ui_ArcSog, 480);
 lv_obj_set_align( ui_ArcSog, LV_ALIGN_CENTER );
 lv_arc_set_value(ui_ArcSog, 70);
 lv_arc_set_bg_angles(ui_ArcSog,121,59);
 lv_obj_set_style_arc_color(ui_ArcSog, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_arc_opa(ui_ArcSog, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_opa(ui_ArcSog, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_width(ui_ArcSog, 25, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_rounded(ui_ArcSog, false, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 lv_obj_set_style_bg_color(ui_ArcSog, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_ArcSog, 255, LV_PART_INDICATOR| LV_STATE_DEFAULT);
 lv_obj_set_style_arc_color(ui_ArcSog, lv_color_hex(0xFFFFFF), LV_PART_INDICATOR | LV_STATE_DEFAULT );
 lv_obj_set_style_arc_opa(ui_ArcSog, 255, LV_PART_INDICATOR| LV_STATE_DEFAULT);
-lv_obj_set_style_arc_width(ui_ArcSog, 40, LV_PART_INDICATOR| LV_STATE_DEFAULT);
+lv_obj_set_style_arc_width(ui_ArcSog, 25, LV_PART_INDICATOR| LV_STATE_DEFAULT);
 lv_obj_set_style_arc_rounded(ui_ArcSog, false, LV_PART_INDICATOR| LV_STATE_DEFAULT);
 
 lv_obj_set_style_bg_color(ui_ArcSog, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT );

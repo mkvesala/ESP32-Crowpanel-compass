@@ -60,6 +60,7 @@ ui_AttitudeScreen_screen_init();
 ui_BrightnessScreen_screen_init();
 ui_WeatherScreen_screen_init();
 ui_BatteryScreen_screen_init();
+ui_EngineScreen_screen_init();
 ui____initial_actions0 = lv_obj_create(NULL);
 lv_disp_load_scr( ui_CompassScreen);
 }
@@ -70,4 +71,5 @@ ui_AttitudeScreen_screen_destroy();
 ui_BrightnessScreen_screen_destroy();
 ui_WeatherScreen_screen_destroy();
 ui_BatteryScreen_screen_destroy();
+ui_EngineScreen_screen_destroy();
 }

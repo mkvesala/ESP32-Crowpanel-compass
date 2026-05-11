@@ -21,6 +21,7 @@ extern "C" {
 #include "ui_BrightnessScreen.h"
 #include "ui_WeatherScreen.h"
 #include "ui_BatteryScreen.h"
+#include "ui_EngineScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
@@ -37,6 +38,9 @@ LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png
 LV_IMG_DECLARE( ui_img_air2_png);   // assets/air2.png
 LV_IMG_DECLARE( ui_img_humidity2_png);   // assets/humidity2.png
 LV_IMG_DECLARE( ui_img_1299205280);   // assets/car-battery-2.png
+LV_IMG_DECLARE( ui_img_454395385);   // assets/exhaust-pipe-2.png
+LV_IMG_DECLARE( ui_img_fuel_gauge_bg2_png);   // assets/fuel_gauge_bg2.png
+LV_IMG_DECLARE( ui_img_1496861887);   // assets/gas-pump.png
 
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);

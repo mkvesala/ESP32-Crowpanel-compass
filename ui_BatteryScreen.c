@@ -252,6 +252,7 @@ lv_obj_set_x( ui_ImageBattery, 0 );
 lv_obj_set_y( ui_ImageBattery, 14 );
 lv_obj_set_align( ui_ImageBattery, LV_ALIGN_TOP_MID );
 lv_obj_remove_flag( ui_ImageBattery, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_image_set_scale(ui_ImageBattery,192);
 
 ui_LabelHouse = lv_label_create(ui_BatteryScreen);
 lv_obj_set_width( ui_LabelHouse, LV_SIZE_CONTENT);  /// 1
