@@ -97,6 +97,8 @@ void CompassUI::showView(CompassView view) {
     _last_rose_x10  = 0xFFFF;
     _last_label_deg = 0xFFFF;
     _last_sog_x10   = 0xFFFF;
+    _sog_ema        = NAN;
+    _sog_ema_ref    = NAN;
 
     // Force connection dot to red; setConnectionIndicator() will update on next update()
     _last_connected = false;
@@ -147,25 +149,38 @@ void CompassUI::updateHeadingLabel(uint16_t deg) {
     lv_label_set_text(ui_LabelHeading, buf);
 }
 
-// Update SOG arc and label; shows "--.-" when fix_ok is false
+// Update SOG arc and label with EMA smoothing; shows "--.-" when fix_ok is false
 void CompassUI::updateSogDisplay(uint16_t sog_knots_x10, bool fix_ok) {
     if (!fix_ok) {
         if (_last_sog_x10 != 0xFFFF) {
             lv_label_set_text(ui_LabelSog, "--.-");
             lv_arc_set_value(ui_ArcSog, 0);
             _last_sog_x10 = 0xFFFF;
+            _sog_ema      = NAN;
+            _sog_ema_ref  = NAN;
         }
         return;
     }
 
-    if (sog_knots_x10 == _last_sog_x10) return;
-    _last_sog_x10 = sog_knots_x10;
+    float raw_knots = sog_knots_x10 / 10.0f;
 
-    uint16_t arc_val = (sog_knots_x10 > SOG_ARC_MAX) ? SOG_ARC_MAX : sog_knots_x10;
+    if (isnan(_sog_ema)) {
+        // First reading: initialize EMA and reference, display without smoothing
+        _sog_ema     = raw_knots;
+        _sog_ema_ref = raw_knots;
+    } else {
+        _sog_ema = SOG_EMA_ALPHA * raw_knots + (1.0f - SOG_EMA_ALPHA) * _sog_ema;
+    }
+
+    uint16_t smoothed_x10 = (uint16_t)(_sog_ema * 10.0f);
+    if (smoothed_x10 == _last_sog_x10) return;
+    _last_sog_x10 = smoothed_x10;
+
+    uint16_t arc_val = (smoothed_x10 > SOG_ARC_MAX) ? SOG_ARC_MAX : smoothed_x10;
     lv_arc_set_value(ui_ArcSog, arc_val);
 
     char buf[8];
-    snprintf(buf, sizeof(buf), "%.1f", sog_knots_x10 / 10.0f);
+    snprintf(buf, sizeof(buf), "%.1f", _sog_ema);
     lv_label_set_text(ui_LabelSog, buf);
 }
 
@@ -189,6 +204,8 @@ void CompassUI::showWaiting() {
     _last_rose_x10  = 0xFFFF;
     _last_label_deg = 0xFFFF;
     _last_sog_x10   = 0xFFFF;
+    _sog_ema        = NAN;
+    _sog_ema_ref    = NAN;
 }
 
 // Save active view to NVS

@@ -59,6 +59,10 @@ private:
     // SOG arc cache (reset on view switch)
     uint16_t _last_sog_x10 = 0xFFFF;
 
+    // SOG EMA state (knots, float; NAN = not yet initialized)
+    float _sog_ema     = NAN;
+    float _sog_ema_ref = NAN;
+
     // Connection indicator state cache
     bool _last_connected = false;
 
@@ -81,6 +85,10 @@ private:
 
     // SOG arc maximum (10 knots × 10)
     static constexpr uint16_t SOG_ARC_MAX = 100;
+
+    // SOG EMA
+    static constexpr float SOG_EMA_ALPHA       = 0.15f;
+    static constexpr float SOG_TREND_THRESHOLD = 0.1f;  // knots
 
     static constexpr uint32_t HEADING_TIMEOUT_MS = 5000;
     static constexpr uint32_t GNSS_TIMEOUT_MS    = 5000;
