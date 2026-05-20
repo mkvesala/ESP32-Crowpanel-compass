@@ -13,6 +13,7 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 - GNSS position, speed over ground (SOG) and course over ground (COG) from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway)
+- Engine exhaust temperature and fuel tank level from [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway)
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
@@ -20,7 +21,8 @@ Different screens selectable by rotating the knob:
 - **Compass screen** — rotating compass rose with HEADING (HDG T), COG and SOG views
 - **Attitude screen** — artificial horizon, pitch and roll values, pitch and roll min/max values
 - **Weather screen** — toggle between temperature, pressure and humidity views
-- **Battery screen** - toggle between house voltage, house current, house SoC and starter voltage views
+- **Battery screen** — toggle between house voltage, house current, house SoC and starter voltage views
+- **Engine screen** — toggle between exhaust temperature and fuel tank views
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
 
 Developed and tested on:
@@ -37,6 +39,7 @@ Integrated via ESP-NOW with:
 - [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) (v1.0.0) GNSS sender
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
 - [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
+- [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) engine and tank data sender
 
 ## Purpose of the project
 
@@ -50,7 +53,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.0.0 | Latest release. Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.1.0 | Latest release. EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.0.0 | Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
 | v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.0.0 | Library upgrade: ESP32 board package 2.0.14 → 3.3.7, LVGL 8.3.6 → 9.5.0, Arduino GFX Library 1.3.1 → 1.6.5. This is a compatibility change - v2.1.0 does not compile on the new libraries. See [CHANGELOG](CHANGELOG.md) for details. |
@@ -65,11 +69,11 @@ Class diagram including the companion projects:
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
 **`CrowPanelApplication`:**
-- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
+- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `EngineUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
-- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta` and `BatteryDelta` broadcasts via ESP-NOW (receive-only)
+- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta`, `BatteryDelta`, `HALMETEngineDelta` and `HALMETTankDelta` broadcasts via ESP-NOW (receive-only)
 - Owned by: `CrowPanelApplication`
 
 **`RotaryEncoder`:**
@@ -102,7 +106,13 @@ Class diagram including the companion projects:
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the battery screen based on battery data.
-- Owned by: `CrowPanelApplication`  
+- Owned by: `CrowPanelApplication`
+
+**`EngineUI`:**
+- Realizes: `IScreenUI`
+- Uses: `ESPNowReceiver`
+- Responsible for: updating LVGL UI objects on the engine screen based on engine exhaust and fuel tank data; 2-view cycle (EXHAUST / FUEL0)
+- Owned by: `CrowPanelApplication`
 
 **`BrightnessUI`:**
 - Realizes: `IScreenUI`
@@ -179,6 +189,25 @@ Common features:
 - Min and max values are runtime only, not persistent in NVS
 - Trend indicators based on EMA. Alpha (0.05) and threshold (0.001) can be adjusted via constants for each view separately
 
+### Engine screen
+
+- Pressing the knob button toggles between EXHAUST → FUEL0 → EXHAUST view
+- Last view stored in NVS `onLeave()` (default: EXHAUST)
+- Engine and fuel tank connections tracked independently; timeout: 6 seconds
+
+**EXHAUST view:**
+- Exhaust temperature in °C (converted from Kelvin)
+- Session min and max temperatures (runtime only, not persistent in NVS)
+- Trend indicator (↑/↓) based on EMA — hidden until stable or until second reading arrives
+
+**FUEL0 view:**
+- Fuel arc gauge: arc range 0–100 % of tank, label shows calculated litres (tank capacity: 400 L)
+- Dynamic arc color based on fuel level:
+  - Green: ≥ 25 %
+  - Yellow: 10–25 %
+  - Red: < 10 %
+- On disconnect: labels show `"---"`
+
 ### Brightness screen
 
 <img src="docs/brightnessscreen.png" height="240"> <img src="docs/brightnessui.jpeg" height="240">
@@ -199,12 +228,13 @@ Common features:
 | Compass | Cycle HEADING/COG/SOG view | Switch screen | — |
 | Attitude | Toggle ATTITUDE/MINMAX view | Switch screen | — |
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
-| Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | - |
+| Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | — |
+| Engine | Toggle EXHAUST/FUEL0 view | Switch screen | — |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
-- **Clockwise:** COMPASS → ATTITUDE → WEATHER → BATTERY → ... → BRIGHTNESS → COMPASS
-- **Counter-clockwise:** COMPASS → BRIGHTNESS → ... → BATTERY → WEATHER → ATTITUDE → COMPASS
+- **Clockwise:** COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → BRIGHTNESS → COMPASS
+- **Counter-clockwise:** COMPASS → BRIGHTNESS → ENGINE → BATTERY → WEATHER → ATTITUDE → COMPASS
 
 Screen carousel is scalable, new screens may be added.
 
@@ -236,10 +266,12 @@ Sample types:
 
 ```cpp
 enum class ESPNowMsgType : uint8_t {
-   HEADING_DELTA   = 1,      // CMPS14-ESP32-SignalK-gateway
-   BATTERY_DELTA   = 2,      // VEDirect based sender
-   WEATHER_DELTA   = 3,      // BME280-ESP32-SignalK-gateway
-   GNSS_DELTA      = 4,      // UBLOX-ESP32-SignalK-gateway
+   HEADING_DELTA        = 1,  // CMPS14-ESP32-SignalK-gateway
+   BATTERY_DELTA        = 2,  // VEDirect-ESP32-SignalK-gateway
+   WEATHER_DELTA        = 3,  // BME280-ESP32-SignalK-gateway
+   GNSS_DELTA           = 4,  // UBLOX-ESP32-SignalK-gateway
+   HALMET_ENGINE_DELTA  = 5,  // HALMET-ESP32-SignalK-gateway
+   HALMET_TANK_DELTA    = 6,  // HALMET-ESP32-SignalK-gateway
 };
 ```
 Sample payloads:
@@ -277,6 +309,14 @@ struct GnssDelta {
    uint8_t fix_ok;       // getGnssFixOk() ? 1 : 0
    uint8_t reserved;
 };
+
+struct HALMETEngineDelta {
+   float exhaust_temp_k;    // propulsion.0.exhaustTemperature [K]
+};
+
+struct HALMETTankDelta {
+   float fuel_level_ratio;  // tanks.fuel.0.currentLevel [0.0..1.0]
+};
 ```
 
 **Receives** at ~20 Hz, in radians (sent by CMPS14-ESP32-SignalK-gateway), as broadcast:
@@ -301,11 +341,19 @@ struct GnssDelta {
   - 28 B packet, 8 B header + 20 B payload
   - Payload: `BatteryDelta` struct (`house_voltage`, `house_current`, `house_power`, `house_soc`, `start_voltage`)
 
+**Receives** at ~1 Hz (sent by HALMET-ESP32-SignalK-gateway), as broadcast:
+- `ESPNowPacket<HALMETEngineDelta>`:
+  - 12 B packet, 8 B header + 4 B payload
+  - Payload: `HALMETEngineDelta` struct (`exhaust_temp_k` — converted to °C in `EngineUI`)
+- `ESPNowPacket<HALMETTankDelta>`:
+  - 12 B packet, 8 B header + 4 B payload
+  - Payload: `HALMETTankDelta` struct (`fuel_level_ratio` — 0.0 to 1.0, scaled to litres in `EngineUI`)
+
 **Channel:** ESP-NOW evices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
 **Deadband:** Compass sender has 0.05° deadband — no packet sent if heading and attitude change less than 0.05°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0, UBLOX-ESP32-SignalK-gateway v1.0.0 and BME280-ESP32-SignalK-gateway v1.0.0 or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.0 and HALMET-ESP32-SignalK-gateway or newer.
 
 ## Project structure
 
@@ -313,13 +361,14 @@ struct GnssDelta {
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta` |
+| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`): `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta`, `HALMETEngineDelta`, `HALMETTankDelta` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
 | `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive (receive-only) |
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |
 | `AttitudeUI.h/.cpp` | Class `AttitudeUI` — attitude screen adapter, realizes `IScreenUI` |
 | `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
-| `BatteryUI.h/cpp` | Class `BatteryUI` - battery screen adapter, realizes `IScreenUI` |
+| `BatteryUI.h/cpp` | Class `BatteryUI` — battery screen adapter, realizes `IScreenUI` |
+| `EngineUI.h/.cpp` | Class `EngineUI` — engine screen adapter, realizes `IScreenUI` |
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
@@ -330,6 +379,7 @@ struct GnssDelta {
 | `ui_AttitudeScreen.h/.c` | SquareLine Studio generated |
 | `ui_WeatherScreen.h/.c` | SquareLine Studio generated | 
 | `ui_BatteryScreen.h/.c` | SquareLine Studio generated |
+| `ui_EngineScreen.h/.c` | SquareLine Studio generated |
 | `ui_BrightnessScreen.h/.c` | SquareLine Studio generated |
 | `ui_helpers.h/.c` | SquareLine Studio generated |
 | `ui_font_*.c` | Custom fonts |
@@ -350,7 +400,8 @@ struct GnssDelta {
 4. [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) as ESP-NOW sender
 5. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
 6. [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) as ESP-NOW sender
-6. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
+7. [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) as ESP-NOW sender
+8. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
 
@@ -369,6 +420,7 @@ struct GnssDelta {
 6. UBLOX-ESP32-SignalK-gateway v1.0.0
 7. BME280-ESP32-SignalK-gateway v1.0.1
 8. VEDirect-ESP32-SignalK-gateway v1.0.0
+9. HALMET-ESP32-SignalK-gateway
 
 ## Installation
 
@@ -431,7 +483,7 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) and [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) and [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 

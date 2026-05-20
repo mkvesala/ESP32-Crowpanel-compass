@@ -4,6 +4,113 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.1.0] - 2026-05-12
+
+### Added
+
+#### EngineScreen — new screen for HALMET engine and tank data
+
+New `EngineUI` class realizes `IScreenUI`. Receives `HALMETEngineDelta` (msg type 5) and `HALMETTankDelta` (msg type 6) packets from HALMET-ESP32-SignalK-gateway.
+
+**View cycle:** `EXHAUST` → `FUEL0` → `EXHAUST` (knob button press cycles, NVS persisted, namespace `"engine"`, key `"view"`)
+
+---
+
+##### EXHAUST view
+
+Shows exhaust temperature in °C converted from Kelvin (`exhaust_temp_k − 273.15`). Session min/max tracked runtime-only (NAN sentinel, resets on reboot, not persisted to NVS).
+
+EMA trend indicator (↑/↓): `EXHAUST_EMA_ALPHA = 0.05`, neutral zone threshold `EXHAUST_TREND_THRESHOLD = 0.001`. Hidden until the second data point arrives and in the neutral zone. EMA reference drifts toward the current EMA when in the neutral zone.
+
+On disconnect: main value label shows `"---"`, trend indicator hidden. Min/max labels preserved if a reading has previously arrived.
+
+---
+
+##### FUEL0 view
+
+Arc gauge (`ui_ArcFuel`, 180°–360° sweep, arc value 0–100) maps directly to fuel ratio 0.0–1.0. Tank capacity `TANK_CAPACITY_L = 400.0 L`. Litres label: `(int)round(ratio × 400)`.
+
+Dynamic arc color based on fuel ratio:
+
+| Ratio | Color | Hex |
+|-------|-------|-----|
+| ≥ 25% | Green | `0x28C850` |
+| 10–25% | Yellow | `0xE6B400` |
+| < 10% | Red | `0xDC2828` |
+
+Arc value and color render-cached (`_last_arc_value`, `_last_arc_color`) — no redundant `lv_arc_set_value()` or `lv_obj_set_style_arc_color()` calls. Color cache sentinel `0xFFFFFFFF` forces color set on first update.
+
+On disconnect: litres label shows `"---"`.
+
+---
+
+**Connection tracking:** Engine and tank connections tracked independently via `_last_engine_millis` and `_last_tank_millis`. `CONNECTION_TIMEOUT_MS = 6000`. Engine data and tank data can disconnect and reconnect independently without affecting each other's display state.
+
+Registered as screen index 4: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → **ENGINE(4)** → BRIGHTNESS(5)
+
+---
+
+#### `espnow_protocol.h` — HALMET message types and payload structs
+
+`ESPNowMsgType` enum extended:
+
+```cpp
+HALMET_ENGINE_DELTA = 5,
+HALMET_TANK_DELTA   = 6,
+```
+
+New payload structs (sent by HALMET-ESP32-SignalK-gateway):
+
+```cpp
+struct HALMETEngineDelta {
+    float exhaust_temp_k;    // propulsion.0.exhaustTemperature [K]
+};
+
+struct HALMETTankDelta {
+    float fuel_level_ratio;  // tanks.fuel.0.currentLevel [0.0..1.0]
+};
+```
+
+Wire packets: `ESPNowHeader` (8 B) + payload (4 B each) = 12 B total per packet.
+
+---
+
+#### `ESPNowReceiver` — HALMET dispatch added
+
+`onDataRecv()` switch extended with `HALMET_ENGINE_DELTA` and `HALMET_TANK_DELTA` cases — store payloads directly into static members (no conversion needed, raw floats stored as-is), set flags.
+
+Added:
+- `hasNewEngineData() const` — thread-safe read of `s_has_new_engine`
+- `getEngineData()` — thread-safe read of `s_latest_engine`, clears `s_has_new_engine`
+- `hasNewTankData() const` — thread-safe read of `s_has_new_tank`
+- `getTankData()` — thread-safe read of `s_latest_tank`, clears `s_has_new_tank`
+- `s_latest_engine` / `s_has_new_engine` / `s_latest_tank` / `s_has_new_tank` `inline static` members
+
+NaN guard for both payloads is in `EngineUI::update()` (`if (!isnan(eng.exhaust_temp_k))`, `if (!isnan(tank.fuel_level_ratio))`), consistent with the pattern used in `BatteryUI` and `WeatherUI`.
+
+---
+
+#### `CrowPanelApplication` — `EngineUI` added to carousel
+
+- `_engineUI(ESPNowReceiver&)` member added between `_batteryUI` and `_brightnessUI` (controls construction order)
+- `begin()`: calls `_engineUI.begin()` and `_screenMgr.addScreen(&_engineUI)` between battery and brightness
+- Screen carousel updated: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → ENGINE(4) → BRIGHTNESS(5)
+
+---
+
+#### EngineScreen SquareLine Studio design
+
+New screen exported from SquareLine Studio 1.6.0:
+
+- `ui_PanelExhaustTemp` — 480×480 container for EXHAUST view: `ui_ImageExhaustTem` (icon), `ui_LabelExhaustTemp` (96pt bold, centered), `ui_LabelTrendExhaustTemp` (36pt, y+80), `ui_LabelMaxExhaustTemp` (36pt, y+120), `ui_LabelMinExhaustTemp` (36pt, y+160)
+- `ui_ContainerFuelGauge` — 484×484 container for FUEL0 view: `ui_ArcFuel` (480×480, 180°–360° sweep, 25px arc width), `ui_LabelLitres` (96pt bold, y+5), `ui_LabelLitresTitle` ("L", 36pt, y+70), fraction labels (0 / ¼ / ½ / ¾ / F), five static tick-mark panels (Panel12, Panel34, Panel14, PanelEmpty, PanelFull), `ui_ImageFuel` (fuel icon, scale 192)
+
+A PNG fuel gauge background image that was present in the initial SquareLine design was removed and replaced by programmatic panels, reducing flash usage.
+
+Generated files: `ui_EngineScreen.h`, `ui_EngineScreen.c`
+
+---
+
 ## [v4.0.0] - 2026-05-02
 
 ### Removed
@@ -939,6 +1046,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.1.0
 [v4.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.0.0
 [v3.1.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.1
 [v3.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.0
