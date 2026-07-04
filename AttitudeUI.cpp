@@ -86,12 +86,6 @@ void AttitudeUI::begin() {
     lv_obj_set_style_image_recolor(_img_min_roll, lv_color_hex(0xFF0000), 0);
     lv_obj_set_style_image_recolor_opa(_img_min_roll, 255, 0);
 
-    // Reset session min/max (runtime only, not persisted)
-    _min_pitch_x10 = SENTINEL;
-    _max_pitch_x10 = SENTINEL;
-    _min_roll_x10  = SENTINEL;
-    _max_roll_x10  = SENTINEL;
-
     // Initialize min/max labels to "---"
     lv_label_set_text(ui_LabelMaxPitch, "---");
     lv_label_set_text(ui_LabelMinPitch, "---");
@@ -136,7 +130,6 @@ void AttitudeUI::update() {
             this->updateHorizon(data.pitch_x10, data.roll_x10);
             this->updatePitchLabel(data.getPitchDeg());
             this->updateRollLabel(data.getRollDeg());
-            this->updateMinMax(data.pitch_x10, data.roll_x10);
             this->updateMinMaxPanels();
             this->updateMinMaxLabels();
         }
@@ -241,73 +234,60 @@ void AttitudeUI::updateRollLabel(int16_t roll_deg) {
     lv_label_set_text(ui_LabelRoll, buf);
 }
 
-// Update session min/max tracking
-void AttitudeUI::updateMinMax(int16_t pitch_x10, int16_t roll_x10) {
-    if (_max_pitch_x10 == SENTINEL || pitch_x10 > _max_pitch_x10) _max_pitch_x10 = pitch_x10;
-    if (_min_pitch_x10 == SENTINEL || pitch_x10 < _min_pitch_x10) _min_pitch_x10 = pitch_x10;
-    if (_max_roll_x10  == SENTINEL || roll_x10  > _max_roll_x10)  _max_roll_x10  = roll_x10;
-    if (_min_roll_x10  == SENTINEL || roll_x10  < _min_roll_x10)  _min_roll_x10  = roll_x10;
-}
-
 // Update min/max panel positions and rotations in ContainerMinMax.
 // Visual positions are clamped to ±MINMAX_LINE_CLAMP_X10 (±30.0°) for readability.
 // Labels in updateMinMaxLabels() always show the true session values (no clamping).
 void AttitudeUI::updateMinMaxPanels() {
+    const int16_t max_pitch = ESPNowReceiver::getMaxPitch_x10();
+    const int16_t min_pitch = ESPNowReceiver::getMinPitch_x10();
+    const int16_t max_roll  = ESPNowReceiver::getMaxRoll_x10();
+    const int16_t min_roll  = ESPNowReceiver::getMinRoll_x10();
+    const int16_t SEN       = ESPNowReceiver::MINMAX_SENTINEL;
+
     // PanelMaxPitch (yellow): highest pitch = bow highest up → horizon lowest on screen
     // Same formula as live ImageHorizon: positive pitch_x10 → positive y_offset → panel moves down
-    if (_max_pitch_x10 != SENTINEL) {
-        int16_t clamped = constrain(_max_pitch_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+    if (max_pitch != SEN) {
+        int16_t clamped = constrain(max_pitch, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
         lv_obj_set_y(ui_PanelMaxPitch, (clamped * PITCH_SCALE) / 10);
     }
 
     // PanelMinPitch (blue): lowest pitch = bow lowest down → horizon highest on screen
-    if (_min_pitch_x10 != SENTINEL) {
-        int16_t clamped = constrain(_min_pitch_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+    if (min_pitch != SEN) {
+        int16_t clamped = constrain(min_pitch, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
         lv_obj_set_y(ui_PanelMinPitch, (clamped * PITCH_SCALE) / 10);
     }
 
     // Roll image lines: -roll_x10 so ship roll right (positive) tilts line left (negative LVGL angle).
-    if (_max_roll_x10 != SENTINEL) {
-        int16_t clamped = constrain(_max_roll_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+    if (max_roll != SEN) {
+        int16_t clamped = constrain(max_roll, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
         lv_image_set_rotation(_img_max_roll, -clamped);
     }
 
-    if (_min_roll_x10 != SENTINEL) {
-        int16_t clamped = constrain(_min_roll_x10, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
+    if (min_roll != SEN) {
+        int16_t clamped = constrain(min_roll, -MINMAX_LINE_CLAMP_X10, MINMAX_LINE_CLAMP_X10);
         lv_image_set_rotation(_img_min_roll, -clamped);
     }
 }
 
 // Update min/max numeric labels in ContainerMinMax
 void AttitudeUI::updateMinMaxLabels() {
+    const int16_t max_pitch = ESPNowReceiver::getMaxPitch_x10();
+    const int16_t min_pitch = ESPNowReceiver::getMinPitch_x10();
+    const int16_t max_roll  = ESPNowReceiver::getMaxRoll_x10();
+    const int16_t min_roll  = ESPNowReceiver::getMinRoll_x10();
+    const int16_t SEN       = ESPNowReceiver::MINMAX_SENTINEL;
     char buf[16];
 
-    if (_max_pitch_x10 == SENTINEL) {
-        lv_label_set_text(ui_LabelMaxPitch, "---");
-    } else {
-        snprintf(buf, sizeof(buf), "Max %+d°", _max_pitch_x10 / 10);
-        lv_label_set_text(ui_LabelMaxPitch, buf);
-    }
+    if (max_pitch == SEN) lv_label_set_text(ui_LabelMaxPitch, "---");
+    else { snprintf(buf, sizeof(buf), "Max %+d°", max_pitch / 10); lv_label_set_text(ui_LabelMaxPitch, buf); }
 
-    if (_min_pitch_x10 == SENTINEL) {
-        lv_label_set_text(ui_LabelMinPitch, "---");
-    } else {
-        snprintf(buf, sizeof(buf), "Min %+d°", _min_pitch_x10 / 10);
-        lv_label_set_text(ui_LabelMinPitch, buf);
-    }
+    if (min_pitch == SEN) lv_label_set_text(ui_LabelMinPitch, "---");
+    else { snprintf(buf, sizeof(buf), "Min %+d°", min_pitch / 10); lv_label_set_text(ui_LabelMinPitch, buf); }
 
-    if (_max_roll_x10 == SENTINEL) {
-        lv_label_set_text(ui_LabelMaxRoll, "---");
-    } else {
-        snprintf(buf, sizeof(buf), "Max %+d°", _max_roll_x10 / 10);
-        lv_label_set_text(ui_LabelMaxRoll, buf);
-    }
+    if (max_roll == SEN) lv_label_set_text(ui_LabelMaxRoll, "---");
+    else { snprintf(buf, sizeof(buf), "Max %+d°", max_roll / 10); lv_label_set_text(ui_LabelMaxRoll, buf); }
 
-    if (_min_roll_x10 == SENTINEL) {
-        lv_label_set_text(ui_LabelMinRoll, "---");
-    } else {
-        snprintf(buf, sizeof(buf), "Min %+d°", _min_roll_x10 / 10);
-        lv_label_set_text(ui_LabelMinRoll, buf);
-    }
+    if (min_roll == SEN) lv_label_set_text(ui_LabelMinRoll, "---");
+    else { snprintf(buf, sizeof(buf), "Min %+d°", min_roll / 10); lv_label_set_text(ui_LabelMinRoll, buf); }
 }
 

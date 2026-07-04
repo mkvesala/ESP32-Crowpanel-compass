@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [v4.1.0] - 2026-05-12
 
+### Fixed
+
+#### `AttitudeUI` — MINMAX view shows only values from when AttitudeUI was the active screen
+
+`updateMinMax()` was called inside `AttitudeUI::update()`, which only runs for the active screen. When the user navigated away, min/max tracking paused. Values accumulated only while AttitudeUI was visible, not across the full runtime.
+
+Additionally, `getData()` clears the `s_has_new_data` flag — so even a hypothetical background call from AttitudeUI would silently lose packets already consumed by CompassUI (which shares the same `HeadingDelta` message type).
+
+**Fix:** Min/max tracking moved into `ESPNowReceiver::onDataRecv()` inside the `HEADING_DELTA` case, under the same spinlock as the existing data store. Every received packet updates the lifetime min/max regardless of which screen is active.
+
+`AttitudeUI`:
+- Removed private members `_min_pitch_x10`, `_max_pitch_x10`, `_min_roll_x10`, `_max_roll_x10` and private method `updateMinMax()`
+- `updateMinMaxPanels()` and `updateMinMaxLabels()` now read from `ESPNowReceiver::getMinPitch_x10()`, `getMaxPitch_x10()`, `getMinRoll_x10()`, `getMaxRoll_x10()`
+
+`ESPNowReceiver` — new public static API:
+- `getMinPitch_x10()` / `getMaxPitch_x10()` / `getMinRoll_x10()` / `getMaxRoll_x10()` — thread-safe reads of lifetime extremes (×10 integer format, same scale as `HeadingData`)
+- `hasMinMaxData()` — returns `true` once at least one packet has been received
+- `resetMinMax()` — resets all four values to sentinel (`0x7FFF`); runtime-only, not persisted to NVS
+
+New private static members: `s_min_pitch_x10`, `s_max_pitch_x10`, `s_min_roll_x10`, `s_max_roll_x10` (all initialized to `MINMAX_SENTINEL = 0x7FFF`).
+
+---
+
 ### Added
 
 #### EngineScreen — new screen for HALMET engine and tank data

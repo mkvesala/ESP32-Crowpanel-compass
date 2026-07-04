@@ -53,7 +53,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.1.0 | Latest release. EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.1.0 | Latest release. EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. Bug fix: AttitudeScreen MINMAX view now reflects pitch and roll extremes recorded across the full runtime, not only while the Attitude screen was active. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.0.0 | Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
 | v3.1.0 | AttitudeScreen redesigned with separate views for real-time attitude, min/max tracking and for performing attitude leveling (triggered by count-down, canceled by button press/rotate). See [CHANGELOG](CHANGELOG.md) for details. |
@@ -147,7 +147,7 @@ Common features:
 
 <img src="docs/attitudescreen1.png" height="240"> <img src="docs/attitudescreen2.png" height="240"> <img src="docs/attitudeui.jpeg" height="240"> <img src="docs/attitudeui2.jpeg" height="240">
 
-- Pitch and roll min/max values recorded runtime, no persistent storage in NVS
+- Pitch and roll min/max values tracked across the full runtime (all screens), no persistent storage in NVS
 - Pressing the knob button toggles between ATTITUDE ↔ MINMAX view
 - Returning to the screen always loads ATTITUDE view
 - ATTITUDE view:

@@ -69,12 +69,6 @@ private:
     int16_t _last_roll_deg   = SENTINEL;
     bool _last_connected  = false;
 
-    // Session min/max (SENTINEL = no data yet)
-    int16_t _min_pitch_x10 = SENTINEL;
-    int16_t _max_pitch_x10 = SENTINEL;
-    int16_t _min_roll_x10  = SENTINEL;
-    int16_t _max_roll_x10  = SENTINEL;
-
     // Programmatically created image lines (not part of SquareLine Studio export)
     // _img_horizon: live artificial horizon (child of ui_ContainerHorizonGroup)
     // _img_max_roll / _img_min_roll: MINMAX roll lines (children of _container_roll_lines)
@@ -92,8 +86,7 @@ private:
     void updatePitchLabel(int16_t pitch_deg);
     void updateRollLabel(int16_t roll_deg);
 
-    // Min/max tracking and display
-    void updateMinMax(int16_t pitch_x10, int16_t roll_x10);
+    // Min/max display
     void updateMinMaxPanels();
     void updateMinMaxLabels();
 
