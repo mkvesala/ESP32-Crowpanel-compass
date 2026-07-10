@@ -49,6 +49,9 @@ public:
     static bool    hasMinMaxData();
     static void    resetMinMax();
 
+    // Sentinel for unset min/max (out of range for pitch ±900 and roll ±1800 ×10)
+    static constexpr int16_t MINMAX_SENTINEL = 0x7FFF;
+
 private:
 
     // Static callback for ESP-NOW
@@ -80,9 +83,6 @@ private:
     // Static variables for HALMET tank data handling
     inline static HALMETTankDelta s_latest_tank = {};
     inline static volatile bool   s_has_new_tank = false;
-
-    // Sentinel for unset min/max (out of range for pitch ±900 and roll ±1800 ×10)
-    static constexpr int16_t MINMAX_SENTINEL = 0x7FFF;
 
     // Lifetime min/max pitch and roll — updated in onDataRecv() for every packet
     inline static int16_t s_min_pitch_x10 = MINMAX_SENTINEL;
