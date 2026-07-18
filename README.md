@@ -485,6 +485,10 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Pressure icons created by Muhammad Ali - Flaticon](https://www.flaticon.com/free-icons/pressure)
 
+[Exhaust pipe icons created by Iconiyo - Flaticon](https://www.flaticon.com/free-icons/exhaust-pipe)
+
+[Gas icons created by Pixel perfect - Flaticon](https://www.flaticon.com/free-icons/gas)
+
 This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) and [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
