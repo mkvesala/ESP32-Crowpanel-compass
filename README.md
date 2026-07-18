@@ -39,7 +39,7 @@ Integrated via ESP-NOW with:
 - [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) (v1.0.0) GNSS sender
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
 - [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
-- [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) engine and tank data sender
+- [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) (v1.1.0) engine and tank data sender
 
 ## Purpose of the project
 
@@ -422,7 +422,7 @@ struct HALMETTankDelta {
 6. UBLOX-ESP32-SignalK-gateway v1.0.0
 7. BME280-ESP32-SignalK-gateway v1.0.1
 8. VEDirect-ESP32-SignalK-gateway v1.0.0
-9. HALMET-ESP32-SignalK-gateway
+9. HALMET-ESP32-SignalK-gateway v1.1.0
 
 ## Installation
 
