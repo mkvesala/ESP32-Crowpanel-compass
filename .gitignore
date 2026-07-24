@@ -1,5 +1,6 @@
 # Secrets - WiFi credentials etc.
 secrets.h
+*.docx
 
 # Claude
 .claude/
