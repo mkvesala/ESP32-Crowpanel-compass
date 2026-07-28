@@ -36,6 +36,22 @@ extern lv_obj_t *ui_Panel34;
 extern lv_obj_t *ui_Panel14;
 extern lv_obj_t *ui_PanelEmpty;
 extern lv_obj_t *ui_PanelFull;
+extern lv_obj_t *ui_ContainerWaterGauge;
+extern lv_obj_t *ui_PanelWtrLitresBg;
+extern lv_obj_t *ui_LabelWtrLitres;
+extern lv_obj_t *ui_LabelWtrLitresTitle;
+extern lv_obj_t *ui_LabelWtrEmpty;
+extern lv_obj_t *ui_LabelWtr14;
+extern lv_obj_t *ui_LabelWtr12;
+extern lv_obj_t *ui_LabelWtr34;
+extern lv_obj_t *ui_LabelWtrFull;
+extern lv_obj_t *ui_ImageWater;
+extern lv_obj_t *ui_ArcWater;
+extern lv_obj_t *ui_PanelWtr12;
+extern lv_obj_t *ui_PanelWtr34;
+extern lv_obj_t *ui_PanelWtr14;
+extern lv_obj_t *ui_PanelWtrEmpty;
+extern lv_obj_t *ui_PanelWtrFull;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

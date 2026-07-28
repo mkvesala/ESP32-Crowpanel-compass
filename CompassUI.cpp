@@ -54,11 +54,14 @@ void CompassUI::update() {
             _last_gnss_fix = gnss.hasFix();
 
             if (_active_view == CompassView::COG) {
-                if (_last_gnss_fix) {
+                // COG needs a fix AND a defined course. At anchor (fix but stationary,
+                // COG undefined) show dashes, not a false 000° — fix_ok no longer folds in
+                // COG validity, so gate the course view on hasCog() separately.
+                if (_last_gnss_fix && gnss.hasCog()) {
                     this->setCompassRotation(gnss.cog_true_x10);
                     this->updateHeadingLabel(gnss.getCogDeg());
                 } else {
-                    // Connected but no fix: reset to dashes
+                    // No fix, or stationary (no course): reset to dashes
                     lv_label_set_text(ui_LabelHeading, "---°");
                     _last_rose_x10  = 0xFFFF;
                     _last_label_deg = 0xFFFF;

@@ -40,6 +40,7 @@ LV_IMG_DECLARE( ui_img_humidity2_png);   // assets/humidity2.png
 LV_IMG_DECLARE( ui_img_1299205280);   // assets/car-battery-2.png
 LV_IMG_DECLARE( ui_img_454395385);   // assets/exhaust-pipe-2.png
 LV_IMG_DECLARE( ui_img_1496861887);   // assets/gas-pump.png
+LV_IMG_DECLARE( ui_img_916444405);   // assets/gallon-bottle.png
 
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);
