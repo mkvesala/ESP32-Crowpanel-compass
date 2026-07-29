@@ -175,6 +175,17 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             break;
         }
 
+        case ESPNowMsgType::HALMET_WATER_DELTA: {
+            if (hdr.payload_len != sizeof(HALMETWaterDelta)) return;
+            HALMETWaterDelta water;
+            memcpy(&water, payload, sizeof(HALMETWaterDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_water  = water;
+            s_has_new_water = true;
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
@@ -272,6 +283,25 @@ HALMETTankDelta ESPNowReceiver::getTankData() {
     portENTER_CRITICAL(&s_spinlock);
     data = s_latest_tank;
     s_has_new_tank = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns true if new HALMET fresh water tank data packet available, otherwise false
+bool ESPNowReceiver::hasNewWaterData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_water;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest HALMET fresh water tank data packet received via ESP-NOW
+HALMETWaterDelta ESPNowReceiver::getWaterData() {
+    HALMETWaterDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_water;
+    s_has_new_water = false;
     portEXIT_CRITICAL(&s_spinlock);
     return data;
 }

@@ -13,7 +13,8 @@ using namespace ESPNow;
 // - Class ESPNowReceiver - responsible for ESP-NOW inbound/outbound communication
 //
 // - Provides public API to manage incoming instrument data (receive-only)
-// - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), BATTERY_DELTA, GNSS_DELTA
+// - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), BATTERY_DELTA,
+//   GNSS_DELTA, HALMET_ENGINE_DELTA (exhaust temp), HALMET_TANK_DELTA (fuel), HALMET_WATER_DELTA (fresh water)
 // - Init: _receiver.begin(channel)
 // - Owned by: CrowPanelApplication
 
@@ -39,6 +40,8 @@ public:
     HALMETEngineDelta getEngineData();
     bool hasNewTankData() const;
     HALMETTankDelta getTankData();
+    bool hasNewWaterData() const;
+    HALMETWaterDelta getWaterData();
 
     float getPacketsPerSecond() const { return _packets_per_second; }
 
@@ -83,6 +86,10 @@ private:
     // Static variables for HALMET tank data handling
     inline static HALMETTankDelta s_latest_tank = {};
     inline static volatile bool   s_has_new_tank = false;
+
+    // Static variables for HALMET fresh water tank data handling
+    inline static HALMETWaterDelta s_latest_water = {};
+    inline static volatile bool    s_has_new_water = false;
 
     // Lifetime min/max pitch and roll — updated in onDataRecv() for every packet
     inline static int16_t s_min_pitch_x10 = MINMAX_SENTINEL;

@@ -27,7 +27,7 @@ void EngineUI::begin() {
     _initialized = true;
 }
 
-// Realizes update(): fetch engine and tank data from receiver and update UI
+// Realizes update(): fetch engine, fuel tank and fresh water tank data from receiver and update UI
 void EngineUI::update() {
     if (!_initialized) return;
 
@@ -47,8 +47,17 @@ void EngineUI::update() {
         }
     }
 
+    if (_receiver.hasNewWaterData()) {
+        HALMETWaterDelta water = _receiver.getWaterData();
+        if (!isnan(water.water_level_ratio)) {
+            _last_water_millis = millis();
+            updateWaterLevel(water.water_level_ratio);
+        }
+    }
+
     bool engine_connected = (_last_engine_millis > 0 && (millis() - _last_engine_millis) < CONNECTION_TIMEOUT_MS);
     bool tank_connected   = (_last_tank_millis   > 0 && (millis() - _last_tank_millis)   < CONNECTION_TIMEOUT_MS);
+    bool water_connected  = (_last_water_millis  > 0 && (millis() - _last_water_millis)  < CONNECTION_TIMEOUT_MS);
 
     if (!engine_connected && _last_engine_connected) {
         lv_label_set_text(ui_LabelExhaustTemp, "---");
@@ -64,6 +73,11 @@ void EngineUI::update() {
         lv_label_set_text(ui_LabelLitres, "---");
     }
     _last_tank_connected = tank_connected;
+
+    if (!water_connected && _last_water_connected) {
+        lv_label_set_text(ui_LabelWtrLitres, "---");
+    }
+    _last_water_connected = water_connected;
 }
 
 // Realizes onButtonPress(): cycle visible view
@@ -80,14 +94,17 @@ void EngineUI::onLeave() {
 
 // === P R I V A T E ===
 
-// Show one view, hide the other
+// Show one view, hide the others
 void EngineUI::showView(EngineView view) {
     _active_view = view;
-    _last_arc_value = -1;
-    _last_arc_color = 0xFFFFFFFF;
+    _last_fuel_arc_value  = -1;
+    _last_fuel_arc_color  = 0xFFFFFFFF;
+    _last_water_arc_value = -1;
+    _last_water_arc_color = 0xFFFFFFFF;
 
-    lv_obj_add_flag(ui_PanelExhaustTemp,   LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(ui_ContainerFuelGauge, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_PanelExhaustTemp,    LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_ContainerFuelGauge,  LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_ContainerWaterGauge, LV_OBJ_FLAG_HIDDEN);
 
     switch (view) {
         case EngineView::EXHAUST:
@@ -95,6 +112,9 @@ void EngineUI::showView(EngineView view) {
             break;
         case EngineView::FUEL0:
             lv_obj_clear_flag(ui_ContainerFuelGauge, LV_OBJ_FLAG_HIDDEN);
+            break;
+        case EngineView::FRESHWATER:
+            lv_obj_clear_flag(ui_ContainerWaterGauge, LV_OBJ_FLAG_HIDDEN);
             break;
         default:
             break;
@@ -107,6 +127,7 @@ void EngineUI::showWaiting() {
 
     lv_label_set_text(ui_LabelExhaustTemp, "---");
     lv_label_set_text(ui_LabelLitres,      "---");
+    lv_label_set_text(ui_LabelWtrLitres,   "---");
     lv_obj_add_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
 
     if (isnan(_exhaust_min_c)) {
@@ -155,29 +176,44 @@ void EngineUI::updateExhaustTemp(float temp_c) {
     }
 }
 
-// Update fuel gauge arc and litres label
-void EngineUI::updateFuelLevel(float ratio) {
+// Update one tank gauge: arc value, arc color and litres label.
+// The arc uses the LVGL default range 0-100, so the level ratio maps straight to percent.
+// The visible "needle" is the arc KNOB part, so indicator and knob are colored together.
+void EngineUI::updateGauge(lv_obj_t* arc, lv_obj_t* label, float ratio, float capacity_l,
+                           int& last_value, uint32_t& last_color) {
     if (ratio < 0.0f) ratio = 0.0f;
     if (ratio > 1.0f) ratio = 1.0f;
 
     int arc_val = (int)roundf(ratio * 100.0f);
-    if (arc_val != _last_arc_value) {
-        lv_arc_set_value(ui_ArcFuel, arc_val);
-        _last_arc_value = arc_val;
+    if (arc_val != last_value) {
+        lv_arc_set_value(arc, arc_val);
+        last_value = arc_val;
     }
 
-    uint32_t color = (ratio >= FUEL_THRESHOLD_YELLOW) ? FUEL_COLOR_GREEN
-                   : (ratio >= FUEL_THRESHOLD_RED)    ? FUEL_COLOR_YELLOW
-                                                      : FUEL_COLOR_RED;
-    if (color != _last_arc_color) {
-        lv_obj_set_style_arc_color(ui_ArcFuel, lv_color_hex(color), LV_PART_INDICATOR | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_color(ui_ArcFuel,  lv_color_hex(color), LV_PART_KNOB      | LV_STATE_DEFAULT);
-        _last_arc_color = color;
+    uint32_t color = (ratio >= TANK_THRESHOLD_YELLOW) ? TANK_COLOR_GREEN
+                   : (ratio >= TANK_THRESHOLD_RED)    ? TANK_COLOR_YELLOW
+                                                      : TANK_COLOR_RED;
+    if (color != last_color) {
+        lv_obj_set_style_arc_color(arc, lv_color_hex(color), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(arc,  lv_color_hex(color), LV_PART_KNOB      | LV_STATE_DEFAULT);
+        last_color = color;
     }
 
     char buf[8];
-    snprintf(buf, sizeof(buf), "%d", (int)roundf(ratio * TANK_CAPACITY_L));
-    lv_label_set_text(ui_LabelLitres, buf);
+    snprintf(buf, sizeof(buf), "%d", (int)roundf(ratio * capacity_l));
+    lv_label_set_text(label, buf);
+}
+
+// Update fuel gauge arc and litres label
+void EngineUI::updateFuelLevel(float ratio) {
+    updateGauge(ui_ArcFuel, ui_LabelLitres, ratio, FUEL_CAPACITY_L,
+                _last_fuel_arc_value, _last_fuel_arc_color);
+}
+
+// Update fresh water gauge arc and litres label
+void EngineUI::updateWaterLevel(float ratio) {
+    updateGauge(ui_ArcWater, ui_LabelWtrLitres, ratio, WATER_CAPACITY_L,
+                _last_water_arc_value, _last_water_arc_color);
 }
 
 // Save active view to NVS

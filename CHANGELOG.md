@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### EngineScreen — FRESHWATER view for the fresh water tank
+
+HALMET-ESP32-SignalK-gateway now broadcasts `HALMETWaterDelta` (msg type 7, `tanks.freshWater.0.currentLevel` as a 0.0–1.0 ratio). The message was already in `espnow_protocol.h`; this release consumes it.
+
+**View cycle:** `EXHAUST` → `FUEL0` → `FRESHWATER` → `EXHAUST` (knob button press cycles, NVS persisted, namespace `"engine"`, key `"view"`). Existing view indices are unchanged — `FRESHWATER = 2` is appended, so a stored value from an earlier build still selects the same view.
+
+`ESPNowReceiver` — new water path mirroring the existing tank path:
+- `HALMET_WATER_DELTA` case in `onDataRecv()` (payload length check, `memcpy`, spinlock write)
+- private statics `s_latest_water`, `s_has_new_water`
+- `hasNewWaterData()` (const, non-destructive) / `getWaterData()` (clears the flag — single-consumer, `EngineUI` only)
+
+`EngineUI`:
+- `EngineView::FRESHWATER`, `COUNT` 2 → 3
+- Drives the already-exported SquareLine widgets `ui_ContainerWaterGauge`, `ui_ArcWater`, `ui_LabelWtrLitres`
+- Tank capacity `WATER_CAPACITY_L = 100.0 L`; litres label `(int)round(ratio × 100)`
+- Same arc color thresholds as fuel (green ≥ 25%, yellow 10–25%, red < 10%) — `FUEL_THRESHOLD_*` / `FUEL_COLOR_*` renamed to `TANK_THRESHOLD_*` / `TANK_COLOR_*` since both gauges now share them
+- `TANK_CAPACITY_L` renamed to `FUEL_CAPACITY_L` for symmetry
+- Own connection tracking (`_last_water_millis`, 6 s timeout → `"---"`), independent of the fuel and exhaust feeds
+- Gauge logic extracted into `updateGauge(arc, label, ratio, capacity_l, last_value, last_color)`; `updateFuelLevel()` and `updateWaterLevel()` are thin wrappers over it
+- Arc render cache split into per-gauge pairs (`_last_fuel_arc_*`, `_last_water_arc_*`) — a shared pair would suppress legitimate writes to whichever arc was not updated last
+
+### Fixed
+
+#### EngineScreen — water gauge container covered the exhaust and fuel views
+
+`showView()` hid only `ui_PanelExhaustTemp` and `ui_ContainerFuelGauge`. `ui_ContainerWaterGauge`, added in the latest SquareLine export and created last (therefore topmost), was never hidden and rendered over both existing views. `showView()` now hides all three view roots before showing the active one.
+
+---
+
 ## [v4.1.0] - 2026-05-12
 
 ### Fixed
