@@ -186,6 +186,18 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             break;
         }
 
+        case ESPNowMsgType::DEPTH_DELTA: {
+            if (hdr.payload_len != sizeof(DepthDelta)) return;
+            DepthDelta depth;
+            memcpy(&depth, payload, sizeof(DepthDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_depth      = depth;
+            s_has_new_depth     = true;
+            s_last_depth_millis = millis();
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
         default:
             // Unknown msg_type — ignore
             break;
@@ -304,6 +316,30 @@ HALMETWaterDelta ESPNowReceiver::getWaterData() {
     s_has_new_water = false;
     portEXIT_CRITICAL(&s_spinlock);
     return data;
+}
+
+// Returns true if new depth data packet available, otherwise false
+bool ESPNowReceiver::hasNewDepthData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_depth;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest depth data packet received via ESP-NOW
+DepthDelta ESPNowReceiver::getDepthData() {
+    DepthDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_depth;
+    s_has_new_depth = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns millis() of the last received depth packet, 0 if none ever received
+uint32_t ESPNowReceiver::lastDepthRxMillis() const {
+    uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_depth_millis; portEXIT_CRITICAL(&s_spinlock); return v;
 }
 
 // Lifetime min/max pitch/roll getters — tracked across all screens since boot

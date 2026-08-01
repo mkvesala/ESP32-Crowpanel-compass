@@ -8,6 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+#### AttitudeScreen — DEPTH view
+
+Third view on AttitudeScreen, showing the vessel's depth situation graphically. `SignalK-ESP-NOW-gateway` broadcasts `DepthDelta` (msg type 8), relayed from SignalK: Raymarine Element 12S → NMEA2000 → SH-wg → UDP → SignalK. The message and the SquareLine widgets both already existed; this release consumes them.
+
+**View cycle:** `ATTITUDE` → `MINMAX` → `DEPTH` → `ATTITUDE` (knob button press). Not persisted — `onLeave()` still resets to `ATTITUDE`, as before.
+
+`ESPNowReceiver` — new depth path mirroring `ESP32-Crowpanel-SkippersWatch`:
+- `DEPTH_DELTA` case in `onDataRecv()` (payload length check, `memcpy`, spinlock write)
+- private statics `s_latest_depth`, `s_has_new_depth`, `s_last_depth_millis`
+- `hasNewDepthData()` / `getDepthData()` (clears the flag) / `lastDepthRxMillis()`
+- `lastDepthRxMillis()` exists because the depth view only reads while it is active; an adapter-owned timestamp would always look stale on entry, whereas this one is maintained in the RX callback and is correct on the first tick
+
+`AttitudeUI`:
+- `AttitudeView::DEPTH` + `COUNT`; `onButtonPress()` is now a modulo cycle instead of a two-way toggle
+- Drives the already-exported SquareLine widgets `ui_ContainerDepth`, `ui_PanelSurface`, `ui_PanelKeel`, `ui_PanelBottom`, `ui_ImageCaution`, `ui_LabelDptBelowKeel`, `ui_LabelDptBelowSurface`
+- **Scale:** `ui_PanelSurface` → `ui_PanelKeel` is 55 px and represents the 1.2 m draft, so `PX_PER_METRE = 45.83` (≈ 2.18 cm/px). `ui_PanelBottom` y-offset is `148 + below_keel_m × PX_PER_METRE`; at 1.2 m this reproduces SquareLine's own y = 203, and at 0 m the panel's top edge lands on the keel line and fills the screen to the bottom edge (aground)
+- `ui_PanelBottom` is hidden once it has slid entirely off-screen (≈ 4.0 m under the keel) — derived from `PANEL_BOTTOM_Y_AGROUND + PANEL_BOTTOM_H`, not a separate magic depth
+- `ui_ImageCaution` shown when there is less than one draft (1.2 m) of water under the keel. SquareLine exports it visible, so `begin()` clears it
+- **Two-fold freshness**, as in `SkippersWatch::NavigationUI`: the ESP-NOW gateway must be alive (`lastDepthRxMillis()`, 6 s) *and* the relayed sounder feed must be fresh (`DepthDelta.age_ms`, 5 s). Either stale, or `below_keel_m` NAN → `"--.-"` and `ui_PanelBottom`/`ui_ImageCaution` hidden. A frozen depth under the keel is worse than none
+- Any single NAN half is reconstructed from the other through the constant draft (`below_keel = below_surface − 1.2` and vice versa); `below_transducer_m` is unused, since the transducer offset is not known here
+- `ui_LabelAirHeight` (5.0) and `ui_LabelDraft` (1.2) are static vessel dimensions, left exactly as exported — not worth putting `vessel.design` paths on the air
+- **Render cost:** `ui_PanelBottom` is 484×185, so it is throttled to 250 ms and skipped entirely when the computed y has not moved. The sounder only updates at ~1 Hz
+- Port/starboard navigation lights keep following the heading link (`isConnected()`) in all three views — missing depth does not hide them
+
 #### EngineScreen — FRESHWATER view for the fresh water tank
 
 HALMET-ESP32-SignalK-gateway now broadcasts `HALMETWaterDelta` (msg type 7, `tanks.freshWater.0.currentLevel` as a 0.0–1.0 ratio). The message was already in `espnow_protocol.h`; this release consumes it.

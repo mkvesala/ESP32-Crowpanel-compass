@@ -18,9 +18,11 @@
 // - Views (cycled with knob button press):
 //   1. ATTITUDE  — live horizon + pitch/roll labels + ship silhouette
 //   2. MINMAX    — 4 static min/max lines + numeric labels + ship silhouette
+//   3. DEPTH     — surface/keel lines + moving sea bottom + depth labels + ship silhouette
 // - Pitch: bow down → pitch negative → horizon moves up
 // - Roll:  roll port → roll negative → horizon tilts starboard (clockwise)
 // - Min/max: runtime only, not persisted to NVS, resets on reboot
+// - Active view: runtime only, resets to ATTITUDE on onLeave()
 // - Owned by: CrowPanelApplication
 
 class AttitudeUI : public IScreenUI {
@@ -38,9 +40,11 @@ public:
 private:
 
     // Internal view (cycled with knob button press)
-    enum class AttitudeView {
+    enum class AttitudeView : uint8_t {
         ATTITUDE,   // Live horizon, pitch/roll labels, ship silhouette
         MINMAX,     // Static min/max lines, numeric labels, ship silhouette
+        DEPTH,      // Surface/keel lines, moving sea bottom, depth labels, ship silhouette
+        COUNT
     };
 
     ESPNowReceiver &_receiver;
@@ -58,6 +62,30 @@ private:
     // Sentinel for unset min/max (int16_t, out of range for pitch ±900 and roll ±1800)
     static constexpr int16_t SENTINEL = 0x7FFF;
 
+    // Depth is relayed, never measured here, so it carries no freshness of its own. Both
+    // gates are required: the ESP-NOW gateway must be alive (RX timestamp) AND the sounder
+    // feed behind it must be fresh (DepthDelta.age_ms). Either stale → "--.-", never a
+    // frozen depth under the keel.
+    static constexpr uint32_t DEPTH_TIMEOUT_MS      = 6000;  // ESP-NOW gateway broadcast timeout
+    static constexpr uint32_t DEPTH_FEED_MAX_AGE_MS = 5000;  // in-payload age of the depth feed
+
+    // ui_PanelBottom is 484×185 and moving it invalidates two full-width bands; the sounder
+    // only updates at ~1 Hz, so redrawing faster than this buys nothing.
+    static constexpr uint32_t DEPTH_RENDER_INTERVAL_MS = 250;
+
+    // Vessel draft [m] — matches the static ui_LabelDraft text. Also the caution threshold:
+    // less than one draft of water under the keel is where the margin runs out.
+    static constexpr float DRAFT_M = 1.2f;
+
+    // ui_PanelSurface (y=0) to ui_PanelKeel (y=55) is 55 px and represents DRAFT_M
+    static constexpr float PX_PER_METRE = 55.0f / DRAFT_M;  // 45.83 px/m ≈ 2.18 cm/px
+
+    // ui_PanelBottom y-offset when its top edge sits on the keel line (aground, depth below
+    // keel = 0). At this offset the 185 px panel exactly fills the screen down to y=479;
+    // SquareLine's own y=203 is this value plus one draft, i.e. 1.2 m under the keel.
+    static constexpr int16_t PANEL_BOTTOM_Y_AGROUND = 148;
+    static constexpr int16_t PANEL_BOTTOM_H         = 185;
+
     // State
     AttitudeView _active_view = AttitudeView::ATTITUDE;
     bool         _initialized = false;
@@ -68,6 +96,15 @@ private:
     int16_t _last_pitch_deg  = SENTINEL;
     int16_t _last_roll_deg   = SENTINEL;
     bool _last_connected  = false;
+
+    // Depth view state
+    int16_t  _last_bottom_y        = SENTINEL;  // render cache, skips redundant lv_obj_set_y
+    uint32_t _last_depth_render_ms = 0;
+    bool     _last_depth_valid     = true;      // falling edge blanks the labels once
+    bool     _last_bottom_hidden   = false;
+    bool     _last_caution_shown   = false;
+    int16_t  _last_below_keel_x10    = SENTINEL;  // label caches, in 0.1 m units
+    int16_t  _last_below_surface_x10 = SENTINEL;
 
     // Programmatically created image lines (not part of SquareLine Studio export)
     // _img_horizon: live artificial horizon (child of ui_ContainerHorizonGroup)
@@ -89,6 +126,10 @@ private:
     // Min/max display
     void updateMinMaxPanels();
     void updateMinMaxLabels();
+
+    // Depth display
+    void updateDepth();
+    void showDepthWaiting();
 
 };
 

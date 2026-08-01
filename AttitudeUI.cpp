@@ -102,6 +102,9 @@ void AttitudeUI::begin() {
     this->showView(AttitudeView::ATTITUDE);
 
     this->showWaiting();
+
+    // Also clears ui_ImageCaution, which SquareLine exports visible
+    this->showDepthWaiting();
 }
 
 // Realizes update(): Fetch data from receiver and update UI
@@ -135,13 +138,17 @@ void AttitudeUI::update() {
         }
     }
 
+    // Depth has its own gateway and its own freshness rules, independent of the heading
+    // link above — only the active view pays for it.
+    if (_active_view == AttitudeView::DEPTH) this->updateDepth();
+
 }
 
-// Realizes onButtonPress(): Toggle between ATTITUDE and MINMAX views
+// Realizes onButtonPress(): Cycle ATTITUDE → MINMAX → DEPTH → ATTITUDE
 void AttitudeUI::onButtonPress() {
     if (!_initialized) return;
-    if (_active_view == AttitudeView::ATTITUDE) this->showView(AttitudeView::MINMAX);
-    else this->showView(AttitudeView::ATTITUDE);
+    uint8_t next = (static_cast<uint8_t>(_active_view) + 1) % static_cast<uint8_t>(AttitudeView::COUNT);
+    this->showView(static_cast<AttitudeView>(next));
 }
 
 // Realizes onLeave(): Reset to ATTITUDE view when navigating away
@@ -157,6 +164,7 @@ void AttitudeUI::showView(AttitudeView view) {
 
     const bool is_attitude = (view == AttitudeView::ATTITUDE);
     const bool is_minmax   = (view == AttitudeView::MINMAX);
+    const bool is_depth    = (view == AttitudeView::DEPTH);
 
     // ContainerHorizonGroup (live horizon line): visible in ATTITUDE only
     if (is_attitude) lv_obj_remove_flag(ui_ContainerHorizonGroup, LV_OBJ_FLAG_HIDDEN);
@@ -170,12 +178,23 @@ void AttitudeUI::showView(AttitudeView view) {
     if (is_minmax) lv_obj_remove_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
     else lv_obj_add_flag(ui_ContainerMinMax, LV_OBJ_FLAG_HIDDEN);
 
-    // ContainerVessel (ship silhouette): always visible
+    // ContainerDepth (surface/keel/bottom panels + depth labels): visible in DEPTH only
+    if (is_depth) lv_obj_remove_flag(ui_ContainerDepth, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(ui_ContainerDepth, LV_OBJ_FLAG_HIDDEN);
+
+    // ContainerVessel (ship silhouette): always visible. It is the last screen child, so in
+    // DEPTH the hull draws on top of ui_PanelBottom.
     lv_obj_remove_flag(ui_ContainerVessel, LV_OBJ_FLAG_HIDDEN);
 
     // Roll image lines container: visible in MINMAX only
     if (is_minmax) lv_obj_remove_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
     else lv_obj_add_flag(_container_roll_lines, LV_OBJ_FLAG_HIDDEN);
+
+    // Entering DEPTH: drop the render caches so the first update() tick redraws immediately
+    if (is_depth) {
+        _last_bottom_y        = SENTINEL;
+        _last_depth_render_ms = 0;
+    }
 }
 
 // Update AttitudeScreen live horizon to "waiting for data" state
@@ -289,5 +308,103 @@ void AttitudeUI::updateMinMaxLabels() {
 
     if (min_roll == SEN) lv_label_set_text(ui_LabelMinRoll, "---");
     else { snprintf(buf, sizeof(buf), "Min %+d°", min_roll / 10); lv_label_set_text(ui_LabelMinRoll, buf); }
+}
+
+// Update the depth view: labels, sea bottom position and the shallow-water caution.
+// Only called while DEPTH is the active view, and throttled to DEPTH_RENDER_INTERVAL_MS
+// because ui_PanelBottom is 484×185 and the sounder only updates at ~1 Hz anyway.
+void AttitudeUI::updateDepth() {
+    const uint32_t now = millis();
+    if ((now - _last_depth_render_ms) < DEPTH_RENDER_INTERVAL_MS) return;
+    _last_depth_render_ms = now;
+
+    // getDepthData() returns the latest value whether or not the has-new flag was still set;
+    // lastDepthRxMillis() is maintained in the RX callback, so entering this view mid-stream
+    // shows the correct value on the first tick instead of blanking for a second.
+    const DepthDelta depth = _receiver.getDepthData();
+    const uint32_t   rx    = _receiver.lastDepthRxMillis();
+
+    const bool link_ok = (rx > 0) && ((now - rx) < DEPTH_TIMEOUT_MS);
+    const bool feed_ok = (depth.age_ms != UINT32_MAX) && (depth.age_ms < DEPTH_FEED_MAX_AGE_MS);
+
+    // Either half can be NAN on its own. The draft is a constant, so whichever half arrived
+    // determines the other; only when both are missing is there nothing to show.
+    float below_keel    = depth.below_keel_m;
+    float below_surface = depth.below_surface_m;
+    if (isnan(below_keel)    && !isnan(below_surface)) below_keel    = below_surface - DRAFT_M;
+    if (isnan(below_surface) && !isnan(below_keel))    below_surface = below_keel    + DRAFT_M;
+
+    const bool valid = link_ok && feed_ok && !isnan(below_keel);
+
+    if (!valid) {
+        // Falling edge only — a frozen depth is worse than none, but blanking every tick
+        // would redraw the labels four times a second for nothing.
+        if (_last_depth_valid) this->showDepthWaiting();
+        _last_depth_valid = false;
+        return;
+    }
+    _last_depth_valid = true;
+
+    // Labels, cached in 0.1 m units so an unchanged reading does not invalidate the label
+    char buf[16];
+    const int16_t keel_x10 = (int16_t)lroundf(below_keel * 10.0f);
+    if (keel_x10 != _last_below_keel_x10) {
+        _last_below_keel_x10 = keel_x10;
+        snprintf(buf, sizeof(buf), "%.1f", below_keel);
+        lv_label_set_text(ui_LabelDptBelowKeel, buf);
+    }
+
+    const int16_t surface_x10 = (int16_t)lroundf(below_surface * 10.0f);
+    if (surface_x10 != _last_below_surface_x10) {
+        _last_below_surface_x10 = surface_x10;
+        snprintf(buf, sizeof(buf), "%.1f", below_surface);
+        lv_label_set_text(ui_LabelDptBelowSurface, buf);
+    }
+
+    // Sea bottom: top edge sits at PANEL_BOTTOM_Y_AGROUND on the keel line, one PX_PER_METRE
+    // lower per metre of water under the keel. Negative depth (aground) clamps to the keel.
+    // Kept in float until the hidden test, so a wildly deep reading can never wrap the cast.
+    const float clamped     = (below_keel > 0.0f) ? below_keel : 0.0f;
+    const float y_float     = PANEL_BOTTOM_Y_AGROUND + clamped * PX_PER_METRE;
+    const float y_offscreen = PANEL_BOTTOM_Y_AGROUND + PANEL_BOTTOM_H;
+
+    // Past that offset the whole panel has slid below the screen edge — nothing to draw
+    const bool bottom_hidden = (y_float >= y_offscreen);
+    if (bottom_hidden != _last_bottom_hidden) {
+        _last_bottom_hidden = bottom_hidden;
+        if (bottom_hidden) lv_obj_add_flag(ui_PanelBottom, LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_remove_flag(ui_PanelBottom, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (!bottom_hidden) {
+        const int16_t y = (int16_t)lroundf(y_float);   // bounded to [148, 333] by the test above
+        if (y != _last_bottom_y) {
+            _last_bottom_y = y;
+            lv_obj_set_y(ui_PanelBottom, y);
+        }
+    }
+
+    // Caution: less than one draft of water under the keel
+    const bool caution = (below_keel < DRAFT_M);
+    if (caution != _last_caution_shown) {
+        _last_caution_shown = caution;
+        if (caution) lv_obj_remove_flag(ui_ImageCaution, LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_add_flag(ui_ImageCaution, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+// Update the depth view to "no depth data" state: blank labels, no sea bottom, no caution.
+// ui_LabelAirHeight and ui_LabelDraft are static vessel dimensions and stay as exported.
+void AttitudeUI::showDepthWaiting() {
+    lv_label_set_text(ui_LabelDptBelowKeel, "--.-");
+    lv_label_set_text(ui_LabelDptBelowSurface, "--.-");
+
+    lv_obj_add_flag(ui_PanelBottom, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_ImageCaution, LV_OBJ_FLAG_HIDDEN);
+
+    _last_bottom_hidden     = true;
+    _last_caution_shown     = false;
+    _last_bottom_y          = SENTINEL;
+    _last_below_keel_x10    = SENTINEL;
+    _last_below_surface_x10 = SENTINEL;
 }
 

@@ -14,7 +14,8 @@ using namespace ESPNow;
 //
 // - Provides public API to manage incoming instrument data (receive-only)
 // - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), BATTERY_DELTA,
-//   GNSS_DELTA, HALMET_ENGINE_DELTA (exhaust temp), HALMET_TANK_DELTA (fuel), HALMET_WATER_DELTA (fresh water)
+//   GNSS_DELTA, HALMET_ENGINE_DELTA (exhaust temp), HALMET_TANK_DELTA (fuel), HALMET_WATER_DELTA (fresh water),
+//   DEPTH_DELTA (relayed sounder depth)
 // - Init: _receiver.begin(channel)
 // - Owned by: CrowPanelApplication
 
@@ -42,6 +43,15 @@ public:
     HALMETTankDelta getTankData();
     bool hasNewWaterData() const;
     HALMETWaterDelta getWaterData();
+
+    bool hasNewDepthData() const;
+    DepthDelta getDepthData();
+
+    // Depth is relayed, so freshness is two-fold and both halves are needed: this is the
+    // ESP-NOW gateway liveness, DepthDelta.age_ms is the underlying N2K sounder feed.
+    // Maintained in onDataRecv() regardless of consumption, so a screen that only reads
+    // depth while its depth view is active still knows the true age on entry.
+    uint32_t lastDepthRxMillis() const;
 
     float getPacketsPerSecond() const { return _packets_per_second; }
 
@@ -90,6 +100,13 @@ private:
     // Static variables for HALMET fresh water tank data handling
     inline static HALMETWaterDelta s_latest_water = {};
     inline static volatile bool    s_has_new_water = false;
+
+    // Static variables for depth data handling. NOTE: depth is relayed, so freshness is
+    // two-fold — s_last_depth_millis is ESP-NOW gateway liveness; DepthDelta.age_ms inside
+    // the payload is the liveness of the sounder feed behind it.
+    inline static DepthDelta        s_latest_depth      = {};
+    inline static volatile bool     s_has_new_depth     = false;
+    inline static volatile uint32_t s_last_depth_millis = 0;
 
     // Lifetime min/max pitch and roll — updated in onDataRecv() for every packet
     inline static int16_t s_min_pitch_x10 = MINMAX_SENTINEL;
