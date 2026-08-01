@@ -33,6 +33,7 @@ extern lv_obj_t *ui____initial_actions0;
 LV_IMG_DECLARE( ui_img_1776051799);   // assets/Compass-12.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
 LV_IMG_DECLARE( ui_img_speedometer_bg_png);   // assets/speedometer_bg.png
+LV_IMG_DECLARE( ui_img_222405695);   // assets/caution-2.png
 LV_IMG_DECLARE( ui_img_sun3_png);   // assets/sun3.png
 LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png
 LV_IMG_DECLARE( ui_img_air2_png);   // assets/air2.png

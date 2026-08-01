@@ -7,8 +7,10 @@
   "size": 24,
   "bpp": 1,
   "letters": 0,
-  "ranges": [],
-  "symbols": "PitchRol:",
+  "ranges": [
+    "0x20-0x7E"
+  ],
+  "symbols": "",
   "customparams": "--no-compress --no-prefilter",
   "uploaded": false
 }
