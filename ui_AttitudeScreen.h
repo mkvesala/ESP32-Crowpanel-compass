@@ -42,6 +42,7 @@ extern lv_obj_t *ui_LabelDptBelowKeel;
 extern lv_obj_t *ui_LabelDptBelowSurface;
 extern lv_obj_t *ui_LabelAirHeight;
 extern lv_obj_t *ui_LabelDraft;
+extern lv_obj_t *ui_LabelUnits;
 extern lv_obj_t *ui_ContainerVessel;
 extern lv_obj_t *ui_PanelHull;
 extern lv_obj_t *ui_PanelDeck;
