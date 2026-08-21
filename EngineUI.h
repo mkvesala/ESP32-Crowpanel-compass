@@ -16,7 +16,7 @@
 // - Active view: persisted to NVS on onLeave()
 // - EXHAUST: temperature °C, session min/max, EMA trend indicator
 // - FUEL0: fuel arc 0-100, litres label (tank capacity 400 L)
-// - FRESHWATER: water arc 0-100, litres label (tank capacity 100 L)
+// - FRESHWATER: water arc 0-100, litres label (tank capacity 80 L)
 // - Min/max: tracked runtime only, not persisted to NVS
 // - Realizes: IScreenUI
 // - Owned by: CrowPanelApplication
@@ -84,7 +84,7 @@ private:
 
     static constexpr uint32_t CONNECTION_TIMEOUT_MS  = 6000;
     static constexpr float    FUEL_CAPACITY_L        = 400.0f;
-    static constexpr float    WATER_CAPACITY_L       = 100.0f;
+    static constexpr float    WATER_CAPACITY_L       = 80.0f;
     static constexpr float    EXHAUST_EMA_ALPHA       = 0.05f;
     static constexpr float    EXHAUST_TREND_THRESHOLD = 0.001f;
 

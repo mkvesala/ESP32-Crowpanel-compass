@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v4.2.0] - 2026-08-20
 
 ### Added
 
@@ -46,18 +46,61 @@ HALMET-ESP32-SignalK-gateway now broadcasts `HALMETWaterDelta` (msg type 7, `tan
 `EngineUI`:
 - `EngineView::FRESHWATER`, `COUNT` 2 → 3
 - Drives the already-exported SquareLine widgets `ui_ContainerWaterGauge`, `ui_ArcWater`, `ui_LabelWtrLitres`
-- Tank capacity `WATER_CAPACITY_L = 100.0 L`; litres label `(int)round(ratio × 100)`
+- Tank capacity `WATER_CAPACITY_L = 80.0 L` — measured on the vessel, not taken from a spec sheet; litres label `(int)round(ratio × 80)`. Only the litres label scales with it: the arc is driven by the 0.0–1.0 ratio from HALMET and the color thresholds are proportional, so both are capacity-independent
 - Same arc color thresholds as fuel (green ≥ 25%, yellow 10–25%, red < 10%) — `FUEL_THRESHOLD_*` / `FUEL_COLOR_*` renamed to `TANK_THRESHOLD_*` / `TANK_COLOR_*` since both gauges now share them
 - `TANK_CAPACITY_L` renamed to `FUEL_CAPACITY_L` for symmetry
 - Own connection tracking (`_last_water_millis`, 6 s timeout → `"---"`), independent of the fuel and exhaust feeds
 - Gauge logic extracted into `updateGauge(arc, label, ratio, capacity_l, last_value, last_color)`; `updateFuelLevel()` and `updateWaterLevel()` are thin wrappers over it
 - Arc render cache split into per-gauge pairs (`_last_fuel_arc_*`, `_last_water_arc_*`) — a shared pair would suppress legitimate writes to whichever arc was not updated last
 
+#### `espnow_protocol.h` — merged into the shared fleet-wide superset
+
+The file is copied by hand into every ESP32 project on the boat, but no single project owns it. On 2026-07-28 the copies had drifted into four different versions; they were merged into one superset and every project now holds the identical file. A change is written in whichever project needs it and then copied whole to all the others — it is not done until every copy matches, and two versions are never reconciled field by field. The header comment states the rule, names the sender of every message type and lists the current receivers (`ESP32-Crowpanel-SkippersWatch`, `ESP32-Crowpanel-compass`, `DFWind-ESP32-SignalK-gateway`).
+
+`ESPNowMsgType` is a single fleet-wide number space, extended with:
+- `HALMET_WATER_DELTA = 7` — HALMET-ESP32-SignalK-gateway
+- `DEPTH_DELTA = 8` — SignalK-ESP-NOW-gateway
+- `DATETIME_DELTA = 9` — UBLOX-ESP32-SignalK-gateway, for other receivers on the boat; this project ignores it
+- `GENERIC_SK_DELTA = 20` reserved in a comment for runtime-configurable path relaying, deliberately **not** implemented — a self-describing message would cost 48 bytes of path per packet
+
+New payload structs: `HALMETWaterDelta` (4 B), `DepthDelta` (16 B) and `DateTimeDelta` (8 B, compiled but unused here).
+
+`GnssData` — position fix and COG validity split apart:
+- new members `cog_valid`, `lat_deg`, `lon_deg` and accessor `hasCog()`
+- `convertGnssDeltaToData()` no longer folds COG availability into `fix_ok`. Position validity is authoritative on its own, `sog_knots_x10` is gated on `fix_ok` alone, and `lat_deg` / `lon_deg` are NAN without a fix
+- See **Fixed** below for the display behaviour this changes
+
+#### SquareLine Studio design — depth widgets, water gauge, fonts
+
+Exported from SquareLine Studio 1.6.0 (project version 173 → 204):
+
+- `ui_ContainerDepth` — 484×484 container for the AttitudeScreen DEPTH view: `ui_PanelSurface` and `ui_PanelKeel` (484×2 white lines, 55 px apart = the 1.2 m draft), `ui_PanelBottom` (484×185 grey sea bottom, exported at y = 203), `ui_ImageCaution`, `ui_LabelDptBelowSurface` (left of the hull, on the surface line), `ui_LabelDptBelowKeel` (right of the hull, on the keel line), `ui_LabelAirHeight` ("5.0", on the mast), `ui_LabelDraft` ("1.2", under the hull), `ui_LabelUnits` ("Meters")
+- `ui_ContainerWaterGauge` — 484×484 container for the EngineScreen FRESHWATER view, mirroring the fuel gauge: `ui_ArcWater`, `ui_LabelWtrLitres` (96pt bold), `ui_LabelWtrLitresTitle` ("L"), fraction labels (0 / ¼ / ½ / ¾ / F), five static tick-mark panels, `ui_ImageWater`
+- `ui_ContainerVessel` (ship silhouette) remains the last screen child, so in the DEPTH view the hull draws on top of `ui_PanelBottom`
+- New image assets: `assets/caution-2.png` (`ui_img_222405695`) and `assets/gallon-bottle.png` (`ui_img_916444405`)
+- `ui_font_FontAttitudeTitle24` regenerated from the symbol set `"PitchRol:"` to the full ASCII range `0x20-0x7E` (380 B → 3924 B) — the depth view needs digits, `.`, `-` and "Meters" from it
+- `ui_font_FontHeading64b` gained `.` in its symbol set, for the one-decimal depth values
+- SquareLine canvas shape changed CIRCLE → RECTANGLE, which is why the new UI screenshots are square. Studio preview only, no effect on the device
+
+Generated files: `ui_AttitudeScreen.h/.c`, `ui_EngineScreen.h/.c`, `ui.h`, `ui_img_222405695.c`, `ui_img_916444405.c`, `ui_font_FontAttitudeTitle24.c`, `ui_font_FontHeading64b.c`
+
 ### Fixed
+
+#### CompassScreen — SOG blanked and COG could read 000° at anchor
+
+`convertGnssDeltaToData()` zeroed `fix_ok` whenever `cog_true_rad` was NaN — which is exactly what the u-blox reports when the boat is stationary. One undefined value therefore invalidated the entire fix: the SOG view fell back to `--.-` at anchor although position and speed were perfectly valid, and the COG view depended on that side effect to hide its course.
+
+**Fix:** `fix_ok` now carries `delta.fix_ok` unchanged and COG validity lives in its own `cog_valid` flag (see `espnow_protocol.h` above). `CompassUI` gates the SOG view on `hasFix()` and the COG view on `hasFix() && hasCog()` — so SOG reads 0.0 at anchor and COG shows `---°` instead of a false `000°`.
 
 #### EngineScreen — water gauge container covered the exhaust and fuel views
 
 `showView()` hid only `ui_PanelExhaustTemp` and `ui_ContainerFuelGauge`. `ui_ContainerWaterGauge`, added in the latest SquareLine export and created last (therefore topmost), was never hidden and rendered over both existing views. `showView()` now hides all three view roots before showing the active one.
+
+### Documentation
+
+- `README.md` — DEPTH and FRESHWATER views documented, SignalK-ESP-NOW-gateway added as a data source and to the BOM, message types 7–9 and the `HALMETWaterDelta` / `DepthDelta` payloads, updated knob behaviour table and gateway versions, Flaticon credits for the two new icons
+- `docs/` — new UI screenshots and photos: `depthui.png`, `depthscreen.jpeg`, `waterui.png`, `waterscreen.jpeg`
+- `.gitignore` — ignore `*.docx`
 
 ---
 
@@ -1126,6 +1169,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.0
 [v4.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.1.0
 [v4.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.0.0
 [v3.1.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v3.1.1
