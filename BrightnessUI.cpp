@@ -23,7 +23,8 @@ void BrightnessUI::begin() {
     this->applyBrightness();
     this->updateUI();
 
-    _state = BrightnessState::IDLE;
+    // Start in IDLE and force the arc hidden (SquareLine creates it visible)
+    this->setState(BrightnessState::IDLE);
     _initialized = true;
 }
 
@@ -45,6 +46,12 @@ void BrightnessUI::onRotation(int8_t dir) {
 // Realizes interceptsRotation(): true when ADJUSTING (absorbs knob rotation)
 bool BrightnessUI::interceptsRotation() const {
     return this->isAdjusting();
+}
+
+// Realizes onEnter(): always enter the screen in IDLE with the arc hidden
+void BrightnessUI::onEnter() {
+    if (!_initialized) return;
+    this->setState(BrightnessState::IDLE);
 }
 
 // Realizes onLeave(): cancel adjustment when leaving screen

@@ -14,6 +14,7 @@
 // - Init: _brightnessUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API (via IScreenUI) to:
+//  - Reset to IDLE (arc hidden) on screen enter via onEnter()
 //  - Handle knob button press via onButtonPress()
 //  - Handle knob rotation via onRotation()
 //  - Intercept rotation when adjusting via interceptsRotation()
@@ -33,6 +34,7 @@ public:
     void begin() override;
     lv_obj_t* getLvglScreen() const override;
     void update() override;
+    void onEnter() override;
     void onButtonPress() override;
     void onRotation(int8_t dir) override; 
     bool interceptsRotation() const override;
