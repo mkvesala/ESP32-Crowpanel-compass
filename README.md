@@ -14,7 +14,7 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway)
 - Engine exhaust temperature, fuel tank level and fresh water tank level from [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway)
-- Depth below surface and below keel, relayed from the SignalK server by [SignalK-ESP-NOW-gateway](https://github.com/mkvesala/SignalK-ESP-NOW-gateway)
+- Depth below surface and below keel, relayed from the SignalK server by SignalK-ESP-NOW-gateway
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
@@ -41,7 +41,7 @@ Integrated via ESP-NOW with:
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
 - [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
 - [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) (v1.3.0) engine, fuel tank and fresh water tank data sender
-- [SignalK-ESP-NOW-gateway](https://github.com/mkvesala/SignalK-ESP-NOW-gateway) (v1.0.0) depth relay from the SignalK server
+- SignalK-ESP-NOW-gateway (v1.0.0) depth relay from the SignalK server
 
 ## Purpose of the project
 
@@ -55,7 +55,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.2.0 | Latest release. AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution) from depth relayed by SignalK-ESP-NOW-gateway. EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fix: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.0 | Latest release. AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution) from depth relayed by SignalK-ESP-NOW-gateway. EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.1.0 | EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. Bug fix: AttitudeScreen MINMAX view now reflects pitch and roll extremes recorded across the full runtime, not only while the Attitude screen was active. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.0.0 | Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
@@ -240,6 +240,7 @@ Common features:
 <img src="docs/brightnessscreen.png" height="240"> <img src="docs/brightnessui.jpeg" height="240">
 
 - Sun icon image and current brightness percentage label
+- Screen always entered in IDLE with the arc overlay hidden (`onEnter()`), regardless of how the screen was left
 - Knob button press enters ADJUSTING mode: arc overlay appears
 - Knob rotation in ADJUSTING mode: ±2% brightness, updates arc, label and backlight in real-time
 - 3-second timeout after last rotation → saves to NVS and returns to idle
@@ -408,11 +409,11 @@ struct DepthDelta {
   - Payload: `DepthDelta` struct (`below_surface_m`, `below_transducer_m`, `below_keel_m`, `age_ms`)
   - Relayed from SignalK, not measured on the boat's own bus — `AttitudeUI` gates it on both the ESP-NOW RX timestamp (6 s) and the in-payload `age_ms` (5 s)
 
-**Channel:** ESP-NOW evices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
+**Channel:** ESP-NOW devices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
 **Deadband:** Compass sender has 0.05° deadband — no packet sent if heading and attitude change less than 0.05°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.3.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.0, HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank) and SignalK-ESP-NOW-gateway v1.0.0 (depth), or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.4.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.1, HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank) and SignalK-ESP-NOW-gateway v1.0.0 (depth), or newer.
 
 ## Project structure
 
@@ -460,7 +461,7 @@ struct DepthDelta {
 5. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
 6. [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) as ESP-NOW sender
 7. [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) as ESP-NOW sender
-8. [SignalK-ESP-NOW-gateway](https://github.com/mkvesala/SignalK-ESP-NOW-gateway) as ESP-NOW sender (relays depth from the SignalK server)
+8. SignalK-ESP-NOW-gateway as ESP-NOW sender (relays depth from the SignalK server)
 9. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
@@ -552,7 +553,7 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Caution icons created by agus raharjo - Flaticon](https://www.flaticon.com/free-icons/caution)
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway), [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) and [SignalK-ESP-NOW-gateway](https://github.com/mkvesala/SignalK-ESP-NOW-gateway). Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway), [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) and SignalK-ESP-NOW-gateway. Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 

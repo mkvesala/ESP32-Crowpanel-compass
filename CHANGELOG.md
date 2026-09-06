@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v4.2.0] - 2026-08-20
+## [v4.2.0] - 2026-09-06
 
 ### Added
 
@@ -96,11 +96,20 @@ Generated files: `ui_AttitudeScreen.h/.c`, `ui_EngineScreen.h/.c`, `ui.h`, `ui_i
 
 `showView()` hid only `ui_PanelExhaustTemp` and `ui_ContainerFuelGauge`. `ui_ContainerWaterGauge`, added in the latest SquareLine export and created last (therefore topmost), was never hidden and rendered over both existing views. `showView()` now hides all three view roots before showing the active one.
 
+#### BrightnessScreen — arc overlay visible on screen entry
+
+SquareLine exports `ui_ContainerAdjustment` (the arc overlay) visible, and `begin()` set `_state = BrightnessState::IDLE` by direct assignment instead of going through `setState()` — the only place that hides the container. State and screen therefore disagreed from boot: IDLE, with the arc drawn over the brightness label. It only ever went away after the first ADJUSTING cycle had been entered and timed out.
+
+**Fix:**
+- `begin()` calls `setState(BrightnessState::IDLE)`, which hides the container as part of entering the state
+- `onEnter()` added (`BrightnessUI.h/.cpp`) — forces IDLE on every screen entry, so state and overlay cannot drift apart again. Guarded by `_initialized` like the other handlers
+
 ### Documentation
 
 - `README.md` — DEPTH and FRESHWATER views documented, SignalK-ESP-NOW-gateway added as a data source and to the BOM, message types 7–9 and the `HALMETWaterDelta` / `DepthDelta` payloads, updated knob behaviour table and gateway versions, Flaticon credits for the two new icons
 - `docs/` — new UI screenshots and photos: `depthui.png`, `depthscreen.jpeg`, `waterui.png`, `waterscreen.jpeg`
-- `.gitignore` — ignore `*.docx`
+- `docs/full_uml_diagram.jpeg` — regenerated with the depth and fresh water paths and `SignalK-ESP-NOW-gateway`
+- `.gitignore` — ignore `*.docx` and `*.doc`
 
 ---
 
