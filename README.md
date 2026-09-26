@@ -177,8 +177,8 @@ Common features:
     - Bottom of the screen: static `Meters` unit label
   - Yellow caution triangle shown when there is less than one draft (1.2 m) of water under the keel
   - Either half of the depth pair is reconstructed from the other through the constant draft if only one arrives; `below_transducer_m` is not used
-  - **Two-fold freshness check** — a relayed value carries no freshness of its own, so both are required: the ESP-NOW gateway must be alive (RX timestamp, 6 s) **and** the sounder feed behind it must be fresh (`DepthDelta.age_ms`, 5 s). Either stale, or depth below keel NAN → labels show `--.-` and the bottom panel and caution triangle are hidden. A frozen depth under the keel is worse than none, because the caution triangle is driven by the same number
-  - `--.-` at anchor is normal: the plotter feeding `environment.depth.*` into SignalK reports very infrequently while the vessel is stationary
+  - **Two-fold freshness check** — a relayed value carries no freshness of its own, so both are required: the ESP-NOW relay must be alive (RX timestamp, 6 s) **and** the sounder feed behind it must be fresh (`DepthDelta.age_ms`, 5 s). Either stale, or depth below keel NAN → labels show `--.-` and the bottom panel and caution triangle are hidden. A frozen depth under the keel is worse than none, because the caution triangle is driven by the same number
+  - `--.-` at anchor is normal: the plotter feeding depth into NMEA2000 reports very infrequently while the vessel is stationary
   - Sea bottom rendering throttled to 250 ms and skipped when the computed position has not moved — the panel is 484x185 px and the sounder only updates at ~1 Hz
 - Ship silhouette overlay on all three views
   - The red and green "navigation lights" of the ship silhouette hidden when disconnected, shown again when data received from the compass — they follow the compass link in all three views, missing depth does not hide them
@@ -359,7 +359,7 @@ struct HALMETWaterDelta {
    float water_level_ratio;  // tanks.freshWater.0.currentLevel [0.0..1.0]
 };
 
-// Depth relayed from NMEA200 source, will be replaced by a clean ESP32 based sender later.
+// Depth relayed from NMEA2000 source, will be replaced by a clean ESP32 based sender later.
 // A relayed value carries no freshness of its own, so both signals are required:
 //   - a field is NAN when that individual path is stale or has never arrived
 //   - age_ms describes the depth feed as a whole (bottom lost, or N2K chain down)
@@ -404,17 +404,17 @@ struct DepthDelta {
   - 12 B packet, 8 B header + 4 B payload
   - Payload: `HALMETWaterDelta` struct (`water_level_ratio` — 0.0 to 1.0, scaled to litres in `EngineUI`)
 
-**Receives** at ~1 Hz, in meters (sent by SignalK-ESP-NOW-gateway), as broadcast:
+**Receives** at ~1 Hz, in meters (sent by a temporary NMEA2000 relay), as broadcast:
 - `ESPNowPacket<DepthDelta>`:
   - 24 B packet, 8 B header + 16 B payload
   - Payload: `DepthDelta` struct (`below_surface_m`, `below_transducer_m`, `below_keel_m`, `age_ms`)
-  - Relayed from SignalK, not measured on the boat's own bus — `AttitudeUI` gates it on both the ESP-NOW RX timestamp (6 s) and the in-payload `age_ms` (5 s)
+  - Relayed from NMEA2000, not measured by a dedicated ESP32 sender — `AttitudeUI` gates it on both the ESP-NOW RX timestamp (6 s) and the in-payload `age_ms` (5 s)
 
 **Channel:** ESP-NOW devices must be on the same WiFi channel. Configured to channel 6 (`static constexpr uint8_t ESP_NOW_CHANNEL = 6` in `CrowPanelApplication.h`). Set your router to a fixed channel 6. This allows senders to operate both on WiFi and ESP-NOW, using WiFi's channel for ESP-NOW. Avoid channel jumping by setting a fixed channel in the router.
 
 **Deadband:** Compass sender has 0.05° deadband — no packet sent if heading and attitude change less than 0.05°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.4.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.1, HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank) and SignalK-ESP-NOW-gateway v1.0.0 (depth), or newer.
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.4.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.1, VEDirect-ESP32-SignalK-gateway v1.0.0 and HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank), or newer. Depth requires an NMEA2000 relay broadcasting `DepthDelta` (msg type 8).
 
 ## Project structure
 
