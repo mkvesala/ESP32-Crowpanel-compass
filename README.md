@@ -55,7 +55,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.2.0 | Latest release. AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution). EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.1 | Latest release. Documentation update only. |
+| v4.2.0 | AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution). EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.1.0 | EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. Bug fix: AttitudeScreen MINMAX view now reflects pitch and roll extremes recorded across the full runtime, not only while the Attitude screen was active. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.0.0 | Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
