@@ -16,7 +16,7 @@ Documentation update only.
 
 #### AttitudeScreen — DEPTH view
 
-Third view on AttitudeScreen, showing the vessel's depth situation graphically. `SignalK-ESP-NOW-gateway` broadcasts `DepthDelta` (msg type 8), relayed from SignalK: Raymarine Element 12S → NMEA2000 → SH-wg → UDP → SignalK. The message and the SquareLine widgets both already existed; this release consumes them.
+Third view on AttitudeScreen, showing the vessel's depth situation graphically. A temporary NMEA2000 relay broadcasts `DepthDelta` (msg type 8). The message and the SquareLine widgets both already existed; this release consumes them.
 
 **View cycle:** `ATTITUDE` → `MINMAX` → `DEPTH` → `ATTITUDE` (knob button press). Not persisted — `onLeave()` still resets to `ATTITUDE`, as before.
 
@@ -65,7 +65,7 @@ The file is copied by hand into every ESP32 project on the boat, but no single p
 
 `ESPNowMsgType` is a single fleet-wide number space, extended with:
 - `HALMET_WATER_DELTA = 7` — HALMET-ESP32-SignalK-gateway
-- `DEPTH_DELTA = 8` — SignalK-ESP-NOW-gateway
+- `DEPTH_DELTA = 8` — Temporary NMEA2000 relay
 - `DATETIME_DELTA = 9` — UBLOX-ESP32-SignalK-gateway, for other receivers on the boat; this project ignores it
 - `GENERIC_SK_DELTA = 20` reserved in a comment for runtime-configurable path relaying, deliberately **not** implemented — a self-describing message would cost 48 bytes of path per packet
 
@@ -112,9 +112,9 @@ SquareLine exports `ui_ContainerAdjustment` (the arc overlay) visible, and `begi
 
 ### Documentation
 
-- `README.md` — DEPTH and FRESHWATER views documented, SignalK-ESP-NOW-gateway added as a data source and to the BOM, message types 7–9 and the `HALMETWaterDelta` / `DepthDelta` payloads, updated knob behaviour table and gateway versions, Flaticon credits for the two new icons
+- `README.md` — DEPTH and FRESHWATER views documented, NMEA2000 added as a depth data source, message types 7–9 and the `HALMETWaterDelta` / `DepthDelta` payloads, updated knob behaviour table and gateway versions, Flaticon credits for the two new icons
 - `docs/` — new UI screenshots and photos: `depthui.png`, `depthscreen.jpeg`, `waterui.png`, `waterscreen.jpeg`
-- `docs/full_uml_diagram.jpeg` — regenerated with the depth and fresh water paths and `SignalK-ESP-NOW-gateway`
+- `docs/full_uml_diagram.jpeg` — regenerated
 - `.gitignore` — ignore `*.docx` and `*.doc`
 
 ---
@@ -1184,6 +1184,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.2.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.1
 [v4.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.0
 [v4.1.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.1.0
 [v4.0.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.0.0
