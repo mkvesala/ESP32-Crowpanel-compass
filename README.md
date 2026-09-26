@@ -14,7 +14,7 @@ Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.c
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway)
 - Engine exhaust temperature, fuel tank level and fresh water tank level from [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway)
-- Depth below surface and below keel, relayed from the SignalK server by SignalK-ESP-NOW-gateway
+- Depth below surface and below keel, relayed from NMEA2000 source
 
 Displays values on a round LVGL UI. User interaction via rotary knob (rotate or press). No touch screen implementation yet.
 
@@ -41,7 +41,7 @@ Integrated via ESP-NOW with:
 - [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) (v1.0.1) weather data sender
 - [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) (v1.0.0) battery data sender
 - [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) (v1.3.0) engine, fuel tank and fresh water tank data sender
-- SignalK-ESP-NOW-gateway (v1.0.0) depth relay from the SignalK server
+- Depth relay from NMEA2000 (temporary, clean ESP32 based depth sender under construction)
 
 ## Purpose of the project
 
@@ -49,13 +49,13 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 1. I needed a compact multi-function display near the helm, receiving data wirelessly from the compass and other devices, independently from WiFi and SignalK
 2. I wanted to learn LVGL and SquareLine Studio for UI development
-3. I continued learning ESP32 C++ patterns and FreeRTOS from the companion compass project
+3. I continued learning ESP32 C++ patterns and FreeRTOS from the companion projects
 
 ## Release history
 
 | Release | Comment |
 |---------|---------|
-| v4.2.0 | Latest release. AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution) from depth relayed by SignalK-ESP-NOW-gateway. EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.0 | Latest release. AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution). EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.1.0 | EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. Bug fix: AttitudeScreen MINMAX view now reflects pitch and roll extremes recorded across the full runtime, not only while the Attitude screen was active. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.0.0 | Leveling functionality removed — CrowPanel is now receive-only. CompassScreen with 3-view cycle (HEADING → COG → SOG), GNSS data integration from UBLOX-ESP32-SignalK-gateway. See [CHANGELOG](CHANGELOG.md) for details. |
 | v3.1.1 | Patching documentation only. |
@@ -165,7 +165,7 @@ Common features:
     - Red, pivot at the center, rotated to show min roll, furthest roll position to port side
   - Pitch and roll min/max value labels
 - DEPTH view:
-  - Depth relayed from the SignalK server, not measured on the boat's own bus. Source chain: Raymarine Element 12S sounder → NMEA2000 → SH-wg → UDP → SignalK → `SignalK-ESP-NOW-gateway`
+  - Depth relayed from NMEA2000 source (temporary, clean ESP32-based depth sender under construction)
   - Ship silhouette floats between two static white lines: water surface (top) and keel (bottom), 55 px apart representing the 1.2 m draft (45.83 px/m ≈ 2.18 cm/px)
   - Grey sea bottom panel slides vertically with the depth below keel. At 0 m it sits on the keel line (aground) and fills the screen; it is hidden once it has slid entirely off-screen (≈ 4.0 m under the keel)
   - Labels, one decimal place, in meters:
@@ -303,7 +303,7 @@ enum class ESPNowMsgType : uint8_t {
    HALMET_ENGINE_DELTA  = 5,  // HALMET-ESP32-SignalK-gateway
    HALMET_TANK_DELTA    = 6,  // HALMET-ESP32-SignalK-gateway
    HALMET_WATER_DELTA   = 7,  // HALMET-ESP32-SignalK-gateway
-   DEPTH_DELTA          = 8,  // SignalK-ESP-NOW-gateway
+   DEPTH_DELTA          = 8,  // Relayed NMEA2000 source
    DATETIME_DELTA       = 9,  // UBLOX-ESP32-SignalK-gateway
 };
 ```
@@ -358,7 +358,7 @@ struct HALMETWaterDelta {
    float water_level_ratio;  // tanks.freshWater.0.currentLevel [0.0..1.0]
 };
 
-// Depth relayed from the SignalK server, not measured locally.
+// Depth relayed from NMEA200 source, will be replaced by a clean ESP32 based sender later.
 // A relayed value carries no freshness of its own, so both signals are required:
 //   - a field is NAN when that individual path is stale or has never arrived
 //   - age_ms describes the depth feed as a whole (bottom lost, or N2K chain down)
@@ -461,8 +461,7 @@ struct DepthDelta {
 5. [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway) as ESP-NOW sender
 6. [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway) as ESP-NOW sender
 7. [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) as ESP-NOW sender
-8. SignalK-ESP-NOW-gateway as ESP-NOW sender (relays depth from the SignalK server)
-9. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
+8. [3D-printed mounting frame for CrowPanel](docs/CrowPanel_2_1_HMI_mounting.stl):
 
    <img src="docs/mountingframe.png" width="480">
 
@@ -482,7 +481,6 @@ struct DepthDelta {
 7. BME280-ESP32-SignalK-gateway v1.0.1
 8. VEDirect-ESP32-SignalK-gateway v1.0.0
 9. HALMET-ESP32-SignalK-gateway v1.3.0
-10. SignalK-ESP-NOW-gateway v1.0.0
 
 ## Installation
 
@@ -521,8 +519,6 @@ Performance characteristics on CrowPanel 2.1" (ESP32-S3):
 
 Compass rose `lv_image_set_rotation()` is the main performance bottleneck (only on the compass screen). PNG image stored in the image object is 240x240 pixels, no alpha, scaled with LVGL factor 512 to 480x480 pixels. Antialiasing is off. LVGL rendering is based on partial mode, using buffer of 480x120.
 
-Flash usage: ~74%.
-
 ## Security
 
 **Use at your own risk — not for safety-critical navigation!**
@@ -553,7 +549,7 @@ Inspired by [example source code by Elecrow](https://github.com/Elecrow-RD/CrowP
 
 [Caution icons created by agus raharjo - Flaticon](https://www.flaticon.com/free-icons/caution)
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway), [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) and SignalK-ESP-NOW-gateway. Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) and [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway). Check the UML diagram below to see how these projects relate:
 
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
