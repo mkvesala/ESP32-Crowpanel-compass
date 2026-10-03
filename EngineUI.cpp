@@ -1,5 +1,6 @@
 #include "EngineUI.h"
 #include "ui.h"
+#include "TrendLabel.h"
 
 // === P U B L I C ===
 
@@ -62,6 +63,7 @@ void EngineUI::update() {
     if (!engine_connected && _last_engine_connected) {
         lv_label_set_text(ui_LabelExhaustTemp, "---");
         lv_obj_add_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
+        _exhaust_trend.reset();
         if (isnan(_exhaust_min_c)) {
             lv_label_set_text(ui_LabelMinExhaustTemp, "---");
             lv_label_set_text(ui_LabelMaxExhaustTemp, "---");
@@ -129,6 +131,7 @@ void EngineUI::showWaiting() {
     lv_label_set_text(ui_LabelLitres,      "---");
     lv_label_set_text(ui_LabelWtrLitres,   "---");
     lv_obj_add_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
+    _exhaust_trend.reset();
 
     if (isnan(_exhaust_min_c)) {
         lv_label_set_text(ui_LabelMinExhaustTemp, "---");
@@ -153,27 +156,8 @@ void EngineUI::updateExhaustTemp(float temp_c) {
     snprintf(buf, sizeof(buf), "Min %+.0f°C", _exhaust_min_c);
     lv_label_set_text(ui_LabelMinExhaustTemp, buf);
 
-    if (isnan(_exhaust_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _exhaust_ema     = temp_c;
-        _exhaust_ema_ref = temp_c;
-        lv_obj_add_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _exhaust_ema = EXHAUST_EMA_ALPHA * temp_c + (1.0f - EXHAUST_EMA_ALPHA) * _exhaust_ema;
-
-    float diff = _exhaust_ema - _exhaust_ema_ref;
-    if (diff >= EXHAUST_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendExhaustTemp, "↑");
-    } else if (diff <= -EXHAUST_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendExhaustTemp, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelTrendExhaustTemp, LV_OBJ_FLAG_HIDDEN);
-        _exhaust_ema_ref = _exhaust_ema;
-    }
+    // Trend indicator update
+    if (_exhaust_trend.update(temp_c, millis())) applyTrend(ui_LabelTrendExhaustTemp, _exhaust_trend.trend());
 }
 
 // Update one tank gauge: arc value, arc color and litres label.

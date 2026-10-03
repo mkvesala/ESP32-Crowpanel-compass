@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include "IScreenUI.h"
 #include "ESPNowReceiver.h"
+#include "TrendIndicator.h"
 
 // === C L A S S  W E A T H E R U I ===
 //
@@ -48,13 +49,10 @@ private:
     float _humidity_p = NAN;
     float _pressure_hpa = NAN;
 
-     // exponential moving average
-    float _temperature_ema = NAN;
-    float _temperature_ema_ref = NAN;
-    float _pressure_ema = NAN;
-    float _pressure_ema_ref = NAN;
-    float _humidity_ema = NAN;
-    float _humidity_ema_ref = NAN;
+    // Trend indicators (fast/slow EMA rate estimate, see TrendIndicator.h)
+    TrendIndicator _temperature_trend{TEMPERATURE_TREND_TAU_FAST_S, TEMPERATURE_TREND_TAU_SLOW_S, TEMPERATURE_TREND_RATE_PER_MIN};
+    TrendIndicator _pressure_trend{PRESSURE_TREND_TAU_FAST_S, PRESSURE_TREND_TAU_SLOW_S, PRESSURE_TREND_RATE_PER_MIN};
+    TrendIndicator _humidity_trend{HUMIDITY_TREND_TAU_FAST_S, HUMIDITY_TREND_TAU_SLOW_S, HUMIDITY_TREND_RATE_PER_MIN};
 
     // Session min/max (NAN = not yet received, not saved to NVS)
     float _max_temp = NAN;
@@ -82,12 +80,17 @@ private:
     WeatherPanel loadPanel();
 
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
-    static constexpr float TEMPERATURE_EMA_ALPHA = 0.05f;
-    static constexpr float PRESSURE_EMA_ALPHA = 0.05f;
-    static constexpr float HUMIDITY_EMA_ALPHA = 0.05f;
-    static constexpr float TEMPERATURE_TREND_THRESHOLD = 0.001f;
-    static constexpr float PRESSURE_TREND_THRESHOLD = 0.001f;
-    static constexpr float HUMIDITY_TREND_THRESHOLD = 0.001f;
+
+    // Trend tuning: EMA time constants (s) and rate (units/min) at which the arrow appears
+    static constexpr float TEMPERATURE_TREND_TAU_FAST_S   = 300.0f;
+    static constexpr float TEMPERATURE_TREND_TAU_SLOW_S   = 1200.0f;
+    static constexpr float TEMPERATURE_TREND_RATE_PER_MIN = 0.5f / 60.0f;   // 0.5 °C/h
+    static constexpr float PRESSURE_TREND_TAU_FAST_S      = 600.0f;
+    static constexpr float PRESSURE_TREND_TAU_SLOW_S      = 1800.0f;
+    static constexpr float PRESSURE_TREND_RATE_PER_MIN    = 0.5f / 60.0f;   // 0.5 hPa/h
+    static constexpr float HUMIDITY_TREND_TAU_FAST_S      = 300.0f;
+    static constexpr float HUMIDITY_TREND_TAU_SLOW_S      = 1200.0f;
+    static constexpr float HUMIDITY_TREND_RATE_PER_MIN    = 3.0f / 60.0f;   // 3 %/h
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";

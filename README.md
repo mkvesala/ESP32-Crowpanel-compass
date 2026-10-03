@@ -194,7 +194,7 @@ Common features:
 - Pressure view: Pressure hPA, maximum and minimum
 - Humidity view: Humidity %, maximum and minimum
 - Min and max values are runtime only, not persistent in NVS
-- Trend indicators based on EMA. Alpha (0.05) and threshold (0.001) can be adjusted via constants for each view separately
+- Trend indicators (↑/↓) show the direction the value is developing in: rate estimate from a fast and a slow time-based EMA, with hysteresis (`TrendIndicator`). Time constants and rate thresholds are tuned per value and can be adjusted via the `*_TREND_*` constants in the header
 
 ### Battery screen
 
@@ -207,7 +207,7 @@ Common features:
 - House current view: current A, maximum and minimum
 - House SoC view: state-of-charge %, maximum and minimum
 - Min and max values are runtime only, not persistent in NVS
-- Trend indicators based on EMA. Alpha (0.05) and threshold (0.001) can be adjusted via constants for each view separately
+- Trend indicators (↑/↓) show the direction the value is developing in: rate estimate from a fast and a slow time-based EMA, with hysteresis (`TrendIndicator`). Time constants and rate thresholds are tuned per value and can be adjusted via the `*_TREND_*` constants in the header
 
 ### Engine screen
 
@@ -220,7 +220,7 @@ Common features:
 **EXHAUST view:**
 - Exhaust temperature in °C (converted from Kelvin)
 - Session min and max temperatures (runtime only, not persistent in NVS)
-- Trend indicator (↑/↓) based on EMA — hidden until stable or until second reading arrives
+- Trend indicator (↑/↓) based on a fast/slow EMA rate estimate (`TrendIndicator`) — appears when the temperature changes faster than 2 °C/min
 
 **FUEL0 view:**
 - Fuel arc gauge: arc range 0–100 % of tank, label shows calculated litres (tank capacity: 400 L)
@@ -430,6 +430,8 @@ struct DepthDelta {
 | `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
 | `BatteryUI.h/cpp` | Class `BatteryUI` — battery screen adapter, realizes `IScreenUI` |
 | `EngineUI.h/.cpp` | Class `EngineUI` — engine screen adapter, realizes `IScreenUI` |
+| `TrendIndicator.h` | Class `TrendIndicator` — header-only ↑/↓ trend estimate (fast/slow EMA + hysteresis), shared by `WeatherUI`, `BatteryUI` and `EngineUI` |
+| `TrendLabel.h` | `applyTrend()` — shows a `TrendIndicator` trend on an LVGL label |
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |

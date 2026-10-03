@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include "IScreenUI.h"
 #include "ESPNowReceiver.h"
+#include "TrendIndicator.h"
 
 // === C L A S S  B A T T E R Y U I ===
 //
@@ -50,15 +51,11 @@ private:
     float _house_soc = NAN;
     float _start_voltage = NAN;
 
-     // exponential moving average
-    float _house_v_ema = NAN;
-    float _house_v_ema_ref = NAN;
-    float _house_a_ema = NAN;
-    float _house_a_ema_ref = NAN;
-    float _house_soc_ema = NAN;
-    float _house_soc_ema_ref = NAN;
-    float _start_v_ema = NAN;
-    float _start_v_ema_ref = NAN;
+    // Trend indicators (fast/slow EMA rate estimate, see TrendIndicator.h)
+    TrendIndicator _house_v_trend{VOLTAGE_TREND_TAU_FAST_S, VOLTAGE_TREND_TAU_SLOW_S, VOLTAGE_TREND_RATE_PER_MIN};
+    TrendIndicator _house_a_trend{CURRENT_TREND_TAU_FAST_S, CURRENT_TREND_TAU_SLOW_S, CURRENT_TREND_RATE_PER_MIN};
+    TrendIndicator _house_soc_trend{SOC_TREND_TAU_FAST_S, SOC_TREND_TAU_SLOW_S, SOC_TREND_RATE_PER_MIN};
+    TrendIndicator _start_v_trend{VOLTAGE_TREND_TAU_FAST_S, VOLTAGE_TREND_TAU_SLOW_S, VOLTAGE_TREND_RATE_PER_MIN};
 
     // Session min/max (NAN = not yet received, not saved to NVS)
     float _max_house_v = NAN;
@@ -89,12 +86,18 @@ private:
     BatteryPanel loadPanel();
 
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
-    static constexpr float VOLTAGE_EMA_ALPHA = 0.05f;
-    static constexpr float CURRENT_EMA_ALPHA = 0.05f;
-    static constexpr float SOC_EMA_ALPHA = 0.05f;
-    static constexpr float VOLTAGE_TREND_THRESHOLD = 0.001f;
-    static constexpr float CURRENT_TREND_THRESHOLD = 0.001f;
-    static constexpr float SOC_TREND_THRESHOLD = 0.001f;
+
+    // Trend tuning: EMA time constants (s) and rate (units/min) at which the arrow appears.
+    // A single 0.1 % SoC step peaks at ~0.007 %/min and a ~4 A load step at ~0.3 A/min, both below threshold.
+    static constexpr float VOLTAGE_TREND_TAU_FAST_S   = 30.0f;
+    static constexpr float VOLTAGE_TREND_TAU_SLOW_S   = 180.0f;
+    static constexpr float VOLTAGE_TREND_RATE_PER_MIN = 0.02f;   // V/min
+    static constexpr float CURRENT_TREND_TAU_FAST_S   = 60.0f;
+    static constexpr float CURRENT_TREND_TAU_SLOW_S   = 600.0f;
+    static constexpr float CURRENT_TREND_RATE_PER_MIN = 0.4f;    // A/min
+    static constexpr float SOC_TREND_TAU_FAST_S       = 120.0f;
+    static constexpr float SOC_TREND_TAU_SLOW_S       = 600.0f;
+    static constexpr float SOC_TREND_RATE_PER_MIN     = 0.01f;   // %/min
 
     static constexpr const char* NVS_NAMESPACE = "battery";
     static constexpr const char* NVS_KEY_PANEL = "panel";

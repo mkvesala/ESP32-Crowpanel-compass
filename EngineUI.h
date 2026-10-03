@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include "IScreenUI.h"
 #include "ESPNowReceiver.h"
+#include "TrendIndicator.h"
 
 // === C L A S S  E N G I N E U I ===
 //
@@ -47,12 +48,11 @@ private:
 
     EngineView _active_view = EngineView::EXHAUST;
 
-    // EXHAUST: latest value, session min/max, EMA
+    // EXHAUST: latest value, session min/max, trend (fast/slow EMA rate estimate, see TrendIndicator.h)
     float _exhaust_temp_c  = NAN;
     float _exhaust_min_c   = NAN;
     float _exhaust_max_c   = NAN;
-    float _exhaust_ema     = NAN;
-    float _exhaust_ema_ref = NAN;
+    TrendIndicator _exhaust_trend{EXHAUST_TREND_TAU_FAST_S, EXHAUST_TREND_TAU_SLOW_S, EXHAUST_TREND_RATE_PER_MIN};
 
     // EXHAUST: connection tracking
     uint32_t _last_engine_millis   = 0;
@@ -85,8 +85,11 @@ private:
     static constexpr uint32_t CONNECTION_TIMEOUT_MS  = 6000;
     static constexpr float    FUEL_CAPACITY_L        = 400.0f;
     static constexpr float    WATER_CAPACITY_L       = 80.0f;
-    static constexpr float    EXHAUST_EMA_ALPHA       = 0.05f;
-    static constexpr float    EXHAUST_TREND_THRESHOLD = 0.001f;
+
+    // Exhaust trend tuning: EMA time constants (s) and rate at which the arrow appears
+    static constexpr float    EXHAUST_TREND_TAU_FAST_S   = 15.0f;
+    static constexpr float    EXHAUST_TREND_TAU_SLOW_S   = 60.0f;
+    static constexpr float    EXHAUST_TREND_RATE_PER_MIN = 2.0f;   // °C/min
 
     // Tank arc color thresholds and colors — shared by the fuel and fresh water gauges
     static constexpr float    TANK_THRESHOLD_YELLOW = 0.25f;  // below this: yellow

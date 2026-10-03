@@ -1,5 +1,6 @@
 #include "BatteryUI.h"
 #include "ui.h"
+#include "TrendLabel.h"
 
 // === P U B L I C ===
 
@@ -118,6 +119,10 @@ void BatteryUI::showWaiting() {
     lv_obj_add_flag(ui_LabelHouseAmpsTrend, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelHouseSocTrend, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelStarterVoltageTrend, LV_OBJ_FLAG_HIDDEN);
+    _house_v_trend.reset();
+    _house_a_trend.reset();
+    _house_soc_trend.reset();
+    _start_v_trend.reset();
 
     // Min/max labels: show "---" only if no session data yet
     if (isnan(_min_house_v)) {
@@ -156,28 +161,8 @@ void BatteryUI::updateHouseVoltage(float house_v) {
     snprintf(buf, sizeof(buf), "Min %.1fV", _min_house_v);
     lv_label_set_text(ui_LabelMinHouseVoltage, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_house_v_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _house_v_ema = house_v;
-        _house_v_ema_ref = house_v;
-        lv_obj_add_flag(ui_LabelHouseVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _house_v_ema = VOLTAGE_EMA_ALPHA * house_v + (1.0f - VOLTAGE_EMA_ALPHA) * _house_v_ema;
-
-    float diff = _house_v_ema - _house_v_ema_ref;
-    if (diff >= VOLTAGE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseVoltageTrend, "↑");
-    } else if (diff <= -VOLTAGE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseVoltageTrend, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelHouseVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        _house_v_ema_ref = _house_v_ema;
-    }
+    // Trend indicator update
+    if (_house_v_trend.update(house_v, millis())) applyTrend(ui_LabelHouseVoltageTrend, _house_v_trend.trend());
 }
 
 // Update house battery bank current (amps)
@@ -198,28 +183,8 @@ void BatteryUI::updateHouseCurrent(float house_a) {
     snprintf(buf, sizeof(buf), "Min %+.1fA", _min_house_a);
     lv_label_set_text(ui_LabelMinHouseAmps, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_house_a_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _house_a_ema     = house_a;
-        _house_a_ema_ref = house_a;
-        lv_obj_add_flag(ui_LabelHouseAmpsTrend, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _house_a_ema = CURRENT_EMA_ALPHA * house_a + (1.0f - CURRENT_EMA_ALPHA) * _house_a_ema;
-
-    float diff = _house_a_ema - _house_a_ema_ref;
-    if (diff >= CURRENT_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseAmpsTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseAmpsTrend, "↑");
-    } else if (diff <= -CURRENT_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseAmpsTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseAmpsTrend, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelHouseAmpsTrend, LV_OBJ_FLAG_HIDDEN);
-        _house_a_ema_ref = _house_a_ema;
-    }
+    // Trend indicator update
+    if (_house_a_trend.update(house_a, millis())) applyTrend(ui_LabelHouseAmpsTrend, _house_a_trend.trend());
 
 }
 
@@ -241,28 +206,8 @@ void BatteryUI::updateHouseSoc(float soc_p) {
     snprintf(buf, sizeof(buf), "Min %.0f%%", _min_house_soc);
     lv_label_set_text(ui_LabelMinHouseSoc, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_house_soc_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _house_soc_ema = soc_p;
-        _house_soc_ema_ref = soc_p;
-        lv_obj_add_flag(ui_LabelHouseSocTrend, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _house_soc_ema = SOC_EMA_ALPHA * soc_p + (1.0f - SOC_EMA_ALPHA) * _house_soc_ema;
-
-    float diff = _house_soc_ema - _house_soc_ema_ref;
-    if (diff >= SOC_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseSocTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseSocTrend, "↑");
-    } else if (diff <= -SOC_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelHouseSocTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelHouseSocTrend, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelHouseSocTrend, LV_OBJ_FLAG_HIDDEN);
-        _house_soc_ema_ref = _house_soc_ema;
-    }
+    // Trend indicator update
+    if (_house_soc_trend.update(soc_p, millis())) applyTrend(ui_LabelHouseSocTrend, _house_soc_trend.trend());
 }
 
 // Update starter battery bank voltage (volts)
@@ -283,28 +228,8 @@ void BatteryUI::updateStartVoltage(float start_v) {
     snprintf(buf, sizeof(buf), "Min %.1fV", _min_start_v);
     lv_label_set_text(ui_LabelMinStarterVoltage, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_start_v_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _start_v_ema = start_v;
-        _start_v_ema_ref = start_v;
-        lv_obj_add_flag(ui_LabelStarterVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _start_v_ema = VOLTAGE_EMA_ALPHA * start_v + (1.0f - VOLTAGE_EMA_ALPHA) * _start_v_ema;
-
-    float diff = _start_v_ema - _start_v_ema_ref;
-    if (diff >= VOLTAGE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelStarterVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelStarterVoltageTrend, "↑");
-    } else if (diff <= -VOLTAGE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelStarterVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelStarterVoltageTrend, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelStarterVoltageTrend, LV_OBJ_FLAG_HIDDEN);
-        _start_v_ema_ref = _start_v_ema;
-    }
+    // Trend indicator update
+    if (_start_v_trend.update(start_v, millis())) applyTrend(ui_LabelStarterVoltageTrend, _start_v_trend.trend());
 }
 
 // Save active panel to NVS

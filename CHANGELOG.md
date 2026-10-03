@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+#### Trend arrows show the direction the value is developing in
+
+The ↑/↓ trend arrows on WeatherScreen (temperature, pressure, humidity), BatteryScreen (house voltage, current, SoC, starter voltage) and EngineScreen (exhaust temperature) compared the EMA against a reference that only moved inside a ±0.001 neutral band. Once an arrow appeared the reference froze, so the arrow showed whether the value was above or below the level where it last stood still, not where it was heading. Example: house SoC showed ↓ throughout charging because the reference was stuck at the higher morning SoC.
+
+- New header-only `TrendIndicator` class: fast and slow time-based EMAs (`alpha = 1 − exp(−dt/τ)`, independent of the sender's rate); rate estimate `(fast − slow) / (τ_slow − τ_fast)` in units/min
+- Hysteresis: arrow appears at the rate threshold and disappears below half of it; ↑ ↔ ↓ always passes through hidden, so the arrow does not flicker
+- Trend state resets on connection loss and after a sample gap longer than τ_slow
+- New `TrendLabel.h` with `applyTrend()`; labels are only touched when the trend changes
+- Per-value tuning (τ_fast / τ_slow / threshold):
+
+| Value | τ_fast | τ_slow | Threshold |
+|---|---|---|---|
+| House / starter voltage | 30 s | 180 s | 0.02 V/min |
+| House current | 60 s | 600 s | 0.4 A/min |
+| House SoC | 120 s | 600 s | 0.01 %/min |
+| Temperature | 300 s | 1200 s | 0.5 °C/h |
+| Pressure | 600 s | 1800 s | 0.5 hPa/h |
+| Humidity | 300 s | 1200 s | 3 %/h |
+| Exhaust temperature | 15 s | 60 s | 2 °C/min |
+
 ## [v4.2.1] - 2026-09-26
 
 ### Changed

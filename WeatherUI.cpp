@@ -1,5 +1,6 @@
 #include "WeatherUI.h"
 #include "ui.h"
+#include "TrendLabel.h"
 
 // === P U B L I C ===
 
@@ -99,6 +100,9 @@ void WeatherUI::showWaiting() {
     lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
+    _temperature_trend.reset();
+    _pressure_trend.reset();
+    _humidity_trend.reset();
 
     // Min/max labels: show "---" only if no session data yet
     if (isnan(_min_temp)) {
@@ -133,28 +137,8 @@ void WeatherUI::updateTemperature(float temp_c) {
     snprintf(buf, sizeof(buf), "Min %+.0f°C", _min_temp);
     lv_label_set_text(ui_LabelMinTemp, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_temperature_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _temperature_ema = temp_c;
-        _temperature_ema_ref = temp_c;
-        lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _temperature_ema = TEMPERATURE_EMA_ALPHA * temp_c + (1.0f - TEMPERATURE_EMA_ALPHA) * _temperature_ema;
-
-    float diff = _temperature_ema - _temperature_ema_ref;
-    if (diff >= TEMPERATURE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendTemp, "↑");
-    } else if (diff <= -TEMPERATURE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendTemp, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelTrendTemp, LV_OBJ_FLAG_HIDDEN);
-        _temperature_ema_ref = _temperature_ema;
-    }
+    // Trend indicator update
+    if (_temperature_trend.update(temp_c, millis())) applyTrend(ui_LabelTrendTemp, _temperature_trend.trend());
 }
 
 // Update pressure value, session min/max, and trend indicator
@@ -175,28 +159,8 @@ void WeatherUI::updatePressure(float pres_hpa) {
     snprintf(buf, sizeof(buf), "Min %.0f", _min_pressure);
     lv_label_set_text(ui_LabelMinPressure, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_pressure_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _pressure_ema     = pres_hpa;
-        _pressure_ema_ref = pres_hpa;
-        lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _pressure_ema = PRESSURE_EMA_ALPHA * pres_hpa + (1.0f - PRESSURE_EMA_ALPHA) * _pressure_ema;
-
-    float diff = _pressure_ema - _pressure_ema_ref;
-    if (diff >= PRESSURE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrend, "↑");
-    } else if (diff <= -PRESSURE_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrend, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelTrend, LV_OBJ_FLAG_HIDDEN);
-        _pressure_ema_ref = _pressure_ema;
-    }
+    // Trend indicator update
+    if (_pressure_trend.update(pres_hpa, millis())) applyTrend(ui_LabelTrend, _pressure_trend.trend());
 
 }
 
@@ -218,28 +182,8 @@ void WeatherUI::updateHumidity(float hum_p) {
     snprintf(buf, sizeof(buf), "Min %.0f%%", _min_humidity);
     lv_label_set_text(ui_LabelMinHumidity, buf);
 
-    // Trend indicator update based on EMA
-    if (isnan(_humidity_ema)) {
-        // First reading — initialize EMA and reference, hide trend
-        _humidity_ema = hum_p;
-        _humidity_ema_ref = hum_p;
-        lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
-        return;
-    }
-    _humidity_ema = HUMIDITY_EMA_ALPHA * hum_p + (1.0f - HUMIDITY_EMA_ALPHA) * _humidity_ema;
-
-    float diff = _humidity_ema - _humidity_ema_ref;
-    if (diff >= HUMIDITY_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendHumidity, "↑");
-    } else if (diff <= -HUMIDITY_TREND_THRESHOLD) {
-        lv_obj_clear_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(ui_LabelTrendHumidity, "↓");
-    } else {
-        // Neutral zone — hide indicator and drift reference toward EMA
-        lv_obj_add_flag(ui_LabelTrendHumidity, LV_OBJ_FLAG_HIDDEN);
-        _humidity_ema_ref = _humidity_ema;
-    }
+    // Trend indicator update
+    if (_humidity_trend.update(hum_p, millis())) applyTrend(ui_LabelTrendHumidity, _humidity_trend.trend());
 }
 
 // Save active panel to NVS
