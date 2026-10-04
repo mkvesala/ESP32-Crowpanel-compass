@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.2.3] - 2026-10-04
+
+### Fixed
+
+#### AttitudeScreen remembers the last selected view
+
+AttitudeScreen always returned to the ATTITUDE view when the user rotated the knob to another screen and back, because `AttitudeUI::onLeave()` explicitly reset the view. MINMAX and DEPTH had to be re-selected with the knob button every time.
+
+- `onLeave()` now saves the active view to NVS instead of resetting it (namespace `"attitude"`, key `"view"`)
+- `begin()` loads the stored view, so the last selected view is also restored after reboot
+- Out-of-range stored values fall back to ATTITUDE
+- Same `saveView()` / `loadView()` pattern as CompassUI and EngineUI; min/max values remain runtime only
+
 ## [v4.2.2] - 2026-10-04
 
 ### Fixed
@@ -1208,6 +1221,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.2.3]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.3
 [v4.2.2]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.2
 [v4.2.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.1
 [v4.2.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.0

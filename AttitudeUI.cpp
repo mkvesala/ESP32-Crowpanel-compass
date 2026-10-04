@@ -22,6 +22,8 @@ lv_obj_t* AttitudeUI::getLvglScreen() const {
 void AttitudeUI::begin() {
     if (_initialized) return;
 
+    _active_view = this->loadView();
+
     // Initialize shared image descriptor
     memset(s_horizonline_buf, 0xFF, sizeof(s_horizonline_buf));
     s_horizonline_dsc.header.magic  = LV_IMAGE_HEADER_MAGIC;
@@ -99,7 +101,7 @@ void AttitudeUI::begin() {
     _initialized = true;
 
     // Apply initial view (sets container visibility)
-    this->showView(AttitudeView::ATTITUDE);
+    this->showView(_active_view);
 
     this->showWaiting();
 
@@ -151,9 +153,9 @@ void AttitudeUI::onButtonPress() {
     this->showView(static_cast<AttitudeView>(next));
 }
 
-// Realizes onLeave(): Reset to ATTITUDE view when navigating away
+// Realizes onLeave(): save active view to NVS
 void AttitudeUI::onLeave() {
-    this->showView(AttitudeView::ATTITUDE);
+    this->saveView();
 }
 
 // === P R I V A T E ===
@@ -408,3 +410,21 @@ void AttitudeUI::showDepthWaiting() {
     _last_below_surface_x10 = SENTINEL;
 }
 
+// Save active view to NVS
+void AttitudeUI::saveView() {
+    Preferences prefs;
+    prefs.begin(NVS_NAMESPACE, false);
+    prefs.putUChar(NVS_KEY_VIEW, static_cast<uint8_t>(_active_view));
+    prefs.end();
+}
+
+// Load active view from NVS
+AttitudeUI::AttitudeView AttitudeUI::loadView() {
+    Preferences prefs;
+    prefs.begin(NVS_NAMESPACE, true);
+    uint8_t val = prefs.getUChar(NVS_KEY_VIEW, 0);  // default: ATTITUDE
+    prefs.end();
+
+    if (val >= static_cast<uint8_t>(AttitudeView::COUNT)) val = 0;
+    return static_cast<AttitudeView>(val);
+}

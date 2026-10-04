@@ -55,7 +55,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.2.2 | Latest release. Bug fix: trend arrows (↑/↓) on WeatherScreen, BatteryScreen and EngineScreen now show the direction the value is developing in, instead of whether it is above or below the level where it last stood still. New `TrendIndicator` (fast/slow EMA rate estimate with hysteresis), tuned per value. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.3 | Latest release. Bug fix: AttitudeScreen now restores the last selected view (ATTITUDE / MINMAX / DEPTH) when returning to the screen and after reboot — active view is persisted to NVS like on the other screens. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.2 | Bug fix: trend arrows (↑/↓) on WeatherScreen, BatteryScreen and EngineScreen now show the direction the value is developing in, instead of whether it is above or below the level where it last stood still. New `TrendIndicator` (fast/slow EMA rate estimate with hysteresis), tuned per value. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.1 | Documentation update only. |
 | v4.2.0 | AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution). EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.1.0 | EngineScreen added — exhaust temperature with session min/max and trend, fuel tank arc gauge with dynamic color. ESP-NOW integration with HALMET-ESP32-SignalK-gateway. Bug fix: AttitudeScreen MINMAX view now reflects pitch and roll extremes recorded across the full runtime, not only while the Attitude screen was active. See [CHANGELOG](CHANGELOG.md) for details. |
@@ -155,7 +156,7 @@ Common features:
 
 - Pitch and roll min/max values tracked across the full runtime (all screens), no persistent storage in NVS
 - Pressing the knob button cycles between ATTITUDE → MINMAX → DEPTH → ATTITUDE view
-- Active view is runtime only, not stored in NVS — returning to the screen always loads ATTITUDE view
+- Last view stored in NVS `onLeave()` (default: ATTITUDE)
 - ATTITUDE view:
   - Artificial horizon: white 680 x 4 px image that rotates and translates based on pitch and roll
   - Pitch and roll value labels

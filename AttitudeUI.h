@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <lvgl.h>
+#include <Preferences.h>
 #include "IScreenUI.h"
 #include "ESPNowReceiver.h"
 
@@ -13,8 +14,8 @@
 // - Initialize: _attitudeUI.begin()
 // - Update in loop(): via ScreenManager → IScreenUI::update()
 // - Provides public API to:
-//   - Cycle internal views (ATTITUDE → MINMAX) via onButtonPress()
-//   - Reset to ATTITUDE view on screen leave via onLeave()
+//   - Cycle internal views (ATTITUDE → MINMAX → DEPTH) via onButtonPress()
+//   - Save active view to NVS on screen leave via onLeave()
 // - Views (cycled with knob button press):
 //   1. ATTITUDE  — live horizon + pitch/roll labels + ship silhouette
 //   2. MINMAX    — 4 static min/max lines + numeric labels + ship silhouette
@@ -22,7 +23,7 @@
 // - Pitch: bow down → pitch negative → horizon moves up
 // - Roll:  roll port → roll negative → horizon tilts starboard (clockwise)
 // - Min/max: runtime only, not persisted to NVS, resets on reboot
-// - Active view: runtime only, resets to ATTITUDE on onLeave()
+// - Active view: persisted to NVS on onLeave()
 // - Owned by: CrowPanelApplication
 
 class AttitudeUI : public IScreenUI {
@@ -130,6 +131,13 @@ private:
     // Depth display
     void updateDepth();
     void showDepthWaiting();
+
+    // NVS
+    void saveView();
+    AttitudeView loadView();
+
+    static constexpr const char* NVS_NAMESPACE = "attitude";
+    static constexpr const char* NVS_KEY_VIEW  = "view";
 
 };
 
