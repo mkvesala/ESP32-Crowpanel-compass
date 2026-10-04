@@ -89,15 +89,15 @@ private:
 
     // Trend tuning: EMA time constants (s) and rate (units/min) at which the arrow appears.
     // A single 0.1 % SoC step peaks at ~0.007 %/min and a ~4 A load step at ~0.3 A/min, both below threshold.
-    static constexpr float VOLTAGE_TREND_TAU_FAST_S   = 30.0f;
-    static constexpr float VOLTAGE_TREND_TAU_SLOW_S   = 180.0f;
-    static constexpr float VOLTAGE_TREND_RATE_PER_MIN = 0.02f;   // V/min
+    static constexpr float VOLTAGE_TREND_TAU_FAST_S   = 15.0f;
+    static constexpr float VOLTAGE_TREND_TAU_SLOW_S   = 90.0f;
+    static constexpr float VOLTAGE_TREND_RATE_PER_MIN = 0.01f;   // V/min
     static constexpr float CURRENT_TREND_TAU_FAST_S   = 60.0f;
     static constexpr float CURRENT_TREND_TAU_SLOW_S   = 600.0f;
     static constexpr float CURRENT_TREND_RATE_PER_MIN = 0.4f;    // A/min
-    static constexpr float SOC_TREND_TAU_FAST_S       = 120.0f;
-    static constexpr float SOC_TREND_TAU_SLOW_S       = 600.0f;
-    static constexpr float SOC_TREND_RATE_PER_MIN     = 0.01f;   // %/min
+    static constexpr float SOC_TREND_TAU_FAST_S       = 60.0f;
+    static constexpr float SOC_TREND_TAU_SLOW_S       = 300.0f;
+    static constexpr float SOC_TREND_RATE_PER_MIN     = 0.005f;  // %/min
 
     static constexpr const char* NVS_NAMESPACE = "battery";
     static constexpr const char* NVS_KEY_PANEL = "panel";

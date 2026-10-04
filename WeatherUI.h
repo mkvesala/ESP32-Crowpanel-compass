@@ -82,15 +82,15 @@ private:
     static constexpr uint32_t CONNECTION_TIMEOUT_MS = 6000;
 
     // Trend tuning: EMA time constants (s) and rate (units/min) at which the arrow appears
-    static constexpr float TEMPERATURE_TREND_TAU_FAST_S   = 300.0f;
-    static constexpr float TEMPERATURE_TREND_TAU_SLOW_S   = 1200.0f;
-    static constexpr float TEMPERATURE_TREND_RATE_PER_MIN = 0.5f / 60.0f;   // 0.5 °C/h
-    static constexpr float PRESSURE_TREND_TAU_FAST_S      = 600.0f;
-    static constexpr float PRESSURE_TREND_TAU_SLOW_S      = 1800.0f;
-    static constexpr float PRESSURE_TREND_RATE_PER_MIN    = 0.5f / 60.0f;   // 0.5 hPa/h
-    static constexpr float HUMIDITY_TREND_TAU_FAST_S      = 300.0f;
-    static constexpr float HUMIDITY_TREND_TAU_SLOW_S      = 1200.0f;
-    static constexpr float HUMIDITY_TREND_RATE_PER_MIN    = 3.0f / 60.0f;   // 3 %/h
+    static constexpr float TEMPERATURE_TREND_TAU_FAST_S   = 150.0f;
+    static constexpr float TEMPERATURE_TREND_TAU_SLOW_S   = 600.0f;
+    static constexpr float TEMPERATURE_TREND_RATE_PER_MIN = 0.25f / 60.0f;  // 0.25 °C/h
+    static constexpr float PRESSURE_TREND_TAU_FAST_S      = 300.0f;
+    static constexpr float PRESSURE_TREND_TAU_SLOW_S      = 900.0f;
+    static constexpr float PRESSURE_TREND_RATE_PER_MIN    = 0.25f / 60.0f;  // 0.25 hPa/h
+    static constexpr float HUMIDITY_TREND_TAU_FAST_S      = 150.0f;
+    static constexpr float HUMIDITY_TREND_TAU_SLOW_S      = 600.0f;
+    static constexpr float HUMIDITY_TREND_RATE_PER_MIN    = 1.5f / 60.0f;   // 1.5 %/h
 
     static constexpr const char* NVS_NAMESPACE = "weather";
     static constexpr const char* NVS_KEY_PANEL = "panel";

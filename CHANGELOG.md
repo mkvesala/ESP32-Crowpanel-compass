@@ -20,13 +20,13 @@ The ↑/↓ trend arrows on WeatherScreen (temperature, pressure, humidity), Bat
 
 | Value | τ_fast | τ_slow | Threshold |
 |---|---|---|---|
-| House / starter voltage | 30 s | 180 s | 0.02 V/min |
+| House / starter voltage | 15 s | 90 s | 0.01 V/min |
 | House current | 60 s | 600 s | 0.4 A/min |
-| House SoC | 120 s | 600 s | 0.01 %/min |
-| Temperature | 300 s | 1200 s | 0.5 °C/h |
-| Pressure | 600 s | 1800 s | 0.5 hPa/h |
-| Humidity | 300 s | 1200 s | 3 %/h |
-| Exhaust temperature | 15 s | 60 s | 2 °C/min |
+| House SoC | 60 s | 300 s | 0.005 %/min |
+| Temperature | 150 s | 600 s | 0.25 °C/h |
+| Pressure | 300 s | 900 s | 0.25 hPa/h |
+| Humidity | 150 s | 600 s | 1.5 %/h |
+| Exhaust temperature | 8 s | 30 s | 1 °C/min |
 
 ## [v4.2.1] - 2026-09-26
 

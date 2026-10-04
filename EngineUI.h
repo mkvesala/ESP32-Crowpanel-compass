@@ -87,9 +87,9 @@ private:
     static constexpr float    WATER_CAPACITY_L       = 80.0f;
 
     // Exhaust trend tuning: EMA time constants (s) and rate at which the arrow appears
-    static constexpr float    EXHAUST_TREND_TAU_FAST_S   = 15.0f;
-    static constexpr float    EXHAUST_TREND_TAU_SLOW_S   = 60.0f;
-    static constexpr float    EXHAUST_TREND_RATE_PER_MIN = 2.0f;   // °C/min
+    static constexpr float    EXHAUST_TREND_TAU_FAST_S   = 8.0f;
+    static constexpr float    EXHAUST_TREND_TAU_SLOW_S   = 30.0f;
+    static constexpr float    EXHAUST_TREND_RATE_PER_MIN = 1.0f;   // °C/min
 
     // Tank arc color thresholds and colors — shared by the fuel and fresh water gauges
     static constexpr float    TANK_THRESHOLD_YELLOW = 0.25f;  // below this: yellow
