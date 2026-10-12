@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.2.4] - 2026-10-12
+
+### Added
+
+- `version.h` with `SW_VERSION = "v4.2.4"`, same format as in the gateway projects
+
+### Changed
+
+- README: disclaimer added below the badges (same wording as in CMPS14-ESP32-SignalK-gateway) — hobby project provided "as is", not intended for navigation or safety-critical use, used at own risk
+- README: intro text now under its own "Introduction" heading
+
 ## [v4.2.3] - 2026-10-04
 
 ### Fixed
@@ -1221,6 +1232,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.2.4]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.4
 [v4.2.3]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.3
 [v4.2.2]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.2
 [v4.2.1]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.1

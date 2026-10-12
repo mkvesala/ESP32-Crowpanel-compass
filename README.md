@@ -8,6 +8,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![UI: LVGL9](https://img.shields.io/badge/UI-LVGL9-black)](https://lvgl.io)
 
+## Disclaimer
+
+This is a personal hobby project. It is provided "as is", without warranty of any kind. See LICENSE.
+
+This firmware is NOT intended for navigation or for any safety-critical use at sea. Do not rely on the data it produces (such as heading, depth or position) to navigate a vessel. Always use certified navigation equipment and proper seamanship.
+
+You use this code entirely at your own risk. The author accepts no liability for any damage, injury or loss arising from its use.
+
+## Introduction
+
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480x480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
 - GNSS position, speed over ground (SOG) and course over ground (COG) from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
@@ -55,7 +65,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.2.3 | Latest release. Bug fix: AttitudeScreen now restores the last selected view (ATTITUDE / MINMAX / DEPTH) when returning to the screen and after reboot — active view is persisted to NVS like on the other screens. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.4 | Latest release. Documentation update: disclaimer added to README. New `version.h` with `SW_VERSION`. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.3 | Bug fix: AttitudeScreen now restores the last selected view (ATTITUDE / MINMAX / DEPTH) when returning to the screen and after reboot — active view is persisted to NVS like on the other screens. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.2 | Bug fix: trend arrows (↑/↓) on WeatherScreen, BatteryScreen and EngineScreen now show the direction the value is developing in, instead of whether it is above or below the level where it last stood still. New `TrendIndicator` (fast/slow EMA rate estimate with hysteresis), tuned per value. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.1 | Documentation update only. |
 | v4.2.0 | AttitudeScreen DEPTH view — graphical depth situation (surface line, keel line, moving sea bottom, grounding caution). EngineScreen FRESHWATER view — fresh water tank arc gauge from HALMET-ESP32-SignalK-gateway. Bug fixes: EngineScreen `showView()` now hides all three view roots, the water gauge container no longer covers the exhaust and fuel views; the BrightnessScreen arc overlay no longer shows on screen entry. See [CHANGELOG](CHANGELOG.md) for details. |
@@ -437,6 +448,7 @@ struct DepthDelta {
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
 | `RotaryEncoder.h/.cpp` | Class `RotaryEncoder` — rotary knob rotation and button, FreeRTOS tasks |
 | `ScreenManager.h/.cpp` | Class `ScreenManager` — Scalable screen carousel management |
+| `version.h` | Software version string `SW_VERSION` |
 | `lv_conf.h` | LVGL configuration file based on the template provided by LVGL library |
 | `Crowpanel_ST7701_Init.h/.cpp` | `Arduino_RGB_Display` init table for CrowPanel display - `crowpanel_st7701_type5_init_operations` |
 | `ui.h/.c` | SquareLine Studio generated — UI init |
