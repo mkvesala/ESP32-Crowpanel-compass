@@ -24914,12 +24914,12 @@
         "guid": "GUID70956596-430131S265945286",
         "children": [
           {
-            "guid": "GUID55154705-430135S7685286",
+            "guid": "GUID80856062-350617S9845287",
             "properties": [
               {
                 "nid": 10,
                 "strtype": "OBJECT/Name",
-                "strval": "PanelHeading",
+                "strval": "ImageBow",
                 "InheritedType": 10
               },
               {
@@ -24957,18 +24957,18 @@
               },
               {
                 "nid": 60,
-                "flags": 17,
+                "flags": 51,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  2,
-                  120
+                  1,
+                  1
                 ],
                 "InheritedType": 7
               },
               {
                 "nid": 70,
                 "strtype": "OBJECT/Align",
-                "strval": "BOTTOM_MID",
+                "strval": "TOP_MID",
                 "InheritedType": 3
               },
               {
@@ -24984,7 +24984,7 @@
               },
               {
                 "nid": 100,
-                "strtype": "PANEL/Hidden",
+                "strtype": "IMAGE/Hidden",
                 "strval": "False",
                 "InheritedType": 2
               },
@@ -25031,56 +25031,53 @@
                 "InheritedType": 1
               },
               {
-                "part": "lv.PART.MAIN",
-                "childs": [
-                  {
-                    "nid": 10000,
-                    "strtype": "_style/StyleState",
-                    "strval": "DEFAULT",
-                    "childs": [
-                      {
-                        "nid": 10520,
-                        "flags": 4096,
-                        "strtype": "_style/Bg_Color",
-                        "intarray": [
-                          255,
-                          255,
-                          255,
-                          255
-                        ],
-                        "InheritedType": 7
-                      },
-                      {
-                        "nid": 10810,
-                        "flags": 4096,
-                        "strtype": "_style/Outline_Color",
-                        "intarray": [
-                          255,
-                          255,
-                          255,
-                          255
-                        ],
-                        "InheritedType": 7
-                      }
-                    ],
-                    "InheritedType": 1
-                  }
-                ],
                 "nid": 1010,
-                "strtype": "PANEL/Style_main",
-                "strval": "lv.PART.MAIN, Rectangle, Pad, Text, Transform",
-                "InheritedType": 11
+                "strtype": "IMAGE/Image",
+                "InheritedType": 1
               },
               {
-                "part": "lv.PART.SCROLLBAR",
-                "childs": [],
                 "nid": 1020,
-                "strtype": "PANEL/Style_scrollbar",
-                "strval": "lv.PART.SCROLLBAR, Rectangle, Pad",
+                "strtype": "IMAGE/Asset",
+                "strval": "assets/Arrow.png",
+                "InheritedType": 5
+              },
+              {
+                "nid": 1030,
+                "flags": 16,
+                "strtype": "IMAGE/Pivot",
+                "intarray": [
+                  0,
+                  0
+                ],
+                "InheritedType": 7
+              },
+              {
+                "nid": 1040,
+                "strtype": "IMAGE/Rotation",
+                "InheritedType": 6
+              },
+              {
+                "nid": 1050,
+                "strtype": "IMAGE/Scale",
+                "integer": 256,
+                "InheritedType": 6
+              },
+              {
+                "nid": 1060,
+                "strtype": "IMAGE/Inner_align",
+                "strval": "CENTER",
+                "InheritedType": 3
+              },
+              {
+                "part": "lv.PART.MAIN",
+                "childs": [],
+                "nid": 1070,
+                "strtype": "IMAGE/Style_main",
+                "strval": "lv.PART.MAIN, Rectangle, Image, Transform",
                 "InheritedType": 11
               }
             ],
-            "saved_objtypeKey": "PANEL"
+            "saved_objtypeKey": "IMAGE"
           },
           {
             "guid": "GUID44306851-46079S605287",
@@ -25150,6 +25147,12 @@
                 "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
+              },
+              {
+                "nid": 100,
+                "strtype": "PANEL/Hidden",
+                "strval": "False",
+                "InheritedType": 2
               },
               {
                 "nid": 225,
@@ -25313,8 +25316,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      20,
-                      20
+                      18,
+                      18
                     ],
                     "InheritedType": 7
                   },
@@ -25491,24 +25494,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -25584,7 +25587,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Sun\\n\\n\\n00°00,0'\\n090°",
+                    "strval": "\\nSun\\n\\n\\n00°00,0'\\n090°",
                     "InheritedType": 10
                   },
                   {
@@ -25677,8 +25680,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -25822,8 +25825,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      20,
-                      20
+                      18,
+                      18
                     ],
                     "InheritedType": 7
                   },
@@ -26000,24 +26003,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -26093,7 +26096,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Moon\\n\\n\\n00°00,0'\\n180°",
+                    "strval": "\\nMoon\\n\\n\\n60°00,0'\\n180°",
                     "InheritedType": 10
                   },
                   {
@@ -26177,7 +26180,7 @@
                 "strtype": "OBJECT/Position",
                 "intarray": [
                   0,
-                  0
+                  63
                 ],
                 "InheritedType": 7
               },
@@ -26186,15 +26189,15 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
               {
                 "nid": 70,
                 "strtype": "OBJECT/Align",
-                "strval": "BOTTOM_MID",
+                "strval": "CENTER",
                 "InheritedType": 3
               },
               {
@@ -26331,8 +26334,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      15,
-                      15
+                      12,
+                      12
                     ],
                     "InheritedType": 7
                   },
@@ -26509,24 +26512,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -26602,7 +26605,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Mars\\n\\n\\n70°00,0'\\n270°",
+                    "strval": "\\nMars\\n\\n\\n40°00,0'\\n270°",
                     "InheritedType": 10
                   },
                   {
@@ -26685,7 +26688,7 @@
                 "flags": 17,
                 "strtype": "OBJECT/Position",
                 "intarray": [
-                  -40,
+                  -106,
                   0
                 ],
                 "InheritedType": 7
@@ -26695,8 +26698,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -26840,8 +26843,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      15,
-                      15
+                      12,
+                      12
                     ],
                     "InheritedType": 7
                   },
@@ -27018,24 +27021,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -27111,7 +27114,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Venus\\n\\n\\n20°00,0'\\n180°",
+                    "strval": "\\nVenus\\n\\n\\n20°00,0'\\n360°",
                     "InheritedType": 10
                   },
                   {
@@ -27204,8 +27207,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -27349,8 +27352,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      15,
-                      15
+                      12,
+                      12
                     ],
                     "InheritedType": 7
                   },
@@ -27527,24 +27530,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -27620,7 +27623,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Saturn\\n\\n\\n10°00,0'\\n135°",
+                    "strval": "\\nSaturn\\n\\n\\n10°00,0'\\n045°",
                     "InheritedType": 10
                   },
                   {
@@ -27713,8 +27716,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -27858,8 +27861,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      15,
-                      15
+                      12,
+                      12
                     ],
                     "InheritedType": 7
                   },
@@ -28036,24 +28039,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -28129,7 +28132,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Jupiter\\n\\n\\n00°00,0'\\n225°",
+                    "strval": "\\nJupiter\\n\\n\\n50°00,0'\\n225°",
                     "InheritedType": 10
                   },
                   {
@@ -28212,8 +28215,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Position",
                 "intarray": [
-                  -134,
-                  134
+                  -60,
+                  60
                 ],
                 "InheritedType": 7
               },
@@ -28222,8 +28225,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -28367,8 +28370,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      10,
-                      10
+                      6,
+                      6
                     ],
                     "InheritedType": 7
                   },
@@ -28545,7 +28548,7 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
@@ -28554,15 +28557,15 @@
                     "flags": 51,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -28638,7 +28641,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Sirius\\n\\n\\n35°00,0'\\n135°",
+                    "strval": "\\nSirius\\n\\n\\n70°00,0'\\n135°",
                     "InheritedType": 10
                   },
                   {
@@ -28721,8 +28724,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Position",
                 "intarray": [
-                  81,
-                  81
+                  30,
+                  30
                 ],
                 "InheritedType": 7
               },
@@ -28731,8 +28734,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -28876,8 +28879,8 @@
                     "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      10,
-                      10
+                      6,
+                      6
                     ],
                     "InheritedType": 7
                   },
@@ -29054,24 +29057,24 @@
                     "strtype": "OBJECT/Position",
                     "intarray": [
                       0,
-                      20
+                      0
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
-                      1,
-                      1
+                      80,
+                      80
                     ],
                     "InheritedType": 7
                   },
                   {
                     "nid": 70,
                     "strtype": "OBJECT/Align",
-                    "strval": "TOP_MID",
+                    "strval": "CENTER",
                     "InheritedType": 3
                   },
                   {
@@ -29147,7 +29150,7 @@
                   {
                     "nid": 1030,
                     "strtype": "LABEL/Text",
-                    "strval": "Vega\\n\\n\\n30°00,0'\\n315°",
+                    "strval": "\\nVega\\n\\n\\n30°00,0'\\n315°",
                     "InheritedType": 10
                   },
                   {
@@ -29240,8 +29243,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  100,
-                  100
+                  90,
+                  90
                 ],
                 "InheritedType": 7
               },
@@ -29379,11 +29382,11 @@
               },
               {
                 "nid": 60,
-                "flags": 51,
+                "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  1,
-                  1
+                  106,
+                  106
                 ],
                 "InheritedType": 7
               },
@@ -29403,6 +29406,12 @@
                 "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
+              },
+              {
+                "nid": 100,
+                "strtype": "LABEL/Hidden",
+                "strval": "False",
+                "InheritedType": 2
               },
               {
                 "nid": 110,
@@ -29460,7 +29469,7 @@
               {
                 "nid": 1030,
                 "strtype": "LABEL/Text",
-                "strval": "HDG: 360°\\nLat: 60°12,2'\\nLon: 025°23,3'\\nUTC: 21:21:21\\n1010 hPa\\n18°C",
+                "strval": "\\n360°\\n60°12,2'\\n025°23,3'\\n21:21:21\\n1010 hPa\\n18°C",
                 "InheritedType": 10
               },
               {
@@ -29490,10 +29499,34 @@
                         "InheritedType": 3
                       },
                       {
+                        "nid": 10440,
+                        "strtype": "_style/Text_Decor",
+                        "strval": "NONE",
+                        "InheritedType": 3
+                      },
+                      {
                         "nid": 10450,
                         "strtype": "_style/Text_Font",
                         "strval": "FontCelestial16",
                         "InheritedType": 3
+                      },
+                      {
+                        "nid": 10510,
+                        "strtype": "_style/Bg_Radius",
+                        "integer": 255,
+                        "InheritedType": 6
+                      },
+                      {
+                        "nid": 10520,
+                        "flags": 4096,
+                        "strtype": "_style/Bg_Color",
+                        "intarray": [
+                          0,
+                          0,
+                          0,
+                          255
+                        ],
+                        "InheritedType": 7
                       }
                     ],
                     "InheritedType": 1
@@ -29882,7 +29915,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 1058,
+    "backup_cnt": 1065,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",

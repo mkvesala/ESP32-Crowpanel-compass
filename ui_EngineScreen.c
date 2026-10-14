@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_EngineScreen = NULL;lv_obj_t *ui_PanelExhaustTemp = NULL;lv_obj_t *ui_ImageExhaustTem = NULL;lv_obj_t *ui_LabelExhaustTemp = NULL;lv_obj_t *ui_LabelMaxExhaustTemp = NULL;lv_obj_t *ui_LabelMinExhaustTemp = NULL;lv_obj_t *ui_LabelTrendExhaustTemp = NULL;lv_obj_t *ui_ContainerFuelGauge = NULL;lv_obj_t *ui_PanelLitresBg = NULL;lv_obj_t *ui_LabelLitres = NULL;lv_obj_t *ui_LabelLitresTitle = NULL;lv_obj_t *ui_LabelEmpty = NULL;lv_obj_t *ui_Label14 = NULL;lv_obj_t *ui_Label12 = NULL;lv_obj_t *ui_Label34 = NULL;lv_obj_t *ui_LabelFull = NULL;lv_obj_t *ui_ImageFuel = NULL;lv_obj_t *ui_ArcFuel = NULL;lv_obj_t *ui_Panel12 = NULL;lv_obj_t *ui_Panel34 = NULL;lv_obj_t *ui_Panel14 = NULL;lv_obj_t *ui_PanelEmpty = NULL;lv_obj_t *ui_PanelFull = NULL;lv_obj_t *ui_ContainerWaterGauge = NULL;lv_obj_t *ui_PanelWtrLitresBg = NULL;lv_obj_t *ui_LabelWtrLitres = NULL;lv_obj_t *ui_LabelWtrLitresTitle = NULL;lv_obj_t *ui_LabelWtrEmpty = NULL;lv_obj_t *ui_LabelWtr14 = NULL;lv_obj_t *ui_LabelWtr12 = NULL;lv_obj_t *ui_LabelWtr34 = NULL;lv_obj_t *ui_LabelWtrFull = NULL;lv_obj_t *ui_ImageWater = NULL;lv_obj_t *ui_ArcWater = NULL;lv_obj_t *ui_PanelWtr12 = NULL;lv_obj_t *ui_PanelWtr34 = NULL;lv_obj_t *ui_PanelWtr14 = NULL;lv_obj_t *ui_PanelWtrEmpty = NULL;lv_obj_t *ui_PanelWtrFull = NULL;
+lv_obj_t *ui_EngineScreen = NULL;lv_obj_t *ui_PanelExhaustTemp = NULL;lv_obj_t *ui_ImageExhaustTem = NULL;lv_obj_t *ui_LabelExhaustTemp = NULL;lv_obj_t *ui_LabelMaxExhaustTemp = NULL;lv_obj_t *ui_LabelMinExhaustTemp = NULL;lv_obj_t *ui_LabelTrendExhaustTemp = NULL;lv_obj_t *ui_ContainerFuelGauge = NULL;lv_obj_t *ui_LabelGauge2 = NULL;lv_obj_t *ui_LabelLitres = NULL;lv_obj_t *ui_ImageFuel = NULL;lv_obj_t *ui_ArcFuel = NULL;lv_obj_t *ui_Panel12 = NULL;lv_obj_t *ui_Panel34 = NULL;lv_obj_t *ui_Panel14 = NULL;lv_obj_t *ui_PanelEmpty = NULL;lv_obj_t *ui_PanelFull = NULL;lv_obj_t *ui_ContainerWaterGauge = NULL;lv_obj_t *ui_LabelWtrLitres = NULL;lv_obj_t *ui_LabelGauge = NULL;lv_obj_t *ui_ImageWater = NULL;lv_obj_t *ui_ArcWater = NULL;lv_obj_t *ui_PanelWtr12 = NULL;lv_obj_t *ui_PanelWtr34 = NULL;lv_obj_t *ui_PanelWtr14 = NULL;lv_obj_t *ui_PanelWtrEmpty = NULL;lv_obj_t *ui_PanelWtrFull = NULL;
 // event funtions
 
 // build funtions
@@ -85,18 +85,21 @@ lv_obj_remove_style_all(ui_ContainerFuelGauge);
 lv_obj_set_width( ui_ContainerFuelGauge, 484);
 lv_obj_set_height( ui_ContainerFuelGauge, 484);
 lv_obj_set_align( ui_ContainerFuelGauge, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_ContainerFuelGauge, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_remove_flag( ui_ContainerFuelGauge, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
-ui_PanelLitresBg = lv_obj_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_PanelLitresBg, 482);
-lv_obj_set_height( ui_PanelLitresBg, 482);
-lv_obj_set_align( ui_PanelLitresBg, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_PanelLitresBg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_radius(ui_PanelLitresBg, 100, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_PanelLitresBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_PanelLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_PanelLitresBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_PanelLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+ui_LabelGauge2 = lv_label_create(ui_ContainerFuelGauge);
+lv_obj_set_width( ui_LabelGauge2, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelGauge2, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_LabelGauge2, 0 );
+lv_obj_set_y( ui_LabelGauge2, -55 );
+lv_obj_set_align( ui_LabelGauge2, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelGauge2,"½\n\n¼                 ¾\n\n\n0                            F\n\nL");
+lv_obj_remove_flag( ui_LabelGauge2, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_obj_set_style_text_color(ui_LabelGauge2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelGauge2, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_align(ui_LabelGauge2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelGauge2, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelLitres = lv_label_create(ui_ContainerFuelGauge);
 lv_obj_set_width( ui_LabelLitres, LV_SIZE_CONTENT);  /// 1
@@ -114,90 +117,6 @@ lv_obj_set_style_text_font(ui_LabelLitres, &ui_font_FontHeading96b, LV_PART_MAIN
 lv_obj_set_style_radius(ui_LabelLitres, 125, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_bg_color(ui_LabelLitres, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_LabelLitres, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelLitresTitle = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_LabelLitresTitle, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelLitresTitle, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelLitresTitle, 1 );
-lv_obj_set_y( ui_LabelLitresTitle, 70 );
-lv_obj_set_align( ui_LabelLitresTitle, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelLitresTitle,"L");
-lv_obj_remove_flag( ui_LabelLitresTitle, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelLitresTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelLitresTitle, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelLitresTitle, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelLitresTitle, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelLitresTitle, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelEmpty = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_LabelEmpty, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelEmpty, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelEmpty, -180 );
-lv_obj_set_y( ui_LabelEmpty, 0 );
-lv_obj_set_align( ui_LabelEmpty, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelEmpty,"0");
-lv_obj_remove_flag( ui_LabelEmpty, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelEmpty, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelEmpty, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelEmpty, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_Label14 = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_Label14, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label14, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label14, -120 );
-lv_obj_set_y( ui_Label14, -120 );
-lv_obj_set_align( ui_Label14, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label14,"¼");
-lv_obj_remove_flag( ui_Label14, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_Label14, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_Label14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_Label14, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_Label14, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Label14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_Label12 = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_Label12, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label12, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label12, 0 );
-lv_obj_set_y( ui_Label12, -175 );
-lv_obj_set_align( ui_Label12, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label12,"½");
-lv_obj_remove_flag( ui_Label12, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_Label12, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_Label12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_Label12, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_Label12, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Label12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_Label34 = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_Label34, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label34, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label34, 120 );
-lv_obj_set_y( ui_Label34, -120 );
-lv_obj_set_align( ui_Label34, LV_ALIGN_CENTER );
-lv_label_set_text(ui_Label34,"¾");
-lv_obj_remove_flag( ui_Label34, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_Label34, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_Label34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_Label34, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_Label34, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_Label34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelFull = lv_label_create(ui_ContainerFuelGauge);
-lv_obj_set_width( ui_LabelFull, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelFull, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelFull, 180 );
-lv_obj_set_y( ui_LabelFull, 0 );
-lv_obj_set_align( ui_LabelFull, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelFull,"F");
-lv_obj_remove_flag( ui_LabelFull, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelFull, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelFull, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelFull, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ImageFuel = lv_image_create(ui_ContainerFuelGauge);
 lv_image_set_src(ui_ImageFuel, &ui_img_1496861887);
@@ -314,18 +233,8 @@ lv_obj_remove_style_all(ui_ContainerWaterGauge);
 lv_obj_set_width( ui_ContainerWaterGauge, 484);
 lv_obj_set_height( ui_ContainerWaterGauge, 484);
 lv_obj_set_align( ui_ContainerWaterGauge, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_ContainerWaterGauge, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_remove_flag( ui_ContainerWaterGauge, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-
-ui_PanelWtrLitresBg = lv_obj_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_PanelWtrLitresBg, 482);
-lv_obj_set_height( ui_PanelWtrLitresBg, 482);
-lv_obj_set_align( ui_PanelWtrLitresBg, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_PanelWtrLitresBg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_radius(ui_PanelWtrLitresBg, 100, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_PanelWtrLitresBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_PanelWtrLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_PanelWtrLitresBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_PanelWtrLitresBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelWtrLitres = lv_label_create(ui_ContainerWaterGauge);
 lv_obj_set_width( ui_LabelWtrLitres, LV_SIZE_CONTENT);  /// 1
@@ -341,92 +250,19 @@ lv_obj_set_style_text_align(ui_LabelWtrLitres, LV_TEXT_ALIGN_CENTER, LV_PART_MAI
 lv_obj_set_style_text_decor(ui_LabelWtrLitres, LV_TEXT_DECOR_NONE, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelWtrLitres, &ui_font_FontHeading96b, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_radius(ui_LabelWtrLitres, 125, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtrLitres, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtrLitres, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_LabelWtrLitresTitle = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtrLitresTitle, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtrLitresTitle, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtrLitresTitle, 1 );
-lv_obj_set_y( ui_LabelWtrLitresTitle, 70 );
-lv_obj_set_align( ui_LabelWtrLitresTitle, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtrLitresTitle,"L");
-lv_obj_remove_flag( ui_LabelWtrLitresTitle, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtrLitresTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtrLitresTitle, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtrLitresTitle, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtrLitresTitle, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtrLitresTitle, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelWtrEmpty = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtrEmpty, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtrEmpty, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtrEmpty, -180 );
-lv_obj_set_y( ui_LabelWtrEmpty, 0 );
-lv_obj_set_align( ui_LabelWtrEmpty, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtrEmpty,"0");
-lv_obj_remove_flag( ui_LabelWtrEmpty, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtrEmpty, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtrEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtrEmpty, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtrEmpty, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtrEmpty, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelWtr14 = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtr14, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtr14, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtr14, -120 );
-lv_obj_set_y( ui_LabelWtr14, -120 );
-lv_obj_set_align( ui_LabelWtr14, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtr14,"¼");
-lv_obj_remove_flag( ui_LabelWtr14, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtr14, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtr14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtr14, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtr14, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtr14, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelWtr12 = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtr12, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtr12, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtr12, 0 );
-lv_obj_set_y( ui_LabelWtr12, -175 );
-lv_obj_set_align( ui_LabelWtr12, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtr12,"½");
-lv_obj_remove_flag( ui_LabelWtr12, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtr12, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtr12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtr12, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtr12, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtr12, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelWtr34 = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtr34, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtr34, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtr34, 120 );
-lv_obj_set_y( ui_LabelWtr34, -120 );
-lv_obj_set_align( ui_LabelWtr34, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtr34,"¾");
-lv_obj_remove_flag( ui_LabelWtr34, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtr34, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtr34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtr34, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtr34, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtr34, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-ui_LabelWtrFull = lv_label_create(ui_ContainerWaterGauge);
-lv_obj_set_width( ui_LabelWtrFull, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_LabelWtrFull, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_LabelWtrFull, 180 );
-lv_obj_set_y( ui_LabelWtrFull, 0 );
-lv_obj_set_align( ui_LabelWtrFull, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelWtrFull,"F");
-lv_obj_remove_flag( ui_LabelWtrFull, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
-lv_obj_set_style_text_color(ui_LabelWtrFull, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_LabelWtrFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_LabelWtrFull, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_LabelWtrFull, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_LabelWtrFull, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+ui_LabelGauge = lv_label_create(ui_ContainerWaterGauge);
+lv_obj_set_width( ui_LabelGauge, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_LabelGauge, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_LabelGauge, 0 );
+lv_obj_set_y( ui_LabelGauge, -55 );
+lv_obj_set_align( ui_LabelGauge, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelGauge,"½\n\n¼                 ¾\n\n\n0                            F\n\nL");
+lv_obj_remove_flag( ui_LabelGauge, LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_obj_set_style_text_color(ui_LabelGauge, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelGauge, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_align(ui_LabelGauge, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelGauge, &ui_font_FontDialog36, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ImageWater = lv_image_create(ui_ContainerWaterGauge);
 lv_image_set_src(ui_ImageWater, &ui_img_916444405);
@@ -553,14 +389,8 @@ ui_LabelMaxExhaustTemp= NULL;
 ui_LabelMinExhaustTemp= NULL;
 ui_LabelTrendExhaustTemp= NULL;
 ui_ContainerFuelGauge= NULL;
-ui_PanelLitresBg= NULL;
+ui_LabelGauge2= NULL;
 ui_LabelLitres= NULL;
-ui_LabelLitresTitle= NULL;
-ui_LabelEmpty= NULL;
-ui_Label14= NULL;
-ui_Label12= NULL;
-ui_Label34= NULL;
-ui_LabelFull= NULL;
 ui_ImageFuel= NULL;
 ui_ArcFuel= NULL;
 ui_Panel12= NULL;
@@ -569,14 +399,8 @@ ui_Panel14= NULL;
 ui_PanelEmpty= NULL;
 ui_PanelFull= NULL;
 ui_ContainerWaterGauge= NULL;
-ui_PanelWtrLitresBg= NULL;
 ui_LabelWtrLitres= NULL;
-ui_LabelWtrLitresTitle= NULL;
-ui_LabelWtrEmpty= NULL;
-ui_LabelWtr14= NULL;
-ui_LabelWtr12= NULL;
-ui_LabelWtr34= NULL;
-ui_LabelWtrFull= NULL;
+ui_LabelGauge= NULL;
 ui_ImageWater= NULL;
 ui_ArcWater= NULL;
 ui_PanelWtr12= NULL;

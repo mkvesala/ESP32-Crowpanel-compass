@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_CompassScreen = NULL;lv_obj_t *ui_ContainerCompass = NULL;lv_obj_t *ui_ImageCompassRose = NULL;lv_obj_t *ui_ImageArrow = NULL;lv_obj_t *ui_LabelHeading = NULL;lv_obj_t *ui_LabelHeadingMode = NULL;lv_obj_t *ui_ContainerSog = NULL;lv_obj_t *ui_ImageSogBg = NULL;lv_obj_t *ui_PanelSogBg = NULL;lv_obj_t *ui_ArcSog = NULL;lv_obj_t *ui_LabelKnots = NULL;lv_obj_t *ui_LabelSog = NULL;lv_obj_t *ui_LabelSogTitle = NULL;lv_obj_t *ui_PanelConnected = NULL;
+lv_obj_t *ui_CompassScreen = NULL;lv_obj_t *ui_ContainerCompass = NULL;lv_obj_t *ui_ImageCompassRose = NULL;lv_obj_t *ui_ImageArrow = NULL;lv_obj_t *ui_LabelHeading = NULL;lv_obj_t *ui_LabelHeadingMode = NULL;lv_obj_t *ui_ContainerSog = NULL;lv_obj_t *ui_ImageSogBg = NULL;lv_obj_t *ui_ArcSog = NULL;lv_obj_t *ui_LabelKnots = NULL;lv_obj_t *ui_LabelSog = NULL;lv_obj_t *ui_LabelSogTitle = NULL;lv_obj_t *ui_PanelConnected = NULL;
 // event funtions
 
 // build funtions
@@ -83,17 +83,6 @@ lv_obj_set_height( ui_ImageSogBg, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_align( ui_ImageSogBg, LV_ALIGN_CENTER );
 lv_obj_add_flag( ui_ImageSogBg, LV_OBJ_FLAG_CLICKABLE );   /// Flags
 lv_obj_remove_flag( ui_ImageSogBg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-
-ui_PanelSogBg = lv_obj_create(ui_ContainerSog);
-lv_obj_set_width( ui_PanelSogBg, 200);
-lv_obj_set_height( ui_PanelSogBg, 200);
-lv_obj_set_align( ui_PanelSogBg, LV_ALIGN_CENTER );
-lv_obj_remove_flag( ui_PanelSogBg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_radius(ui_PanelSogBg, 100, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_PanelSogBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_PanelSogBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_PanelSogBg, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_PanelSogBg, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_ArcSog = lv_arc_create(ui_ContainerSog);
 lv_obj_set_width( ui_ArcSog, 480);
@@ -196,7 +185,6 @@ ui_LabelHeading= NULL;
 ui_LabelHeadingMode= NULL;
 ui_ContainerSog= NULL;
 ui_ImageSogBg= NULL;
-ui_PanelSogBg= NULL;
 ui_ArcSog= NULL;
 ui_LabelKnots= NULL;
 ui_LabelSog= NULL;

@@ -14,8 +14,6 @@ extern "C" {
 extern void ui_BrightnessScreen_screen_init(void);
 extern void ui_BrightnessScreen_screen_destroy(void);
 extern lv_obj_t *ui_BrightnessScreen;
-extern lv_obj_t *ui_ContainerBrightness;
-extern lv_obj_t *ui_PanelBrightness;
 extern lv_obj_t *ui_ImageBrightness;
 extern lv_obj_t *ui_LabelBrightness;
 extern lv_obj_t *ui_LabelBrightnessValue;

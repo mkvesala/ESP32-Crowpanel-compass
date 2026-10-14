@@ -21,7 +21,6 @@ extern lv_obj_t *ui_LabelHeading;
 extern lv_obj_t *ui_LabelHeadingMode;
 extern lv_obj_t *ui_ContainerSog;
 extern lv_obj_t *ui_ImageSogBg;
-extern lv_obj_t *ui_PanelSogBg;
 extern lv_obj_t *ui_ArcSog;
 extern lv_obj_t *ui_LabelKnots;
 extern lv_obj_t *ui_LabelSog;

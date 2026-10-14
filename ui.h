@@ -22,6 +22,7 @@ extern "C" {
 #include "ui_WeatherScreen.h"
 #include "ui_BatteryScreen.h"
 #include "ui_EngineScreen.h"
+#include "ui_CelestialScreen.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * progress_Animation( lv_obj_t *TargetObject, int delay);
@@ -34,6 +35,7 @@ LV_IMG_DECLARE( ui_img_1776051799);   // assets/Compass-12.png
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/Arrow.png
 LV_IMG_DECLARE( ui_img_speedometer_bg_png);   // assets/speedometer_bg.png
 LV_IMG_DECLARE( ui_img_222405695);   // assets/caution-2.png
+LV_IMG_DECLARE( ui_img_vessel_png);   // assets/vessel.png
 LV_IMG_DECLARE( ui_img_sun3_png);   // assets/sun3.png
 LV_IMG_DECLARE( ui_img_temperature2_png);   // assets/temperature2.png
 LV_IMG_DECLARE( ui_img_air2_png);   // assets/air2.png
@@ -46,6 +48,7 @@ LV_IMG_DECLARE( ui_img_916444405);   // assets/gallon-bottle.png
 // FONTS
 LV_FONT_DECLARE( ui_font_FontAttitude84c);
 LV_FONT_DECLARE( ui_font_FontAttitudeTitle24);
+LV_FONT_DECLARE( ui_font_FontCelestial16);
 LV_FONT_DECLARE( ui_font_FontDialog36);
 LV_FONT_DECLARE( ui_font_FontHeading64b);
 LV_FONT_DECLARE( ui_font_FontHeading96b);
