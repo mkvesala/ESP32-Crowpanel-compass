@@ -74,6 +74,7 @@ lv_obj_remove_style_all(ui_ContainerSog);
 lv_obj_set_width( ui_ContainerSog, 484);
 lv_obj_set_height( ui_ContainerSog, 484);
 lv_obj_set_align( ui_ContainerSog, LV_ALIGN_CENTER );
+lv_obj_add_flag( ui_ContainerSog, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_remove_flag( ui_ContainerSog, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
 ui_ImageSogBg = lv_image_create(ui_ContainerSog);

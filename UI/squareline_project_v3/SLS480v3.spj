@@ -2317,6 +2317,12 @@
                 "InheritedType": 1
               },
               {
+                "nid": 100,
+                "strtype": "OBJECT/Hidden",
+                "strval": "True",
+                "InheritedType": 2
+              },
+              {
                 "nid": 110,
                 "strtype": "OBJECT/Clickable",
                 "strval": "False",
@@ -29887,7 +29893,7 @@
     }
   ],
   "selected_theme": "Default",
-  "selected_screen": "GUID70956596-430131S265945286",
+  "selected_screen": "GUID55069174-951400S0531",
   "info": {
     "name": "SquareLine_Project.spj",
     "depth": 1,
@@ -29915,7 +29921,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 1065,
+    "backup_cnt": 1067,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",

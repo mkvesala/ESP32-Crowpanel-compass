@@ -74,7 +74,7 @@ private:
     // only updates at ~1 Hz, so redrawing faster than this buys nothing.
     static constexpr uint32_t DEPTH_RENDER_INTERVAL_MS = 250;
 
-    // Vessel draft [m] — matches the static ui_LabelDraft text. Also the caution threshold:
+    // Vessel draft [m] — matches the draft figure in the static ui_LabelAirHeight text. Also the caution threshold:
     // less than one draft of water under the keel is where the margin runs out.
     static constexpr float DRAFT_M = 1.2f;
 

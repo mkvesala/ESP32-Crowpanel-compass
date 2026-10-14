@@ -395,7 +395,7 @@ void AttitudeUI::updateDepth() {
 }
 
 // Update the depth view to "no depth data" state: blank labels, no sea bottom, no caution.
-// ui_LabelAirHeight and ui_LabelDraft are static vessel dimensions and stay as exported.
+// ui_LabelAirHeight holds the static vessel dimensions (air height, draft) and stays as exported.
 void AttitudeUI::showDepthWaiting() {
     lv_label_set_text(ui_LabelDptBelowKeel, "--.-");
     lv_label_set_text(ui_LabelDptBelowSurface, "--.-");
