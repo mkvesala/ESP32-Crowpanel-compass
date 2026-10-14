@@ -1,3 +1,6 @@
+# Tests
+tests/
+
 # Secrets - WiFi credentials etc.
 secrets.h
 *.docx

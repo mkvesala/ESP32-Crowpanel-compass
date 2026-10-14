@@ -26,6 +26,17 @@ This project uses the following open-source libraries:
 - **License:** MIT
 - **Repository:** https://github.com/xreef/PCF8574_library
 
+## Astronomy Engine
+- **Version:** 2.1.19 (C version, `astronomy.c` / `astronomy.h` copied into the sketch folder)
+- **Author:** Don Cross
+- **License:** MIT
+- **Repository:** https://github.com/cosinekitty/astronomy
+- **Local change:** `ASTRONOMY_ENGINE_NO_CURRENT_TIME` defined at the top of `astronomy.h`
+
+## Star data
+- **Source:** Hipparcos, the New Reduction (van Leeuwen 2007, VizieR I/311) and the Hipparcos Main Catalogue (ESA 1997, VizieR I/239), retrieved via CDS VizieR; names checked against CDS SIMBAD
+- **Used in:** `NavStars.cpp`
+
 ---
 
 **Note:** Please verify license details from each library's repository. This file is for informational purposes.

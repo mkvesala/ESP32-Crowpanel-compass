@@ -124,8 +124,9 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             WeatherDelta weather;
             memcpy(&weather, payload, sizeof(WeatherDelta));
             portENTER_CRITICAL(&s_spinlock);
-            s_latest_weather  = weather;
-            s_has_new_weather = true;
+            s_latest_weather      = weather;
+            s_has_new_weather     = true;
+            s_last_weather_millis = millis();
             portEXIT_CRITICAL(&s_spinlock);
             break;
         }
@@ -147,8 +148,9 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             memcpy(&gnss, payload, sizeof(GnssDelta));
             GnssData converted = convertGnssDeltaToData(gnss);
             portENTER_CRITICAL(&s_spinlock);
-            s_latest_gnss  = converted;
-            s_has_new_gnss = true;
+            s_latest_gnss      = converted;
+            s_has_new_gnss     = true;
+            s_last_gnss_millis = millis();
             portEXIT_CRITICAL(&s_spinlock);
             break;
         }
@@ -194,6 +196,18 @@ void ESPNowReceiver::onDataRecv(const esp_now_recv_info_t* recv_info, const uint
             s_latest_depth      = depth;
             s_has_new_depth     = true;
             s_last_depth_millis = millis();
+            portEXIT_CRITICAL(&s_spinlock);
+            break;
+        }
+
+        case ESPNowMsgType::DATETIME_DELTA: {
+            if (hdr.payload_len != sizeof(DateTimeDelta)) return;
+            DateTimeDelta dt;
+            memcpy(&dt, payload, sizeof(DateTimeDelta));
+            portENTER_CRITICAL(&s_spinlock);
+            s_latest_datetime      = dt;
+            s_has_new_datetime     = true;
+            s_last_datetime_millis = millis();
             portEXIT_CRITICAL(&s_spinlock);
             break;
         }
@@ -340,6 +354,41 @@ DepthDelta ESPNowReceiver::getDepthData() {
 // Returns millis() of the last received depth packet, 0 if none ever received
 uint32_t ESPNowReceiver::lastDepthRxMillis() const {
     uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_depth_millis; portEXIT_CRITICAL(&s_spinlock); return v;
+}
+
+// Returns true if new GNSS date/time packet available, otherwise false
+bool ESPNowReceiver::hasNewDateTimeData() const {
+    bool result;
+    portENTER_CRITICAL(&s_spinlock);
+    result = s_has_new_datetime;
+    portEXIT_CRITICAL(&s_spinlock);
+    return result;
+}
+
+// Returns the latest GNSS date/time packet and the millis() at which it arrived
+DateTimeDelta ESPNowReceiver::getDateTimeData(uint32_t& rx_millis) {
+    DateTimeDelta data;
+    portENTER_CRITICAL(&s_spinlock);
+    data = s_latest_datetime;
+    rx_millis = s_last_datetime_millis;
+    s_has_new_datetime = false;
+    portEXIT_CRITICAL(&s_spinlock);
+    return data;
+}
+
+// Returns millis() of the last received date/time packet, 0 if none ever received
+uint32_t ESPNowReceiver::lastDateTimeRxMillis() const {
+    uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_datetime_millis; portEXIT_CRITICAL(&s_spinlock); return v;
+}
+
+// Returns millis() of the last received GNSS packet, 0 if none ever received
+uint32_t ESPNowReceiver::lastGnssRxMillis() const {
+    uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_gnss_millis; portEXIT_CRITICAL(&s_spinlock); return v;
+}
+
+// Returns millis() of the last received weather packet, 0 if none ever received
+uint32_t ESPNowReceiver::lastWeatherRxMillis() const {
+    uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_weather_millis; portEXIT_CRITICAL(&s_spinlock); return v;
 }
 
 // Lifetime min/max pitch/roll getters — tracked across all screens since boot

@@ -15,7 +15,7 @@ using namespace ESPNow;
 // - Provides public API to manage incoming instrument data (receive-only)
 // - Receives: HEADING_DELTA (compass/attitude), WEATHER_DELTA (weather sensor), BATTERY_DELTA,
 //   GNSS_DELTA, HALMET_ENGINE_DELTA (exhaust temp), HALMET_TANK_DELTA (fuel), HALMET_WATER_DELTA (fresh water),
-//   DEPTH_DELTA (relayed sounder depth)
+//   DEPTH_DELTA (relayed sounder depth), DATETIME_DELTA (GNSS UTC)
 // - Init: _receiver.begin(channel)
 // - Owned by: CrowPanelApplication
 
@@ -53,6 +53,18 @@ public:
     // depth while its depth view is active still knows the true age on entry.
     uint32_t lastDepthRxMillis() const;
 
+    bool hasNewDateTimeData() const;
+    // rx_millis receives the millis() at which this packet arrived — the anchor for
+    // extrapolating UTC, read under the same lock as the payload so the two always match
+    DateTimeDelta getDateTimeData(uint32_t& rx_millis);
+    uint32_t lastDateTimeRxMillis() const;
+
+    // Per-source arrival times (0 = never received). A screen that only consumes a source
+    // while it is active must judge freshness by these, not by hasNewXxxData(): a new-data
+    // flag left set while the screen was inactive may be minutes old when it is read.
+    uint32_t lastGnssRxMillis() const;
+    uint32_t lastWeatherRxMillis() const;
+
     float getPacketsPerSecond() const { return _packets_per_second; }
 
     static int16_t getMinPitch_x10();
@@ -80,6 +92,7 @@ private:
     // Static variables for weather data handling
     inline static WeatherDelta s_latest_weather = {};
     inline static volatile bool s_has_new_weather = false;
+    inline static volatile uint32_t s_last_weather_millis = 0;
 
     // Static variables for battery data handling
     inline static BatteryDelta s_latest_battery = {};
@@ -88,6 +101,7 @@ private:
     // Static variables for GNSS data handling
     inline static GnssData s_latest_gnss = {};
     inline static volatile bool s_has_new_gnss = false;
+    inline static volatile uint32_t s_last_gnss_millis = 0;
 
     // Static variables for HALMET engine data handling
     inline static HALMETEngineDelta s_latest_engine = {};
@@ -107,6 +121,11 @@ private:
     inline static DepthDelta        s_latest_depth      = {};
     inline static volatile bool     s_has_new_depth     = false;
     inline static volatile uint32_t s_last_depth_millis = 0;
+
+    // Static variables for GNSS UTC date/time handling (UBLOX gateway, ~2 s cadence)
+    inline static DateTimeDelta     s_latest_datetime      = {};
+    inline static volatile bool     s_has_new_datetime     = false;
+    inline static volatile uint32_t s_last_datetime_millis = 0;
 
     // Lifetime min/max pitch and roll — updated in onDataRecv() for every packet
     inline static int16_t s_min_pitch_x10 = MINMAX_SENTINEL;

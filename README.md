@@ -20,7 +20,7 @@ You use this code entirely at your own risk. The author accepts no liability for
 
 Marine instrument display for [Elecrow CrowPanel 2.1" HMI](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) (ESP32-S3, 480x480 IPS round touchscreen, rotary knob). Receives via ESP-NOW:
 - Compass heading, pitch and roll from [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) compass
-- GNSS position, speed over ground (SOG) and course over ground (COG) from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
+- GNSS position, speed over ground (SOG), course over ground (COG) and UTC date/time from [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) GNSS sensor
 - Temperature, air pressure and relative humidity from [BME280-ESP32-SignalK-gateway](https://github.com/mkvesala/BME280-ESP32-SignalK-gateway)
 - House battery bank voltage, current and SoC as well as starter battery voltage from [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway)
 - Engine exhaust temperature, fuel tank level and fresh water tank level from [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway)
@@ -34,6 +34,7 @@ Different screens selectable by rotating the knob:
 - **Weather screen** — toggle between temperature, pressure and humidity views
 - **Battery screen** — toggle between house voltage, house current, house SoC and starter voltage views
 - **Engine screen** — toggle between exhaust temperature, fuel tank and fresh water tank views
+- **Celestial screen** — sextant practice aid: computed altitude Hc and azimuth Zn of the Sun, Moon and a twilight set of one planet + two stars, on a star chart relative to the bow
 - **Brightness screen** — backlight brightness adjustment with NVS persistence
 
 Developed and tested on:
@@ -43,6 +44,7 @@ Developed and tested on:
 - [LVGL](https://lvgl.io/) (9.5.0)
 - [Arduino GFX Library](https://github.com/moononournation/Arduino_GFX) (1.6.5)
 - [PCF8574 Library](https://github.com/xreef/PCF8574_library) (2.4.0)
+- [Astronomy Engine](https://github.com/cosinekitty/astronomy) (2.1.19, C version, included in the sketch folder)
 - [SquareLine Studio](https://squareline.io/) (1.6.0) for UI design
 
 Integrated via ESP-NOW with:
@@ -86,12 +88,13 @@ Class diagram including the companion projects:
 <img src="docs/full_uml_diagram.jpeg" width="480">
 
 **`CrowPanelApplication`:**
-- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `EngineUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
+- Owns: `Arduino_ESP32RGBPanel`, `Arduino_RGB_Display`, `Arduino_SWSPI`, `PCF8574`, `ESPNowReceiver`, `CompassUI`, `AttitudeUI`, `WeatherUI`, `BatteryUI`, `EngineUI`, `CelestialUI`, `BrightnessUI`, `RotaryEncoder`, `ScreenManager`
 - Responsible for: orchestrating everything within the main program
 
 **`ESPNowReceiver`:**
-- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta`, `BatteryDelta`, `HALMETEngineDelta`, `HALMETTankDelta`, `HALMETWaterDelta` and `DepthDelta` broadcasts via ESP-NOW (receive-only)
+- Responsible for: receiving `HeadingData`, `GnssData`, `WeatherDelta`, `BatteryDelta`, `HALMETEngineDelta`, `HALMETTankDelta`, `HALMETWaterDelta`, `DepthDelta` and `DateTimeDelta` broadcasts via ESP-NOW (receive-only)
 - Keeps a dedicated RX timestamp for depth (`lastDepthRxMillis()`), because depth is relayed and its freshness cannot be judged from the payload alone
+- Keeps RX timestamps for GNSS, weather and date/time (`lastGnssRxMillis()`, `lastWeatherRxMillis()`, `lastDateTimeRxMillis()`) for screens that judge freshness themselves (`CelestialUI`)
 - Owned by: `CrowPanelApplication`
 
 **`RotaryEncoder`:**
@@ -131,6 +134,27 @@ Class diagram including the companion projects:
 - Uses: `ESPNowReceiver`
 - Responsible for: updating LVGL UI objects on the engine screen based on engine exhaust, fuel tank and fresh water tank data; 3-view cycle (EXHAUST / FUEL0 / FRESHWATER)
 - Owned by: `CrowPanelApplication`
+
+**`CelestialUI`:**
+- Realizes: `IScreenUI`
+- Uses: `ESPNowReceiver`, `Preferences`
+- Owns: `CelestialEngine`
+- Responsible for: updating LVGL UI objects on the celestial screen — data label, body labels and star chart placement; 2-view toggle (FROM_ZENITH / FROM_BOAT)
+- Owned by: `CrowPanelApplication`
+
+**`CelestialEngine`:**
+- Uses: `CelestialCalculator`, `CelestialSelector`, `NavStars`
+- Responsible for: running the astronomy on its own FreeRTOS task (core 0) once per second while the celestial screen is active
+- Owned by: `CelestialUI`
+
+**`CelestialCalculator`:**
+- Uses: Astronomy Engine, `NavStars`
+- Responsible for: geocentric computed altitude Hc and azimuth Zn of the Sun, Moon, Venus, Mars, Jupiter, Saturn and the 57 navigational stars (double precision)
+- Owned by: `CelestialEngine`
+
+**`CelestialSelector`:**
+- Responsible for: picking the twilight set (one planet + two stars, azimuths ~120° apart) with hysteresis
+- Owned by: `CelestialEngine`
 
 **`BrightnessUI`:**
 - Realizes: `IScreenUI`
@@ -249,6 +273,30 @@ Common features:
 - Own arc render cache and connection tracking, independent of the fuel and exhaust feeds
 - On disconnect: labels show `"---"`
 
+### Celestial screen
+
+A sextant practice aid: shows where suitable bodies stand relative to the bow and how high they are. The navigator does the actual sight reduction separately; the display targets 1' in Hc, 4 s in time and 1° in Zn.
+
+- **Hc is geocentric**, as in the Nautical Almanac and sight reduction (apparent place of date, no refraction, no parallax) — for the Moon this differs from what the sextant shows by up to ~1°, corrected via HP as usual
+- Computed with [Astronomy Engine](https://github.com/cosinekitty/astronomy) in double precision; star positions from Hipparcos (57 navigational stars) with proper motion applied. Host tests agree with JPL Horizons to 0.12' in Hc
+- Centre label: blank line, HDG true `000°`, latitude `dd°mm,m'N`, longitude `ddd°mm,m'E`, GNSS UTC `hh:mm:ss`, air pressure `1010 hPa`, temperature `18°C`
+- Body labels: name (longer than 6 characters shortened, e.g. `Betelg.`), Hc `dd°mm,m'`, Zn `ddd°`
+- Star chart: zenith (Hc 90°) at the centre, horizon (Hc 0°) on the 380 px circle, altitude linear; direction relative to true heading
+- Bodies shown:
+  - Sun and Moon whenever Hc > 0°
+  - In twilight (Sun Hc -3°00,0' … -15°00,0', inclusive) one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65° (hard limits 10°–75°), brightness, and distance from the Moon. Two stars ~90° apart if no planet is usable
+  - Hysteresis: the set is re-evaluated every 60 s and replaced only if the new one is clearly better, or at once if a body leaves the hard limits
+- Pressing the knob button toggles the chart view:
+  - FROM_ZENITH (default): looking down on the boat, bow up, bearings clockwise
+  - FROM_BOAT: looking up at the sky from the boat, bow down, bearings counter-clockwise (the starboard quarter is top right)
+- Last view stored in NVS `onLeave()` (namespace `"celestial"`, key `"view"`)
+- Updates once per UTC second; the astronomy runs on its own FreeRTOS task on core 0 and only while the screen is active
+- Data freshness, each source separately: stale values show dashes, never as fresh
+  - Heading (2 s): `---°`, bow arrow hidden, chart drawn north-up
+  - Position (5 s) or GNSS time (10 s): all bodies hidden
+  - Pressure and temperature (6 s): `---- hPa` / `--°C`
+- Known limitation: the centre data label covers bodies higher than ~65°
+
 ### Brightness screen
 
 <img src="docs/brightnessscreen.png" height="240"> <img src="docs/brightnessui.jpeg" height="240">
@@ -272,11 +320,12 @@ Common features:
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | — |
 | Engine | Cycle EXHAUST/FUEL0/FRESHWATER view | Switch screen | — |
+| Celestial | Toggle FROM_ZENITH/FROM_BOAT chart view | Switch screen | — |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:
-- **Clockwise:** COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → BRIGHTNESS → COMPASS
-- **Counter-clockwise:** COMPASS → BRIGHTNESS → ENGINE → BATTERY → WEATHER → ATTITUDE → COMPASS
+- **Clockwise:** COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → CELESTIAL → BRIGHTNESS → COMPASS
+- **Counter-clockwise:** COMPASS → BRIGHTNESS → CELESTIAL → ENGINE → BATTERY → WEATHER → ATTITUDE → COMPASS
 
 Screen carousel is scalable, new screens may be added.
 
@@ -400,6 +449,10 @@ struct DepthDelta {
   - 32 B packet, 8 B header + 24 B payload
   - Payload: `GnssDelta` struct (`lat_deg`, `lon_deg`, `sog_ms`, `cog_true_rad`, `mag_var_rad`, `satellites`, `fix_type`, `fix_ok`)
   - `GnssDelta` converted into `GnssData`, an internal data struct: `cog_true_x10` (0-3599), `sog_knots_x10` (knots x 10), `fix_ok`
+- `ESPNowPacket<DateTimeDelta>` (~2 s cadence):
+  - 16 B packet, 8 B header + 8 B payload
+  - Payload: `DateTimeDelta` struct (`unix_utc` whole seconds, `time_valid`)
+  - Used by `CelestialUI`: UTC is extrapolated between packets with `millis()`; stale after 10 s
 
 **Receives** at ~1 Hz, in V, A and % (sent by VEDirect based sender), as broadcast:
 - `ESPNowPacket<BatteryDelta>`:
@@ -427,7 +480,7 @@ struct DepthDelta {
 
 **Deadband:** Compass sender has 0.05° deadband — no packet sent if heading and attitude change less than 0.05°. CrowPanel has an additional 0.5° threshold for compass rose rotation rendering only.
 
-**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.4.0, UBLOX-ESP32-SignalK-gateway v1.0.0, BME280-ESP32-SignalK-gateway v1.0.1, VEDirect-ESP32-SignalK-gateway v1.0.0 and HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank), or newer. Depth requires an NMEA2000 relay broadcasting `DepthDelta` (msg type 8).
+**NOTE:** Requires CMPS14-ESP32-SignalK-gateway v1.4.0, UBLOX-ESP32-SignalK-gateway v1.0.0 (v1.3.0 for the celestial screen's GNSS time), BME280-ESP32-SignalK-gateway v1.0.1, VEDirect-ESP32-SignalK-gateway v1.0.0 and HALMET-ESP32-SignalK-gateway v1.3.0 (fresh water tank), or newer. Depth requires an NMEA2000 relay broadcasting `DepthDelta` (msg type 8).
 
 ## Project structure
 
@@ -443,6 +496,13 @@ struct DepthDelta {
 | `WeatherUI.h/cpp` | Class `WeatherUI` - weather screen adapter, realizes `IScreenUI` |
 | `BatteryUI.h/cpp` | Class `BatteryUI` — battery screen adapter, realizes `IScreenUI` |
 | `EngineUI.h/.cpp` | Class `EngineUI` — engine screen adapter, realizes `IScreenUI` |
+| `CelestialUI.h/.cpp` | Class `CelestialUI` — celestial screen adapter, realizes `IScreenUI` |
+| `CelestialEngine.h/.cpp` | Class `CelestialEngine` — FreeRTOS task (core 0) running the astronomy at 1 Hz while the celestial screen is active |
+| `CelestialCalculator.h/.cpp` | Class `CelestialCalculator` — geocentric Hc/Zn of Sun, Moon, planets and stars via Astronomy Engine |
+| `CelestialSelector.h/.cpp` | Class `CelestialSelector` — twilight body selection (planet + two stars) with hysteresis |
+| `CelestialFormat.h` | Header-only label formatting, star chart placement and freshness helpers |
+| `NavStars.h/.cpp` | The 57 navigational stars (Hipparcos J2000 positions, proper motions, magnitudes) |
+| `astronomy.h/.c` | [Astronomy Engine](https://github.com/cosinekitty/astronomy) 2.1.19 (MIT) — unmodified except `ASTRONOMY_ENGINE_NO_CURRENT_TIME` defined at the top of `astronomy.h` |
 | `TrendIndicator.h` | Class `TrendIndicator` — header-only ↑/↓ trend estimate (fast/slow EMA + hysteresis), shared by `WeatherUI`, `BatteryUI` and `EngineUI` |
 | `TrendLabel.h` | `applyTrend()` — shows a `TrendIndicator` trend on an LVGL label |
 | `BrightnessUI.h/.cpp` | Class `BrightnessUI` — brightness screen adapter + adjustment state machine, realizes `IScreenUI` |
@@ -457,11 +517,13 @@ struct DepthDelta {
 | `ui_WeatherScreen.h/.c` | SquareLine Studio generated | 
 | `ui_BatteryScreen.h/.c` | SquareLine Studio generated |
 | `ui_EngineScreen.h/.c` | SquareLine Studio generated |
+| `ui_CelestialScreen.h/.c` | SquareLine Studio generated |
 | `ui_BrightnessScreen.h/.c` | SquareLine Studio generated |
 | `ui_helpers.h/.c` | SquareLine Studio generated |
 | `ui_font_*.c` | Custom fonts |
 | `ui_img_*.c` | Images (compass rose, icons) |
 | `UI/` | SquareLine Studio project |
+| `tests/celestial/` | Host unit tests for the celestial logic (`run_tests.sh`), with JPL Horizons and SIMBAD reference fixtures and the scripts that fetch them |
 | `docs/`| Other documents |
 
 ## Hardware

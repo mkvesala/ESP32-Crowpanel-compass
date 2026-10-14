@@ -54,6 +54,7 @@ CrowPanelApplication::CrowPanelApplication():
     _weatherUI(_receiver),
     _batteryUI(_receiver),
     _engineUI(_receiver),
+    _celestialUI(_receiver),
     _brightnessUI(SCREEN_BACKLIGHT_PIN),
     _encoder(_pcf8574),
     _screenMgr() {}
@@ -78,14 +79,16 @@ void CrowPanelApplication::begin() {
     _weatherUI.begin();
     _batteryUI.begin();
     _engineUI.begin();
+    _celestialUI.begin();
     _brightnessUI.begin();
 
-    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → BRIGHTNESS)
+    // Register screens with manager (carousel order: COMPASS → ATTITUDE → WEATHER → BATTERY → ENGINE → CELESTIAL → BRIGHTNESS)
     _screenMgr.addScreen(&_compassUI);
     _screenMgr.addScreen(&_attitudeUI);
     _screenMgr.addScreen(&_weatherUI);
     _screenMgr.addScreen(&_batteryUI);
     _screenMgr.addScreen(&_engineUI);
+    _screenMgr.addScreen(&_celestialUI);
     _screenMgr.addScreen(&_brightnessUI);
 
     // Screen manager init (loads first screen)
@@ -311,6 +314,12 @@ void CrowPanelApplication::handleDiagnostics(const uint32_t now) {
         (unsigned long)uxTaskGetStackHighWaterMark(NULL),
         (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getEncoderTaskHandle()),
         (unsigned long)uxTaskGetStackHighWaterMark(_encoder.getButtonTaskHandle()));
+
+    // Celestial engine (core 0): worst computation time so far and stack headroom
+    const CelestialEngine& celestial = _celestialUI.getEngine();
+    Serial.printf("[DIAG] Celestial compute max: %.1f ms | stack free: %lu\n",
+        celestial.getMaxComputeMicros() / 1000.0f,
+        (unsigned long)celestial.getStackHighWaterMark());
 
     // Reset counters
     _diag_ui_updates = 0;

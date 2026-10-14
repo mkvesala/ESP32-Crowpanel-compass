@@ -13,6 +13,7 @@
 #include "WeatherUI.h"
 #include "BatteryUI.h"
 #include "EngineUI.h"
+#include "CelestialUI.h"
 #include "BrightnessUI.h"
 #include "RotaryEncoder.h"
 #include "ScreenManager.h"
@@ -23,8 +24,8 @@
 // - Init: app.begin();
 // - Loop: app.loop()
 // - Owns: Arduino_ESP32RGBPanel, Arduino_RGB_Display, Arduino_SWSPI, PCF8574, ESPNowReceiver,
-//         CompassUI, AttitudeUI, WeatherUI, BatteryUI, BrightnessUI, RotaryEncoder, ScreenManager
-// - Screen carousel: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → ENGINE(4) → BRIGHTNESS(5) → COMPASS(0)
+//         CompassUI, AttitudeUI, WeatherUI, BatteryUI, EngineUI, CelestialUI, BrightnessUI, RotaryEncoder, ScreenManager
+// - Screen carousel: COMPASS(0) → ATTITUDE(1) → WEATHER(2) → BATTERY(3) → ENGINE(4) → CELESTIAL(5) → BRIGHTNESS(6) → COMPASS(0)
 
 class CrowPanelApplication {
 
@@ -103,6 +104,7 @@ private:
     WeatherUI _weatherUI;
     BatteryUI _batteryUI;
     EngineUI _engineUI;
+    CelestialUI _celestialUI;
     BrightnessUI _brightnessUI;
     RotaryEncoder _encoder;
     ScreenManager _screenMgr;
