@@ -25,10 +25,14 @@
 //   timestamps; stale data is shown as dashes, never as fresh:
 //   - heading stale (2 s)  → "---°", body texts red, bodies still placed with the last heading
 //   - heading lost (4 s)   → "---°", all bodies hidden; back to normal when the heading returns
+//   - NORTH_UP needs no heading: bodies stay visible and white, only the HDG line shows "---°"
 //   - position or time stale → all bodies hidden
-// - Knob press: toggles the chart view
+// - Knob press: cycles the chart view; its name replaces the centre data for 3 s on every view
+//   change and on screen entry
 //   1. FROM_ZENITH — looking down on the boat from the zenith: bow up, bearings clockwise
-//   2. FROM_BOAT   — looking up at the sky from the boat: bow down, bearings counter-clockwise
+//   2. FROM_VESSEL — looking up at the sky from the boat: bow down, bearings counter-clockwise
+//   3. NORTH_UP    — looking down from the zenith with true north up: no heading needed,
+//                    bow arrow hidden
 // - Chart view: persisted to NVS on onLeave()
 // - Owns: CelestialEngine
 // - Owned by: CrowPanelApplication
@@ -52,7 +56,8 @@ private:
 
     enum class ChartView : uint8_t {
         FROM_ZENITH = 0,   // default
-        FROM_BOAT   = 1,
+        FROM_VESSEL = 1,
+        NORTH_UP    = 2,
         COUNT
     };
 
@@ -78,6 +83,10 @@ private:
     // Body label text colour currently applied (red while the heading is stale)
     bool     _labels_stale = false;
 
+    // View name banner in ui_LabelData after a view change / screen entry
+    bool     _banner_active = false;
+    uint32_t _banner_start_ms = 0;
+
     void consumeData();
     void refresh(uint32_t now);
     void updateDataLabel(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok);
@@ -87,6 +96,8 @@ private:
     void hideBodies();
     void setLabelsStale(bool stale);
     void applyView();
+    void showViewBanner();
+    static const char* viewBannerText(ChartView view);
 
     CelestialFormat::HeadingState headingState(uint32_t now) const;
     bool isPositionFresh(uint32_t now) const;
@@ -109,7 +120,13 @@ private:
     static constexpr double DATETIME_TRUNCATION_S = 0.5;
 
     static constexpr uint32_t REFRESH_INTERVAL_MS = 1000;
-    static constexpr int32_t  BOW_ROTATION_FROM_BOAT = 1800;   // 0.1° units
+    static constexpr int32_t  BOW_ROTATION_FROM_VESSEL = 1800;   // 0.1° units
+    static constexpr uint32_t VIEW_BANNER_MS = 3000;
+
+    // View names in ui_LabelData: 7 rows like the data, name on rows 4–5 (centred)
+    static constexpr const char* BANNER_FROM_ZENITH = "\n\n\nFROM\nZENITH\n\n";
+    static constexpr const char* BANNER_FROM_VESSEL = "\n\n\nFROM\nVESSEL\n\n";
+    static constexpr const char* BANNER_NORTH_UP    = "\n\n\nNORTH\nUP\n\n";
 
     // Body labels: 6 rows × 14 px line height = 84 px of text, but SLS exports them 80 px tall
     // (ui_LabelStar1 even as LV_SIZE_CONTENT wide). LVGL 9.5 clips label text at the label's

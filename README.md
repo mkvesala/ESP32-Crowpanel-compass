@@ -139,7 +139,7 @@ Class diagram including the companion projects:
 - Realizes: `IScreenUI`
 - Uses: `ESPNowReceiver`, `Preferences`
 - Owns: `CelestialEngine`
-- Responsible for: updating LVGL UI objects on the celestial screen — data label, body labels and star chart placement; 2-view toggle (FROM_ZENITH / FROM_BOAT)
+- Responsible for: updating LVGL UI objects on the celestial screen — data label, body labels and star chart placement; 3-view cycle (FROM_ZENITH / FROM_VESSEL / NORTH_UP)
 - Owned by: `CrowPanelApplication`
 
 **`CelestialEngine`:**
@@ -286,13 +286,14 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
   - Sun and Moon whenever Hc > 0°
   - In twilight (Sun Hc -3°00,0' … -15°00,0', inclusive) one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65° (hard limits 10°–75°), brightness, and distance from the Moon. Two stars ~90° apart if no planet is usable
   - Hysteresis: the set is re-evaluated every 60 s and replaced only if the new one is clearly better, or at once if a body leaves the hard limits
-- Pressing the knob button toggles the chart view:
-  - FROM_ZENITH (default): looking down on the boat, bow up, bearings clockwise
-  - FROM_BOAT: looking up at the sky from the boat, bow down, bearings counter-clockwise (the starboard quarter is top right)
+- Pressing the knob button cycles the chart view FROM ZENITH → FROM VESSEL → NORTH UP → FROM ZENITH; the view name replaces the centre data for 3 s on every change and when the screen is entered:
+  - FROM ZENITH (default): looking down on the boat, bow up, bearings clockwise
+  - FROM VESSEL: looking up at the sky from the boat, bow down, bearings counter-clockwise (the starboard quarter is top right)
+  - NORTH UP: looking down from the zenith with true north up; needs no heading, bow arrow hidden
 - Last view stored in NVS `onLeave()` (namespace `"celestial"`, key `"view"`)
 - Updates once per UTC second; the astronomy runs on its own FreeRTOS task on core 0 and only while the screen is active
 - Data freshness, each source separately: stale values show dashes, never as fresh
-  - Heading, in two steps: after 2 s `---°` and the body texts turn red, but the bodies are still placed with the last heading; after 4 s the bodies are hidden. Texts turn white and bodies reappear as soon as the heading returns
+  - Heading, in two steps (FROM ZENITH and FROM VESSEL): after 2 s `---°` and the body texts turn red, but the bodies are still placed with the last heading; after 4 s the bodies are hidden. Texts turn white and bodies reappear as soon as the heading returns. NORTH UP does not use the heading: only the HDG line shows `---°`
   - Position (5 s) or GNSS time (10 s): all bodies hidden
   - Pressure and temperature (6 s): `---- hPa` / `--°C`
 - Known limitation: the centre data label covers bodies higher than ~65°
@@ -320,7 +321,7 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
 | Weather | Toggle TEMPERATURE/PRESSURE/HUMIDITY view | Switch screen | — |
 | Battery | Toggle HOUSE VOLTAGE/HOUSE CURRENT/HOUSE SOC/STARTER VOLTAGE view | Switch screen | — |
 | Engine | Cycle EXHAUST/FUEL0/FRESHWATER view | Switch screen | — |
-| Celestial | Toggle FROM_ZENITH/FROM_BOAT chart view | Switch screen | — |
+| Celestial | Cycle FROM ZENITH/FROM VESSEL/NORTH UP chart view | Switch screen | — |
 | Brightness | Enter ADJUSTING mode | Switch screen | ±2% brightness (ADJUSTING mode only) |
 
 Screen carousel order:

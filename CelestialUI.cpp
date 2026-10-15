@@ -39,6 +39,7 @@ void CelestialUI::begin() {
 void CelestialUI::onEnter() {
     if (!_initialized) return;
     _engine.setActive(true);
+    this->showViewBanner();
     _refresh_key = INT64_MIN;
 }
 
@@ -67,6 +68,12 @@ void CelestialUI::update() {
     in.valid         = position_ok && time_ok;
     _engine.setInputs(in);
 
+    // View name banner expired: data back at once, not on the next second
+    if (_banner_active && (uint32_t)(now - _banner_start_ms) >= VIEW_BANNER_MS) {
+        _banner_active = false;
+        _refresh_key = INT64_MIN;
+    }
+
     // Redraw when the displayed UTC second changes, so the clock ticks in step with GNSS time
     int64_t key = time_ok ? (int64_t)floor(this->utcAt(now))
                           : -1 - (int64_t)(now / REFRESH_INTERVAL_MS);
@@ -76,11 +83,13 @@ void CelestialUI::update() {
     }
 }
 
-// Realizes onButtonPress(): toggle chart view
+// Realizes onButtonPress(): cycle chart view FROM_ZENITH → FROM_VESSEL → NORTH_UP
 void CelestialUI::onButtonPress() {
     if (!_initialized) return;
-    _view = (_view == ChartView::FROM_ZENITH) ? ChartView::FROM_BOAT : ChartView::FROM_ZENITH;
+    uint8_t next = (static_cast<uint8_t>(_view) + 1) % static_cast<uint8_t>(ChartView::COUNT);
+    _view = static_cast<ChartView>(next);
     this->applyView();
+    this->showViewBanner();
     this->refresh(millis());
 }
 
@@ -127,8 +136,14 @@ void CelestialUI::refresh(uint32_t now) {
     this->updateChart(now, heading, position_ok, time_ok);
 }
 
-// Centre label: blank, HDG true, latitude, longitude, UTC, pressure, temperature
+// Centre label: blank, HDG true, latitude, longitude, UTC, pressure, temperature —
+// or the view name for VIEW_BANNER_MS after a view change
 void CelestialUI::updateDataLabel(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok) {
+    if (_banner_active) {
+        lv_label_set_text(ui_LabelData, viewBannerText(_view));
+        return;
+    }
+
     char hdg[12], lat[20], lon[20], utc[12], pres[16], temp[12];
 
     if (heading == CelestialFormat::HeadingState::FRESH) snprintf(hdg, sizeof(hdg), "%03u°", (unsigned)(_heading_true_x10 / 10));
@@ -163,19 +178,22 @@ void CelestialUI::updateDataLabel(uint32_t now, CelestialFormat::HeadingState he
 }
 
 // Place the bodies of the latest result; hide everything when its inputs are not fresh.
-// A stale heading still places the bodies (with the last heading) but turns their texts red.
+// Bow-relative views: a stale heading still places the bodies (with the last heading) but turns
+// their texts red, a lost heading hides them. NORTH_UP does not use the heading at all.
 void CelestialUI::updateChart(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok) {
     CelestialEngine::Result r = _engine.getResult();
     bool result_ok = r.seq != 0 && r.valid
                      && CelestialFormat::isFresh(now, r.computed_millis, RESULT_MAX_AGE_MS);
+    bool north_up = (_view == ChartView::NORTH_UP);
 
-    if (!position_ok || !time_ok || !result_ok || heading == CelestialFormat::HeadingState::LOST) {
+    if (!position_ok || !time_ok || !result_ok
+        || (!north_up && heading == CelestialFormat::HeadingState::LOST)) {
         this->hideBodies();
         return;
     }
 
-    this->setLabelsStale(heading == CelestialFormat::HeadingState::STALE);
-    double ref_deg = _heading_true_x10 / 10.0;
+    this->setLabelsStale(!north_up && heading == CelestialFormat::HeadingState::STALE);
+    double ref_deg = north_up ? 0.0 : _heading_true_x10 / 10.0;
 
     this->placeBody(ui_ContainerSun, ui_LabelSun, "Sun", r.sun, ref_deg);
     this->placeBody(ui_ContainerMoon, ui_LabelMoon, "Moon", r.moon, ref_deg);
@@ -221,7 +239,7 @@ void CelestialUI::placeBody(lv_obj_t* container, lv_obj_t* label, const char* na
     lv_label_set_text(label, buf);
 
     CelestialFormat::ChartPoint p = CelestialFormat::chartPosition(
-        body.hc_deg, body.zn_deg, ref_deg, _view == ChartView::FROM_BOAT);
+        body.hc_deg, body.zn_deg, ref_deg, _view == ChartView::FROM_VESSEL);
     lv_obj_set_pos(container, p.x, p.y);
     lv_obj_remove_flag(container, LV_OBJ_FLAG_HIDDEN);
 }
@@ -246,14 +264,31 @@ void CelestialUI::setLabelsStale(bool stale) {
     for (lv_obj_t* label : labels) lv_obj_set_style_text_color(label, color, 0);
 }
 
-// Bow arrow: top and pointing up from the zenith, bottom and pointing down from the boat
+// Bow arrow: top and pointing up from the zenith, bottom and pointing down from the vessel,
+// hidden north-up (the top of the chart is north, not the bow)
 void CelestialUI::applyView() {
-    if (_view == ChartView::FROM_BOAT) {
+    if (_view == ChartView::FROM_VESSEL) {
         lv_obj_set_align(ui_ImageBow, LV_ALIGN_BOTTOM_MID);
-        lv_image_set_rotation(ui_ImageBow, BOW_ROTATION_FROM_BOAT);
+        lv_image_set_rotation(ui_ImageBow, BOW_ROTATION_FROM_VESSEL);
     } else {
         lv_obj_set_align(ui_ImageBow, LV_ALIGN_TOP_MID);
         lv_image_set_rotation(ui_ImageBow, 0);
+    }
+    if (_view == ChartView::NORTH_UP) lv_obj_add_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
+    else                              lv_obj_remove_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
+}
+
+// Show the active view's name in place of the centre data for VIEW_BANNER_MS
+void CelestialUI::showViewBanner() {
+    _banner_active = true;
+    _banner_start_ms = millis();
+}
+
+const char* CelestialUI::viewBannerText(ChartView view) {
+    switch (view) {
+        case ChartView::FROM_VESSEL: return BANNER_FROM_VESSEL;
+        case ChartView::NORTH_UP:    return BANNER_NORTH_UP;
+        default:                     return BANNER_FROM_ZENITH;
     }
 }
 
