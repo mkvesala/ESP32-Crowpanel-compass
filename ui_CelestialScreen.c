@@ -253,8 +253,8 @@ lv_obj_set_style_outline_color(ui_PanelStar1, lv_color_hex(0xCAD7FF), LV_PART_MA
 lv_obj_set_style_outline_opa(ui_PanelStar1, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelStar1 = lv_label_create(ui_ContainerStar1);
-lv_obj_set_width( ui_LabelStar1, LV_SIZE_CONTENT);  /// 80
-lv_obj_set_height( ui_LabelStar1, LV_SIZE_CONTENT);   /// 80
+lv_obj_set_width( ui_LabelStar1, 80);
+lv_obj_set_height( ui_LabelStar1, 80);
 lv_obj_set_align( ui_LabelStar1, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelStar1,"\nSirius\n\n\n70°00,0'\n135°");
 lv_obj_set_style_text_color(ui_LabelStar1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -298,7 +298,7 @@ ui_LabelData = lv_label_create(ui_CelestialScreen);
 lv_obj_set_width( ui_LabelData, 106);
 lv_obj_set_height( ui_LabelData, 106);
 lv_obj_set_align( ui_LabelData, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelData,"\n360°\n60°12,2'\n025°23,3'\n21:21:21\n1010 hPa\n18°C");
+lv_label_set_text(ui_LabelData,"\n360°\n60°12,2' N\n025°23,3' E\n21:21:21\n1010 hPa\n18°C");
 lv_obj_set_style_text_color(ui_LabelData, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelData, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_align(ui_LabelData, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);

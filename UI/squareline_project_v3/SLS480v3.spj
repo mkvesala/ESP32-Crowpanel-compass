@@ -28560,7 +28560,7 @@
                   },
                   {
                     "nid": 60,
-                    "flags": 51,
+                    "flags": 17,
                     "strtype": "OBJECT/Size",
                     "intarray": [
                       80,
@@ -29475,7 +29475,7 @@
               {
                 "nid": 1030,
                 "strtype": "LABEL/Text",
-                "strval": "\\n360°\\n60°12,2'\\n025°23,3'\\n21:21:21\\n1010 hPa\\n18°C",
+                "strval": "\\n360°\\n60°12,2' N\\n025°23,3' E\\n21:21:21\\n1010 hPa\\n18°C",
                 "InheritedType": 10
               },
               {
@@ -29893,7 +29893,7 @@
     }
   ],
   "selected_theme": "Default",
-  "selected_screen": "GUID55069174-951400S0531",
+  "selected_screen": "GUID70956596-430131S265945286",
   "info": {
     "name": "SquareLine_Project.spj",
     "depth": 1,
@@ -29921,7 +29921,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 1067,
+    "backup_cnt": 1072,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
