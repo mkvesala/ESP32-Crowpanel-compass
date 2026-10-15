@@ -32,7 +32,7 @@
 //   1. FROM_ZENITH — looking down on the boat from the zenith: bow up, bearings clockwise
 //   2. FROM_VESSEL — looking up at the sky from the boat: bow down, bearings counter-clockwise
 //   3. NORTH_UP    — looking down from the zenith with true north up: no heading needed,
-//                    bow arrow hidden
+//                    bow arrow hidden, cardinal points N/E/S/W (ui_LabelCardinals) shown
 // - Chart view: persisted to NVS on onLeave()
 // - Owns: CelestialEngine
 // - Owned by: CrowPanelApplication
@@ -127,11 +127,6 @@ private:
     static constexpr const char* BANNER_FROM_ZENITH = "\n\n\nFROM\nZENITH\n\n";
     static constexpr const char* BANNER_FROM_VESSEL = "\n\n\nFROM\nVESSEL\n\n";
     static constexpr const char* BANNER_NORTH_UP    = "\n\n\nNORTH\nUP\n\n";
-
-    // Body labels: 6 rows × 14 px line height = 84 px of text, but SLS exports them 80 px tall
-    // (ui_LabelStar1 even as LV_SIZE_CONTENT wide). LVGL 9.5 clips label text at the label's
-    // bottom edge, which cut off the Zn row; content height fits the 90 px container.
-    static constexpr int32_t BODY_LABEL_WIDTH = 80;
 
     static constexpr uint32_t COLOR_TEXT       = 0xFFFFFF;
     static constexpr uint32_t COLOR_TEXT_STALE = 0xFF0000;

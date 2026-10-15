@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_CelestialScreen = NULL;lv_obj_t *ui_ImageBow = NULL;lv_obj_t *ui_PanelSky = NULL;lv_obj_t *ui_ContainerSun = NULL;lv_obj_t *ui_PanelSun = NULL;lv_obj_t *ui_LabelSun = NULL;lv_obj_t *ui_ContainerMoon = NULL;lv_obj_t *ui_PanelMoon = NULL;lv_obj_t *ui_LabelMoon = NULL;lv_obj_t *ui_ContainerMars = NULL;lv_obj_t *ui_PanelMars = NULL;lv_obj_t *ui_LabelMars = NULL;lv_obj_t *ui_ContainerVenus = NULL;lv_obj_t *ui_PanelVenus = NULL;lv_obj_t *ui_LabelVenus = NULL;lv_obj_t *ui_ContainerSaturn = NULL;lv_obj_t *ui_PanelSaturn = NULL;lv_obj_t *ui_LabelSaturn = NULL;lv_obj_t *ui_ContainerJupiter = NULL;lv_obj_t *ui_PanelJupiter = NULL;lv_obj_t *ui_LabelJupiter = NULL;lv_obj_t *ui_ContainerStar1 = NULL;lv_obj_t *ui_PanelStar1 = NULL;lv_obj_t *ui_LabelStar1 = NULL;lv_obj_t *ui_ContainerStar2 = NULL;lv_obj_t *ui_PanelStar2 = NULL;lv_obj_t *ui_LabelStar2 = NULL;lv_obj_t *ui_LabelData = NULL;
+lv_obj_t *ui_CelestialScreen = NULL;lv_obj_t *ui_ImageBow = NULL;lv_obj_t *ui_PanelSky = NULL;lv_obj_t *ui_ContainerSun = NULL;lv_obj_t *ui_PanelSun = NULL;lv_obj_t *ui_LabelSun = NULL;lv_obj_t *ui_ContainerMoon = NULL;lv_obj_t *ui_PanelMoon = NULL;lv_obj_t *ui_LabelMoon = NULL;lv_obj_t *ui_ContainerMars = NULL;lv_obj_t *ui_PanelMars = NULL;lv_obj_t *ui_LabelMars = NULL;lv_obj_t *ui_ContainerVenus = NULL;lv_obj_t *ui_PanelVenus = NULL;lv_obj_t *ui_LabelVenus = NULL;lv_obj_t *ui_ContainerSaturn = NULL;lv_obj_t *ui_PanelSaturn = NULL;lv_obj_t *ui_LabelSaturn = NULL;lv_obj_t *ui_ContainerJupiter = NULL;lv_obj_t *ui_PanelJupiter = NULL;lv_obj_t *ui_LabelJupiter = NULL;lv_obj_t *ui_ContainerStar1 = NULL;lv_obj_t *ui_PanelStar1 = NULL;lv_obj_t *ui_LabelStar1 = NULL;lv_obj_t *ui_ContainerStar2 = NULL;lv_obj_t *ui_PanelStar2 = NULL;lv_obj_t *ui_LabelStar2 = NULL;lv_obj_t *ui_LabelData = NULL;lv_obj_t *ui_LabelCardinals = NULL;
 // event funtions
 
 // build funtions
@@ -62,7 +62,7 @@ lv_obj_set_style_outline_opa(ui_PanelSun, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelSun = lv_label_create(ui_ContainerSun);
 lv_obj_set_width( ui_LabelSun, 80);
-lv_obj_set_height( ui_LabelSun, 80);
+lv_obj_set_height( ui_LabelSun, 84);
 lv_obj_set_align( ui_LabelSun, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelSun,"\nSun\n\n\n00°00,0'\n090°");
 lv_obj_set_style_text_color(ui_LabelSun, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -94,7 +94,7 @@ lv_obj_set_style_outline_opa(ui_PanelMoon, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelMoon = lv_label_create(ui_ContainerMoon);
 lv_obj_set_width( ui_LabelMoon, 80);
-lv_obj_set_height( ui_LabelMoon, 80);
+lv_obj_set_height( ui_LabelMoon, 84);
 lv_obj_set_align( ui_LabelMoon, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelMoon,"\nMoon\n\n\n60°00,0'\n180°");
 lv_obj_set_style_text_color(ui_LabelMoon, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -126,7 +126,7 @@ lv_obj_set_style_outline_opa(ui_PanelMars, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelMars = lv_label_create(ui_ContainerMars);
 lv_obj_set_width( ui_LabelMars, 80);
-lv_obj_set_height( ui_LabelMars, 80);
+lv_obj_set_height( ui_LabelMars, 84);
 lv_obj_set_align( ui_LabelMars, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelMars,"\nMars\n\n\n40°00,0'\n270°");
 lv_obj_set_style_text_color(ui_LabelMars, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -158,7 +158,7 @@ lv_obj_set_style_outline_opa(ui_PanelVenus, 255, LV_PART_MAIN| LV_STATE_DEFAULT)
 
 ui_LabelVenus = lv_label_create(ui_ContainerVenus);
 lv_obj_set_width( ui_LabelVenus, 80);
-lv_obj_set_height( ui_LabelVenus, 80);
+lv_obj_set_height( ui_LabelVenus, 84);
 lv_obj_set_align( ui_LabelVenus, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelVenus,"\nVenus\n\n\n20°00,0'\n360°");
 lv_obj_set_style_text_color(ui_LabelVenus, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -190,7 +190,7 @@ lv_obj_set_style_outline_opa(ui_PanelSaturn, 255, LV_PART_MAIN| LV_STATE_DEFAULT
 
 ui_LabelSaturn = lv_label_create(ui_ContainerSaturn);
 lv_obj_set_width( ui_LabelSaturn, 80);
-lv_obj_set_height( ui_LabelSaturn, 80);
+lv_obj_set_height( ui_LabelSaturn, 84);
 lv_obj_set_align( ui_LabelSaturn, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelSaturn,"\nSaturn\n\n\n10°00,0'\n045°");
 lv_obj_set_style_text_color(ui_LabelSaturn, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -222,7 +222,7 @@ lv_obj_set_style_outline_opa(ui_PanelJupiter, 255, LV_PART_MAIN| LV_STATE_DEFAUL
 
 ui_LabelJupiter = lv_label_create(ui_ContainerJupiter);
 lv_obj_set_width( ui_LabelJupiter, 80);
-lv_obj_set_height( ui_LabelJupiter, 80);
+lv_obj_set_height( ui_LabelJupiter, 84);
 lv_obj_set_align( ui_LabelJupiter, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelJupiter,"\nJupiter\n\n\n50°00,0'\n225°");
 lv_obj_set_style_text_color(ui_LabelJupiter, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -254,7 +254,7 @@ lv_obj_set_style_outline_opa(ui_PanelStar1, 255, LV_PART_MAIN| LV_STATE_DEFAULT)
 
 ui_LabelStar1 = lv_label_create(ui_ContainerStar1);
 lv_obj_set_width( ui_LabelStar1, 80);
-lv_obj_set_height( ui_LabelStar1, 80);
+lv_obj_set_height( ui_LabelStar1, 84);
 lv_obj_set_align( ui_LabelStar1, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelStar1,"\nSirius\n\n\n70°00,0'\n135°");
 lv_obj_set_style_text_color(ui_LabelStar1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -286,7 +286,7 @@ lv_obj_set_style_outline_opa(ui_PanelStar2, 255, LV_PART_MAIN| LV_STATE_DEFAULT)
 
 ui_LabelStar2 = lv_label_create(ui_ContainerStar2);
 lv_obj_set_width( ui_LabelStar2, 80);
-lv_obj_set_height( ui_LabelStar2, 80);
+lv_obj_set_height( ui_LabelStar2, 84);
 lv_obj_set_align( ui_LabelStar2, LV_ALIGN_CENTER );
 lv_label_set_text(ui_LabelStar2,"\nVega\n\n\n30°00,0'\n315°");
 lv_obj_set_style_text_color(ui_LabelStar2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -307,6 +307,19 @@ lv_obj_set_style_text_font(ui_LabelData, &ui_font_FontCelestial16, LV_PART_MAIN|
 lv_obj_set_style_radius(ui_LabelData, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_bg_color(ui_LabelData, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_LabelData, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+ui_LabelCardinals = lv_label_create(ui_CelestialScreen);
+lv_obj_set_width( ui_LabelCardinals, 440);
+lv_obj_set_height( ui_LabelCardinals, 440);
+lv_obj_set_align( ui_LabelCardinals, LV_ALIGN_CENTER );
+lv_label_set_text(ui_LabelCardinals,"N\n\n\n\n\n\n\n\nW                                                 E\n\n\n\n\n\n\n\nS");
+lv_obj_add_flag( ui_LabelCardinals, LV_OBJ_FLAG_HIDDEN );   /// Flags
+lv_obj_set_style_text_color(ui_LabelCardinals, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_LabelCardinals, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_letter_space(ui_LabelCardinals, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_line_space(ui_LabelCardinals, 2, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_align(ui_LabelCardinals, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_LabelCardinals, &ui_font_FontAttitudeTitle24, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 }
 
@@ -343,5 +356,6 @@ ui_ContainerStar2= NULL;
 ui_PanelStar2= NULL;
 ui_LabelStar2= NULL;
 ui_LabelData= NULL;
+ui_LabelCardinals= NULL;
 
 }

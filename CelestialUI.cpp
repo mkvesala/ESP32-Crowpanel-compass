@@ -19,13 +19,6 @@ void CelestialUI::begin() {
 
     _view = this->loadView();
 
-    // Body labels as tall as their text, so the Zn row is not clipped (see BODY_LABEL_WIDTH)
-    lv_obj_t* const labels[] = {
-        ui_LabelSun, ui_LabelMoon,
-        ui_LabelVenus, ui_LabelMars, ui_LabelJupiter, ui_LabelSaturn,
-        ui_LabelStar1, ui_LabelStar2 };
-    for (lv_obj_t* label : labels) lv_obj_set_size(label, BODY_LABEL_WIDTH, LV_SIZE_CONTENT);
-
     this->hideBodies();
     this->applyView();
 
@@ -264,8 +257,8 @@ void CelestialUI::setLabelsStale(bool stale) {
     for (lv_obj_t* label : labels) lv_obj_set_style_text_color(label, color, 0);
 }
 
-// Bow arrow: top and pointing up from the zenith, bottom and pointing down from the vessel,
-// hidden north-up (the top of the chart is north, not the bow)
+// Bow arrow: top and pointing up from the zenith, bottom and pointing down from the vessel.
+// North-up the top of the chart is north, not the bow: arrow hidden, N/E/S/W shown instead.
 void CelestialUI::applyView() {
     if (_view == ChartView::FROM_VESSEL) {
         lv_obj_set_align(ui_ImageBow, LV_ALIGN_BOTTOM_MID);
@@ -274,8 +267,13 @@ void CelestialUI::applyView() {
         lv_obj_set_align(ui_ImageBow, LV_ALIGN_TOP_MID);
         lv_image_set_rotation(ui_ImageBow, 0);
     }
-    if (_view == ChartView::NORTH_UP) lv_obj_add_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
-    else                              lv_obj_remove_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
+    if (_view == ChartView::NORTH_UP) {
+        lv_obj_add_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui_LabelCardinals, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_remove_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui_LabelCardinals, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 // Show the active view's name in place of the centre data for VIEW_BANNER_MS

@@ -67,7 +67,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Comment |
 |---------|---------|
-| v4.2.4 | Latest release. Documentation update: disclaimer added to README. New `version.h` with `SW_VERSION`. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.3.0 | Latest release. CelestialScreen added — sextant practice aid showing the geocentric computed altitude Hc and azimuth Zn of the Sun, Moon and a twilight set of one planet + two stars on a star chart, in three views (FROM ZENITH / FROM VESSEL / NORTH UP). Astronomy Engine 2.1.19, 57 navigational stars from Hipparcos, GNSS UTC via ESP-NOW `DATETIME_DELTA`, host unit tests against JPL Horizons. See [CHANGELOG](CHANGELOG.md) for details. |
+| v4.2.4 | Documentation update: disclaimer added to README. New `version.h` with `SW_VERSION`. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.3 | Bug fix: AttitudeScreen now restores the last selected view (ATTITUDE / MINMAX / DEPTH) when returning to the screen and after reboot — active view is persisted to NVS like on the other screens. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.2 | Bug fix: trend arrows (↑/↓) on WeatherScreen, BatteryScreen and EngineScreen now show the direction the value is developing in, instead of whether it is above or below the level where it last stood still. New `TrendIndicator` (fast/slow EMA rate estimate with hysteresis), tuned per value. See [CHANGELOG](CHANGELOG.md) for details. |
 | v4.2.1 | Documentation update only. |
@@ -289,7 +290,7 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
 - Pressing the knob button cycles the chart view FROM ZENITH → FROM VESSEL → NORTH UP → FROM ZENITH; the view name replaces the centre data for 3 s on every change and when the screen is entered:
   - FROM ZENITH (default): looking down on the boat, bow up, bearings clockwise
   - FROM VESSEL: looking up at the sky from the boat, bow down, bearings counter-clockwise (the starboard quarter is top right)
-  - NORTH UP: looking down from the zenith with true north up; needs no heading, bow arrow hidden
+  - NORTH UP: looking down from the zenith with true north up; needs no heading, bow arrow replaced by the cardinal points N, E, S, W at the screen edges
 - Last view stored in NVS `onLeave()` (namespace `"celestial"`, key `"view"`)
 - Updates once per UTC second; the astronomy runs on its own FreeRTOS task on core 0 and only while the screen is active
 - Data freshness, each source separately: stale values show dashes, never as fresh

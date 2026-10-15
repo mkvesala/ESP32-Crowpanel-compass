@@ -41,6 +41,7 @@ extern lv_obj_t *ui_ContainerStar2;
 extern lv_obj_t *ui_PanelStar2;
 extern lv_obj_t *ui_LabelStar2;
 extern lv_obj_t *ui_LabelData;
+extern lv_obj_t *ui_LabelCardinals;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

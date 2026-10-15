@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v4.3.0] - 2026-10-15
 
 ### Added
 
@@ -15,18 +15,23 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 - Hc is geocentric, as in the Nautical Almanac and sight reduction (apparent place of date, no refraction, no parallax)
 - Sun and Moon whenever Hc > 0°; in twilight (Sun -3° … -15°, inclusive) also one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65°, brightness and distance from the Moon. Re-evaluated every 60 s with hysteresis, at once if a body leaves Hc 10°–75°
 - Centre label: HDG true, latitude and longitude with hemisphere, GNSS UTC, air pressure, temperature
-- Knob press cycles the chart view: FROM ZENITH (bow up, default) → FROM VESSEL (looking up from the boat, bow down, bearings counter-clockwise) → NORTH UP (true north up, needs no heading, bow arrow hidden); stored in NVS namespace `"celestial"`, key `"view"`
+- Knob press cycles the chart view: FROM ZENITH (bow up, default) → FROM VESSEL (looking up from the boat, bow down, bearings counter-clockwise) → NORTH UP (true north up, needs no heading, bow arrow replaced by the cardinal points N/E/S/W); stored in NVS namespace `"celestial"`, key `"view"`
 - The view name replaces the centre data for 3 s on every view change and on screen entry
 - Per-source freshness, stale data is never shown as fresh: position 5 s and GNSS time 10 s (bodies hidden), weather 6 s
 - Heading loss in the bow-relative views, in two steps: after 2 s the heading shows `---°` and the body texts turn red, but bodies are still placed with the last heading; after 4 s the bodies are hidden. Normal display resumes as soon as the heading returns
-- Body labels sized to their text (6 rows × 14 px = 84 px): the SLS-exported 80 px height made LVGL 9.5 clip the bottom of the Zn row
+- Body labels 84 px tall in SquareLine (6 rows × 14 px): at 80 px LVGL 9.5 clipped the bottom of the Zn row
 - New classes: `CelestialUI` (screen adapter), `CelestialEngine` (FreeRTOS task on core 0, computes only while the screen is active), `CelestialCalculator` (Astronomy Engine wrapper), `CelestialSelector` (twilight set + hysteresis), `CelestialFormat.h` (formatting, chart placement, freshness), `NavStars` (57 navigational stars from Hipparcos with proper motion)
 - [Astronomy Engine](https://github.com/cosinekitty/astronomy) 2.1.19 (MIT) added to the sketch folder; only local change is `ASTRONOMY_ENGINE_NO_CURRENT_TIME` defined in `astronomy.h`
-- Host unit tests `tests/celestial/run_tests.sh`: ephemeris against JPL Horizons (worst 0.12' in Hc, 0.02° in Zn), star table against SIMBAD by name, proper motion, twilight limits, selection and hysteresis, formatting, chart placement, freshness
-- `ESPNowReceiver`: receives `DATETIME_DELTA` (`hasNewDateTimeData()`, `getDateTimeData(rx_millis)`, `lastDateTimeRxMillis()`); new RX timestamps `lastGnssRxMillis()` and `lastWeatherRxMillis()`
+- Host unit tests `tests/celestial/run_tests.sh`: ephemeris against JPL Horizons (worst 0.12' in Hc, 0.02° in Zn), star table against SIMBAD by name, proper motion, twilight limits, selection and hysteresis, formatting, chart placement, freshness, two-stage heading loss
+- `ESPNowReceiver`: receives `DATETIME_DELTA` (`hasNewDateTimeData()`, `getDateTimeData(rx_millis)`, `lastDateTimeRxMillis()`); new RX timestamps `lastHeadingRxMillis()`, `lastGnssRxMillis()` and `lastWeatherRxMillis()`
 - Diagnostics print includes the celestial task's worst computation time and stack headroom
 
-Flash: 2 643 178 B (84 % of the 3 MB app partition), +80 056 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
+### Changed
+
+- `SW_VERSION` = `"v4.3.0"`
+- Requires UBLOX-ESP32-SignalK-gateway v1.3.0 or newer for the GNSS UTC (`DATETIME_DELTA`) used by the celestial screen
+
+Flash: 2 644 982 B (84 % of the 3 MB app partition), +81 860 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
 
 ## [v4.2.4] - 2026-10-12
 
@@ -1256,6 +1261,7 @@ struct LevelResponse {
 #### HeadingData
 - Simplified struct without validity flags: `heading_rad`, `heading_true_rad`, `pitch_rad`, `roll_rad`
 
+[v4.3.0]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.3.0
 [v4.2.4]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.4
 [v4.2.3]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.3
 [v4.2.2]: https://github.com/mkvesala/ESP32-Crowpanel-compass/releases/tag/v4.2.2
