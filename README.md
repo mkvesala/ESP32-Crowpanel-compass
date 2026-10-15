@@ -285,7 +285,7 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
 - Star chart: zenith (Hc 90°) at the centre, horizon (Hc 0°) on the 380 px circle, altitude linear; direction relative to true heading
 - Bodies shown:
   - Sun and Moon whenever Hc > 0°
-  - In twilight (Sun Hc -3°00,0' … -15°00,0', inclusive) one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65° (hard limits 10°–75°), brightness, and distance from the Moon. Two stars ~90° apart if no planet is usable
+  - In twilight (Sun Hc -3°00,0' … -9°00,0', inclusive — mid civil to mid nautical twilight) one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65° (hard limits 10°–75°), brightness, and distance from the Moon. Two stars ~90° apart if no planet is usable
   - Hysteresis: the set is re-evaluated every 60 s and replaced only if the new one is clearly better, or at once if a body leaves the hard limits
 - Pressing the knob button cycles the chart view FROM ZENITH → FROM VESSEL → NORTH UP → FROM ZENITH; the view name replaces the centre data for 3 s on every change and when the screen is entered:
   - FROM ZENITH (default): looking down on the boat, bow up, bearings clockwise

@@ -15,7 +15,7 @@
 // - Sextant practice aid: computed altitude Hc and azimuth Zn of up to five bodies, placed on a
 //   380 px star chart relative to the boat's true heading
 //   - Centre = zenith (Hc 90°), panel edge = horizon (Hc 0°, radius 190 px), altitude linear
-//   - Sun and Moon whenever Hc > 0°; in twilight (Sun -3°..-15°) also one planet + two stars
+//   - Sun and Moon whenever Hc > 0°; in twilight (Sun -3°..-9°) also one planet + two stars
 //     picked by CelestialSelector
 // - Hc is geocentric (Nautical Almanac / sight reduction convention), see CelestialCalculator
 // - Astronomy runs on CelestialEngine's own task (core 0); this class only samples inputs,

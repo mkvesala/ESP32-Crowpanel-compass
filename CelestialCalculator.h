@@ -37,9 +37,10 @@ public:
         bool   valid  = false;
     };
 
-    // Twilight for sextant work: Sun's Hc from -15°00,0' to -3°00,0', both inclusive
+    // Twilight for sextant work: Sun's Hc from -9°00,0' to -3°00,0', both inclusive — mid civil
+    // twilight to mid nautical twilight, when both the horizon and the stars are visible
     static constexpr double TWILIGHT_UPPER_DEG = -3.0;
-    static constexpr double TWILIGHT_LOWER_DEG = -15.0;
+    static constexpr double TWILIGHT_LOWER_DEG = -9.0;
 
     // Set observation time (UTC seconds since 1970) and observer position. Must be called
     // before any position query; caches the time-dependent rotation matrix.

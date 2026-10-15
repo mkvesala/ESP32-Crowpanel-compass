@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azimuth Zn of suitable navigational bodies, placed on a 380 px star chart relative to the boat's true heading (zenith at the centre, horizon on the circle, altitude linear). Updates once per UTC second. Accuracy target: 1' in Hc, 4 s in time, 1° in Zn.
 
 - Hc is geocentric, as in the Nautical Almanac and sight reduction (apparent place of date, no refraction, no parallax)
-- Sun and Moon whenever Hc > 0°; in twilight (Sun -3° … -15°, inclusive) also one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65°, brightness and distance from the Moon. Re-evaluated every 60 s with hysteresis, at once if a body leaves Hc 10°–75°
+- Sun and Moon whenever Hc > 0°; in twilight (Sun -3° … -9°, inclusive: mid civil to mid nautical twilight) also one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65°, brightness and distance from the Moon. Re-evaluated every 60 s with hysteresis, at once if a body leaves Hc 10°–75°
 - Centre label: HDG true, latitude and longitude with hemisphere, GNSS UTC, air pressure, temperature
 - Knob press cycles the chart view: FROM ZENITH (bow up, default) → FROM VESSEL (looking up from the boat, bow down, bearings counter-clockwise) → NORTH UP (true north up, needs no heading, bow arrow replaced by the cardinal points N/E/S/W); stored in NVS namespace `"celestial"`, key `"view"`
 - The view name replaces the centre data for 3 s on every view change and on screen entry
