@@ -16,7 +16,9 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 - Sun and Moon whenever Hc > 0°; in twilight (Sun -3° … -15°, inclusive) also one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65°, brightness and distance from the Moon. Re-evaluated every 60 s with hysteresis, at once if a body leaves Hc 10°–75°
 - Centre label: HDG true, latitude and longitude with hemisphere, GNSS UTC, air pressure, temperature
 - Knob press toggles the chart view: FROM_ZENITH (bow up, default) ↔ FROM_BOAT (looking up from the boat, bow down, bearings counter-clockwise); stored in NVS namespace `"celestial"`, key `"view"`
-- Per-source freshness, stale data is never shown as fresh: heading 2 s (chart falls back to north-up, bow arrow hidden), position 5 s and GNSS time 10 s (bodies hidden), weather 6 s
+- Per-source freshness, stale data is never shown as fresh: position 5 s and GNSS time 10 s (bodies hidden), weather 6 s
+- Heading loss in two steps: after 2 s the heading shows `---°` and the body texts turn red, but bodies are still placed with the last heading; after 4 s the bodies are hidden. Normal display resumes as soon as the heading returns
+- Body labels sized to their text (6 rows × 14 px = 84 px): the SLS-exported 80 px height made LVGL 9.5 clip the bottom of the Zn row
 - New classes: `CelestialUI` (screen adapter), `CelestialEngine` (FreeRTOS task on core 0, computes only while the screen is active), `CelestialCalculator` (Astronomy Engine wrapper), `CelestialSelector` (twilight set + hysteresis), `CelestialFormat.h` (formatting, chart placement, freshness), `NavStars` (57 navigational stars from Hipparcos with proper motion)
 - [Astronomy Engine](https://github.com/cosinekitty/astronomy) 2.1.19 (MIT) added to the sketch folder; only local change is `ASTRONOMY_ENGINE_NO_CURRENT_TIME` defined in `astronomy.h`
 - Host unit tests `tests/celestial/run_tests.sh`: ephemeris against JPL Horizons (worst 0.12' in Hc, 0.02° in Zn), star table against SIMBAD by name, proper motion, twilight limits, selection and hysteresis, formatting, chart placement, freshness

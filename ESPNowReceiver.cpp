@@ -381,6 +381,11 @@ uint32_t ESPNowReceiver::lastDateTimeRxMillis() const {
     uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_datetime_millis; portEXIT_CRITICAL(&s_spinlock); return v;
 }
 
+// Returns millis() of the last received heading packet, 0 if none ever received
+uint32_t ESPNowReceiver::lastHeadingRxMillis() const {
+    uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_rx_millis; portEXIT_CRITICAL(&s_spinlock); return v;
+}
+
 // Returns millis() of the last received GNSS packet, 0 if none ever received
 uint32_t ESPNowReceiver::lastGnssRxMillis() const {
     uint32_t v; portENTER_CRITICAL(&s_spinlock); v = s_last_gnss_millis; portEXIT_CRITICAL(&s_spinlock); return v;

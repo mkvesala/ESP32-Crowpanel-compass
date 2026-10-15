@@ -6,6 +6,7 @@
 #include "IScreenUI.h"
 #include "ESPNowReceiver.h"
 #include "CelestialEngine.h"
+#include "CelestialFormat.h"
 
 // === C L A S S  C E L E S T I A L U I ===
 //
@@ -22,7 +23,8 @@
 // - Sources: HEADING_DELTA (HDG true), GNSS_DELTA (position), DATETIME_DELTA (UTC), WEATHER_DELTA
 //   (pressure, temperature). Each has its own freshness limit, judged by the receiver's RX
 //   timestamps; stale data is shown as dashes, never as fresh:
-//   - heading stale → chart drawn north-up, bow arrow hidden, "---°"
+//   - heading stale (2 s)  → "---°", body texts red, bodies still placed with the last heading
+//   - heading lost (4 s)   → "---°", all bodies hidden; back to normal when the heading returns
 //   - position or time stale → all bodies hidden
 // - Knob press: toggles the chart view
 //   1. FROM_ZENITH — looking down on the boat from the zenith: bow up, bearings clockwise
@@ -62,7 +64,7 @@ private:
 
     // Latest consumed data
     uint16_t _heading_true_x10 = 0;
-    bool     _have_heading     = false;
+    bool     _have_heading     = false;   // a valid (0..3599) heading has been received
     GnssData _gnss;
     double   _utc_anchor       = 0.0;    // UTC at _anchor_millis
     uint32_t _anchor_millis    = 0;
@@ -73,16 +75,20 @@ private:
     // Refresh once per displayed UTC second (or per second of millis() without time)
     int64_t  _refresh_key = INT64_MIN;
 
+    // Body label text colour currently applied (red while the heading is stale)
+    bool     _labels_stale = false;
+
     void consumeData();
     void refresh(uint32_t now);
-    void updateDataLabel(uint32_t now, bool heading_ok, bool position_ok, bool time_ok);
-    void updateChart(uint32_t now, bool heading_ok, bool position_ok, bool time_ok);
+    void updateDataLabel(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok);
+    void updateChart(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok);
     void placeBody(lv_obj_t* container, lv_obj_t* label, const char* name,
                    const CelestialEngine::Body& body, double ref_deg);
     void hideBodies();
+    void setLabelsStale(bool stale);
     void applyView();
 
-    bool isHeadingFresh() const;
+    CelestialFormat::HeadingState headingState(uint32_t now) const;
     bool isPositionFresh(uint32_t now) const;
     bool isTimeFresh(uint32_t now) const;
     bool isWeatherFresh(uint32_t now) const;
@@ -93,7 +99,7 @@ private:
     ChartView loadView();
 
     // Freshness limits (sender cadence in brackets)
-    static constexpr uint32_t HEADING_TIMEOUT_MS  = 2000;   // CMPS14 (53 ms)
+    static constexpr uint32_t HEADING_TIMEOUT_MS  = 2000;   // CMPS14 (53 ms); bodies hidden at 2×
     static constexpr uint32_t GNSS_TIMEOUT_MS     = 5000;   // UBLOX position heartbeat (499 ms)
     static constexpr uint32_t DATETIME_TIMEOUT_MS = 10000;  // UBLOX DATETIME_DELTA (2 s)
     static constexpr uint32_t WEATHER_TIMEOUT_MS  = 6000;   // BME280 (2 s), as WeatherUI
@@ -105,8 +111,13 @@ private:
     static constexpr uint32_t REFRESH_INTERVAL_MS = 1000;
     static constexpr int32_t  BOW_ROTATION_FROM_BOAT = 1800;   // 0.1° units
 
-    // SLS exports ui_LabelStar1 as LV_SIZE_CONTENT, the other body labels as 80×80
-    static constexpr int32_t BODY_LABEL_SIZE = 80;
+    // Body labels: 6 rows × 14 px line height = 84 px of text, but SLS exports them 80 px tall
+    // (ui_LabelStar1 even as LV_SIZE_CONTENT wide). LVGL 9.5 clips label text at the label's
+    // bottom edge, which cut off the Zn row; content height fits the 90 px container.
+    static constexpr int32_t BODY_LABEL_WIDTH = 80;
+
+    static constexpr uint32_t COLOR_TEXT       = 0xFFFFFF;
+    static constexpr uint32_t COLOR_TEXT_STALE = 0xFF0000;
 
     static constexpr const char* NVS_NAMESPACE = "celestial";
     static constexpr const char* NVS_KEY_VIEW  = "view";

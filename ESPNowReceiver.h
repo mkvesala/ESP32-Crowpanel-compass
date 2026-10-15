@@ -62,6 +62,7 @@ public:
     // Per-source arrival times (0 = never received). A screen that only consumes a source
     // while it is active must judge freshness by these, not by hasNewXxxData(): a new-data
     // flag left set while the screen was inactive may be minutes old when it is read.
+    uint32_t lastHeadingRxMillis() const;
     uint32_t lastGnssRxMillis() const;
     uint32_t lastWeatherRxMillis() const;
 

@@ -1,5 +1,4 @@
 #include "CelestialUI.h"
-#include "CelestialFormat.h"
 #include "NavStars.h"
 #include "ui.h"
 
@@ -20,9 +19,12 @@ void CelestialUI::begin() {
 
     _view = this->loadView();
 
-    // Star labels must centre on their container like the other body labels
-    lv_obj_set_size(ui_LabelStar1, BODY_LABEL_SIZE, BODY_LABEL_SIZE);
-    lv_obj_set_size(ui_LabelStar2, BODY_LABEL_SIZE, BODY_LABEL_SIZE);
+    // Body labels as tall as their text, so the Zn row is not clipped (see BODY_LABEL_WIDTH)
+    lv_obj_t* const labels[] = {
+        ui_LabelSun, ui_LabelMoon,
+        ui_LabelVenus, ui_LabelMars, ui_LabelJupiter, ui_LabelSaturn,
+        ui_LabelStar1, ui_LabelStar2 };
+    for (lv_obj_t* label : labels) lv_obj_set_size(label, BODY_LABEL_WIDTH, LV_SIZE_CONTENT);
 
     this->hideBodies();
     this->applyView();
@@ -89,7 +91,7 @@ void CelestialUI::consumeData() {
     if (_receiver.hasNewData()) {
         HeadingData hd = _receiver.getData();
         _heading_true_x10 = hd.heading_true_x10;
-        _have_heading = true;
+        _have_heading = (hd.heading_true_x10 < 3600);
     }
 
     if (_receiver.hasNewGnssData()) {
@@ -117,20 +119,20 @@ void CelestialUI::consumeData() {
 void CelestialUI::refresh(uint32_t now) {
     if (!_initialized) return;
 
-    bool heading_ok = this->isHeadingFresh();
+    CelestialFormat::HeadingState heading = this->headingState(now);
     bool position_ok = this->isPositionFresh(now);
     bool time_ok = this->isTimeFresh(now);
 
-    this->updateDataLabel(now, heading_ok, position_ok, time_ok);
-    this->updateChart(now, heading_ok, position_ok, time_ok);
+    this->updateDataLabel(now, heading, position_ok, time_ok);
+    this->updateChart(now, heading, position_ok, time_ok);
 }
 
 // Centre label: blank, HDG true, latitude, longitude, UTC, pressure, temperature
-void CelestialUI::updateDataLabel(uint32_t now, bool heading_ok, bool position_ok, bool time_ok) {
+void CelestialUI::updateDataLabel(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok) {
     char hdg[12], lat[20], lon[20], utc[12], pres[16], temp[12];
 
-    if (heading_ok) snprintf(hdg, sizeof(hdg), "%03u°", (unsigned)(_heading_true_x10 / 10));
-    else            snprintf(hdg, sizeof(hdg), "---°");
+    if (heading == CelestialFormat::HeadingState::FRESH) snprintf(hdg, sizeof(hdg), "%03u°", (unsigned)(_heading_true_x10 / 10));
+    else snprintf(hdg, sizeof(hdg), "---°");
 
     if (position_ok) {
         CelestialFormat::formatLatitude(lat, sizeof(lat), _gnss.lat_deg);
@@ -160,22 +162,20 @@ void CelestialUI::updateDataLabel(uint32_t now, bool heading_ok, bool position_o
     lv_label_set_text(ui_LabelData, buf);
 }
 
-// Place the bodies of the latest result; hide everything when its inputs are not fresh
-void CelestialUI::updateChart(uint32_t now, bool heading_ok, bool position_ok, bool time_ok) {
-    if (heading_ok) lv_obj_remove_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
-    else            lv_obj_add_flag(ui_ImageBow, LV_OBJ_FLAG_HIDDEN);
-
+// Place the bodies of the latest result; hide everything when its inputs are not fresh.
+// A stale heading still places the bodies (with the last heading) but turns their texts red.
+void CelestialUI::updateChart(uint32_t now, CelestialFormat::HeadingState heading, bool position_ok, bool time_ok) {
     CelestialEngine::Result r = _engine.getResult();
     bool result_ok = r.seq != 0 && r.valid
                      && CelestialFormat::isFresh(now, r.computed_millis, RESULT_MAX_AGE_MS);
 
-    if (!position_ok || !time_ok || !result_ok) {
+    if (!position_ok || !time_ok || !result_ok || heading == CelestialFormat::HeadingState::LOST) {
         this->hideBodies();
         return;
     }
 
-    // Bow-relative when the heading is fresh, otherwise north-up
-    double ref_deg = heading_ok ? _heading_true_x10 / 10.0 : 0.0;
+    this->setLabelsStale(heading == CelestialFormat::HeadingState::STALE);
+    double ref_deg = _heading_true_x10 / 10.0;
 
     this->placeBody(ui_ContainerSun, ui_LabelSun, "Sun", r.sun, ref_deg);
     this->placeBody(ui_ContainerMoon, ui_LabelMoon, "Moon", r.moon, ref_deg);
@@ -234,6 +234,18 @@ void CelestialUI::hideBodies() {
     for (lv_obj_t* c : containers) lv_obj_add_flag(c, LV_OBJ_FLAG_HIDDEN);
 }
 
+// Body label text colour: red while the heading is stale, white otherwise (only on change)
+void CelestialUI::setLabelsStale(bool stale) {
+    if (stale == _labels_stale) return;
+    _labels_stale = stale;
+    lv_color_t color = lv_color_hex(stale ? COLOR_TEXT_STALE : COLOR_TEXT);
+    lv_obj_t* const labels[] = {
+        ui_LabelSun, ui_LabelMoon,
+        ui_LabelVenus, ui_LabelMars, ui_LabelJupiter, ui_LabelSaturn,
+        ui_LabelStar1, ui_LabelStar2 };
+    for (lv_obj_t* label : labels) lv_obj_set_style_text_color(label, color, 0);
+}
+
 // Bow arrow: top and pointing up from the zenith, bottom and pointing down from the boat
 void CelestialUI::applyView() {
     if (_view == ChartView::FROM_BOAT) {
@@ -245,8 +257,8 @@ void CelestialUI::applyView() {
     }
 }
 
-bool CelestialUI::isHeadingFresh() const {
-    return _have_heading && _heading_true_x10 < 3600 && _receiver.isConnected(HEADING_TIMEOUT_MS);
+CelestialFormat::HeadingState CelestialUI::headingState(uint32_t now) const {
+    return CelestialFormat::headingState(_have_heading, now, _receiver.lastHeadingRxMillis(), HEADING_TIMEOUT_MS);
 }
 
 bool CelestialUI::isPositionFresh(uint32_t now) const {

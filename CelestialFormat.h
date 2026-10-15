@@ -94,4 +94,20 @@ namespace CelestialFormat {
         return last_ms != 0 && (uint32_t)(now_ms - last_ms) < timeout_ms;
     }
 
+    // Heading loss is signalled in two steps, so a short dropout does not blank the chart:
+    // FRESH → STALE after timeout (bodies still placed with the last heading, texts red)
+    //       → LOST after 2 × timeout (bodies hidden). Never received / invalid → LOST.
+    enum class HeadingState : uint8_t {
+        FRESH,
+        STALE,
+        LOST
+    };
+
+    inline HeadingState headingState(bool have_valid_heading, uint32_t now_ms, uint32_t last_rx_ms, uint32_t timeout_ms) {
+        if (!have_valid_heading) return HeadingState::LOST;
+        if (isFresh(now_ms, last_rx_ms, timeout_ms)) return HeadingState::FRESH;
+        if (isFresh(now_ms, last_rx_ms, 2 * timeout_ms)) return HeadingState::STALE;
+        return HeadingState::LOST;
+    }
+
 } // namespace CelestialFormat

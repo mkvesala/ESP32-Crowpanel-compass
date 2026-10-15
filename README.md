@@ -280,7 +280,7 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
 - **Hc is geocentric**, as in the Nautical Almanac and sight reduction (apparent place of date, no refraction, no parallax) — for the Moon this differs from what the sextant shows by up to ~1°, corrected via HP as usual
 - Computed with [Astronomy Engine](https://github.com/cosinekitty/astronomy) in double precision; star positions from Hipparcos (57 navigational stars) with proper motion applied. Host tests agree with JPL Horizons to 0.12' in Hc
 - Centre label: blank line, HDG true `000°`, latitude `dd°mm,m'N`, longitude `ddd°mm,m'E`, GNSS UTC `hh:mm:ss`, air pressure `1010 hPa`, temperature `18°C`
-- Body labels: name (longer than 6 characters shortened, e.g. `Betelg.`), Hc `dd°mm,m'`, Zn `ddd°`
+- Body labels: name (star names longer than 6 characters shortened, e.g. `Betelg.`), Hc `dd°mm,m'`, Zn `ddd°`
 - Star chart: zenith (Hc 90°) at the centre, horizon (Hc 0°) on the 380 px circle, altitude linear; direction relative to true heading
 - Bodies shown:
   - Sun and Moon whenever Hc > 0°
@@ -292,7 +292,7 @@ A sextant practice aid: shows where suitable bodies stand relative to the bow an
 - Last view stored in NVS `onLeave()` (namespace `"celestial"`, key `"view"`)
 - Updates once per UTC second; the astronomy runs on its own FreeRTOS task on core 0 and only while the screen is active
 - Data freshness, each source separately: stale values show dashes, never as fresh
-  - Heading (2 s): `---°`, bow arrow hidden, chart drawn north-up
+  - Heading, in two steps: after 2 s `---°` and the body texts turn red, but the bodies are still placed with the last heading; after 4 s the bodies are hidden. Texts turn white and bodies reappear as soon as the heading returns
   - Position (5 s) or GNSS time (10 s): all bodies hidden
   - Pressure and temperature (6 s): `---- hPa` / `--°C`
 - Known limitation: the centre data label covers bodies higher than ~65°
