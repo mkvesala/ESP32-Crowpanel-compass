@@ -20,6 +20,7 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 - Per-source freshness, stale data is never shown as fresh: position 5 s and GNSS time 10 s (bodies hidden), weather 6 s
 - Heading loss in the bow-relative views, in two steps: after 2 s the heading shows `---°` and the body texts turn red, but bodies are still placed with the last heading; after 4 s the bodies are hidden. Normal display resumes as soon as the heading returns
 - Body labels 84 px tall in SquareLine (6 rows × 14 px): at 80 px LVGL 9.5 clipped the bottom of the Zn row
+- One planet container (`ui_ContainerPlanet`) for whichever planet is selected; the planet dot takes that planet's colour (Venus F5E6B8, Mars C1440E, Jupiter C88B3A, Saturn E3C16F)
 - New classes: `CelestialUI` (screen adapter), `CelestialEngine` (FreeRTOS task on core 0, computes only while the screen is active), `CelestialCalculator` (Astronomy Engine wrapper), `CelestialSelector` (twilight set + hysteresis), `CelestialFormat.h` (formatting, chart placement, freshness), `NavStars` (57 navigational stars from Hipparcos with proper motion)
 - [Astronomy Engine](https://github.com/cosinekitty/astronomy) 2.1.19 (MIT) added to the sketch folder; only local change is `ASTRONOMY_ENGINE_NO_CURRENT_TIME` defined in `astronomy.h`
 - Host unit tests `tests/celestial/run_tests.sh`: ephemeris against JPL Horizons (worst 0.12' in Hc, 0.02° in Zn), star table against SIMBAD by name, proper motion, twilight limits, selection and hysteresis, formatting, chart placement, freshness, two-stage heading loss
@@ -29,10 +30,11 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 ### Changed
 
 - `SW_VERSION` = `"v4.3.0"`
+- Fonts `FontCelestial16` and `FontAttitudeTitle24` regenerated at 4 bpp (antialiased); `FontAttitudeTitle24` is also used on AttitudeScreen
 - Requires UBLOX-ESP32-SignalK-gateway v1.3.0 or newer for the GNSS UTC (`DATETIME_DELTA`) used by the celestial screen
 - `espnow_protocol.h` synced with the fleet-wide copy: adds `HALMET_OIL_DELTA` (msg type 10) and `HALMETOilDelta` (engine oil pressure, Pa). Not used by this display — `ESPNowReceiver` ignores the message type
 
-Flash: 2 644 978 B (84 % of the 3 MB app partition), +81 856 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
+Flash: 2 653 822 B (84 % of the 3 MB app partition), +90 700 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
 
 ## [v4.2.4] - 2026-10-12
 

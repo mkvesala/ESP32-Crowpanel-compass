@@ -191,17 +191,15 @@ void CelestialUI::updateChart(uint32_t now, CelestialFormat::HeadingState headin
     this->placeBody(ui_ContainerSun, ui_LabelSun, "Sun", r.sun, ref_deg);
     this->placeBody(ui_ContainerMoon, ui_LabelMoon, "Moon", r.moon, ref_deg);
 
-    // One container per planet; show only the selected one (full name, as designed in SLS)
-    lv_obj_t* const planet_containers[CelestialCalculator::PLANET_COUNT] = {
-        ui_ContainerVenus, ui_ContainerMars, ui_ContainerJupiter, ui_ContainerSaturn };
-    lv_obj_t* const planet_labels[CelestialCalculator::PLANET_COUNT] = {
-        ui_LabelVenus, ui_LabelMars, ui_LabelJupiter, ui_LabelSaturn };
-    for (uint8_t i = 0; i < CelestialCalculator::PLANET_COUNT; i++) {
-        CelestialEngine::Body body;
-        if (r.planet == (int8_t)i) body = r.planet_pos;
-        this->placeBody(planet_containers[i], planet_labels[i],
-                        CelestialCalculator::planetName(static_cast<CelestialCalculator::Planet>(i)), body, ref_deg);
+    // One planet container, recoloured for whichever planet is selected (full name, not shortened)
+    CelestialEngine::Body planet_body;
+    const char* planet_name = "";
+    if (r.planet != CelestialSelector::NONE && r.planet < (int8_t)CelestialCalculator::PLANET_COUNT) {
+        planet_body = r.planet_pos;
+        planet_name = CelestialCalculator::planetName(static_cast<CelestialCalculator::Planet>(r.planet));
+        this->setPlanetColor(r.planet);
     }
+    this->placeBody(ui_ContainerPlanet, ui_LabelPlanet, planet_name, planet_body, ref_deg);
 
     // Two star slots; names longer than 6 characters are shortened
     lv_obj_t* const star_containers[2] = { ui_ContainerStar1, ui_ContainerStar2 };
@@ -239,8 +237,7 @@ void CelestialUI::placeBody(lv_obj_t* container, lv_obj_t* label, const char* na
 
 void CelestialUI::hideBodies() {
     lv_obj_t* const containers[] = {
-        ui_ContainerSun, ui_ContainerMoon,
-        ui_ContainerVenus, ui_ContainerMars, ui_ContainerJupiter, ui_ContainerSaturn,
+        ui_ContainerSun, ui_ContainerMoon, ui_ContainerPlanet,
         ui_ContainerStar1, ui_ContainerStar2 };
     for (lv_obj_t* c : containers) lv_obj_add_flag(c, LV_OBJ_FLAG_HIDDEN);
 }
@@ -251,10 +248,19 @@ void CelestialUI::setLabelsStale(bool stale) {
     _labels_stale = stale;
     lv_color_t color = lv_color_hex(stale ? COLOR_TEXT_STALE : COLOR_TEXT);
     lv_obj_t* const labels[] = {
-        ui_LabelSun, ui_LabelMoon,
-        ui_LabelVenus, ui_LabelMars, ui_LabelJupiter, ui_LabelSaturn,
+        ui_LabelSun, ui_LabelMoon, ui_LabelPlanet,
         ui_LabelStar1, ui_LabelStar2 };
     for (lv_obj_t* label : labels) lv_obj_set_style_text_color(label, color, 0);
+}
+
+// Planet dot colour (background, border, outline) for the selected planet (only on change)
+void CelestialUI::setPlanetColor(int8_t planet) {
+    if (planet == _planet_color || planet < 0 || planet >= (int8_t)CelestialCalculator::PLANET_COUNT) return;
+    _planet_color = planet;
+    lv_color_t color = lv_color_hex(PLANET_COLORS[planet]);
+    lv_obj_set_style_bg_color(ui_PanelPlanet, color, 0);
+    lv_obj_set_style_border_color(ui_PanelPlanet, color, 0);
+    lv_obj_set_style_outline_color(ui_PanelPlanet, color, 0);
 }
 
 // Bow arrow: top and pointing up from the zenith, bottom and pointing down from the vessel.

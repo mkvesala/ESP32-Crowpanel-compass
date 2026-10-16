@@ -83,6 +83,9 @@ private:
     // Body label text colour currently applied (red while the heading is stale)
     bool     _labels_stale = false;
 
+    // Planet whose colour ui_PanelPlanet currently has (NONE = SLS default)
+    int8_t   _planet_color = CelestialSelector::NONE;
+
     // View name banner in ui_LabelData after a view change / screen entry
     bool     _banner_active = false;
     uint32_t _banner_start_ms = 0;
@@ -95,6 +98,7 @@ private:
                    const CelestialEngine::Body& body, double ref_deg);
     void hideBodies();
     void setLabelsStale(bool stale);
+    void setPlanetColor(int8_t planet);
     void applyView();
     void showViewBanner();
     static const char* viewBannerText(ChartView view);
@@ -130,6 +134,14 @@ private:
 
     static constexpr uint32_t COLOR_TEXT       = 0xFFFFFF;
     static constexpr uint32_t COLOR_TEXT_STALE = 0xFF0000;
+
+    // ui_PanelPlanet colour per planet, indexed by CelestialCalculator::Planet
+    static constexpr uint32_t PLANET_COLORS[CelestialCalculator::PLANET_COUNT] = {
+        0xF5E6B8,   // VENUS
+        0xC1440E,   // MARS
+        0xC88B3A,   // JUPITER
+        0xE3C16F    // SATURN
+    };
 
     static constexpr const char* NVS_NAMESPACE = "celestial";
     static constexpr const char* NVS_KEY_VIEW  = "view";
