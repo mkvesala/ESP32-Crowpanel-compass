@@ -309,15 +309,14 @@ lv_obj_set_style_bg_color(ui_LabelData, lv_color_hex(0x000000), LV_PART_MAIN | L
 lv_obj_set_style_bg_opa(ui_LabelData, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_LabelCardinals = lv_label_create(ui_CelestialScreen);
-lv_obj_set_width( ui_LabelCardinals, 440);
-lv_obj_set_height( ui_LabelCardinals, 440);
+lv_obj_set_width( ui_LabelCardinals, 470);
+lv_obj_set_height( ui_LabelCardinals, 470);
 lv_obj_set_align( ui_LabelCardinals, LV_ALIGN_CENTER );
-lv_label_set_text(ui_LabelCardinals,"N\n\n\n\n\n\n\n\nW                                                 E\n\n\n\n\n\n\n\nS");
-lv_obj_add_flag( ui_LabelCardinals, LV_OBJ_FLAG_HIDDEN );   /// Flags
+lv_label_set_text(ui_LabelCardinals,"N\n\n\n\n\n\n\n\nW                                                     E\n\n\n\n\n\n\n\nS");
 lv_obj_set_style_text_color(ui_LabelCardinals, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_text_opa(ui_LabelCardinals, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_letter_space(ui_LabelCardinals, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_line_space(ui_LabelCardinals, 2, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_line_space(ui_LabelCardinals, 4, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_align(ui_LabelCardinals, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_LabelCardinals, &ui_font_FontAttitudeTitle24, LV_PART_MAIN| LV_STATE_DEFAULT);
 

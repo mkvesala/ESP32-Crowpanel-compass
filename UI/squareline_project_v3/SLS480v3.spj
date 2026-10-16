@@ -29593,8 +29593,8 @@
                 "flags": 17,
                 "strtype": "OBJECT/Size",
                 "intarray": [
-                  440,
-                  440
+                  470,
+                  470
                 ],
                 "InheritedType": 7
               },
@@ -29614,12 +29614,6 @@
                 "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
-              },
-              {
-                "nid": 100,
-                "strtype": "OBJECT/Hidden",
-                "strval": "True",
-                "InheritedType": 2
               },
               {
                 "nid": 110,
@@ -29677,7 +29671,7 @@
               {
                 "nid": 1030,
                 "strtype": "LABEL/Text",
-                "strval": "N\\n\\n\\n\\n\\n\\n\\n\\nW                                                 E\\n\\n\\n\\n\\n\\n\\n\\nS",
+                "strval": "N\\n\\n\\n\\n\\n\\n\\n\\nW                                                     E\\n\\n\\n\\n\\n\\n\\n\\nS",
                 "InheritedType": 10
               },
               {
@@ -29706,7 +29700,7 @@
                         "strtype": "_style/Text_Spacing",
                         "intarray": [
                           0,
-                          2
+                          4
                         ],
                         "InheritedType": 7
                       },
@@ -30109,7 +30103,7 @@
     "custom_variable_prefix": "uic",
     "separate_screen_save": false,
     "hierarchy_state_save": false,
-    "backup_cnt": 1077,
+    "backup_cnt": 1079,
     "autosave_cnt": 0,
     "group_color_cnt": 2,
     "imagebytearrayprefix": "",
