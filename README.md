@@ -490,7 +490,7 @@ struct DepthDelta {
 |---------|-------------|
 | `ESP32-Crowpanel-compass.ino` | Owns `CrowPanelApplication app`, contains `setup()` and `loop()` |
 | `CrowPanelApplication.h/.cpp` | Class CrowPanelApplication, the "app" — owns all instances |
-| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`), shared by hand across every ESP32 project on the boat: `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta`, `WeatherDelta`, `BatteryDelta`, `HALMETEngineDelta`, `HALMETTankDelta`, `HALMETWaterDelta`, `DepthDelta`, `DateTimeDelta` |
+| `espnow_protocol.h` | Wire protocol (namespace `ESPNow`), shared by hand across every ESP32 project on the boat: `ESPNowHeader`, `ESPNowPacket<T>`, `ESPNowMsgType`, `HeadingData/Delta`, `GnssData/Delta`, `WeatherDelta`, `BatteryDelta`, `HALMETEngineDelta`, `HALMETTankDelta`, `HALMETWaterDelta`, `HALMETOilDelta` (not used here), `DepthDelta`, `DateTimeDelta` |
 | `IScreenUI.h` | Abstract base class for all UI adapter class implementations |
 | `ESPNowReceiver.h/.cpp` | Class `ESPNowReceiver` — ESP-NOW receive (receive-only) |
 | `CompassUI.h/.cpp` | Class `CompassUI` — compass screen adapter, realizes `IScreenUI` |

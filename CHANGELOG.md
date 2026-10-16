@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v4.3.0] - 2026-10-15
+## [v4.3.0] - 2026-10-16
 
 ### Added
 
@@ -15,7 +15,7 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 - Hc is geocentric, as in the Nautical Almanac and sight reduction (apparent place of date, no refraction, no parallax)
 - Sun and Moon whenever Hc > 0°; in twilight (Sun -3° … -9°, inclusive: mid civil to mid nautical twilight) also one planet and two stars, chosen for azimuths ~120° apart, Hc preferably 15°–65°, brightness and distance from the Moon. Re-evaluated every 60 s with hysteresis, at once if a body leaves Hc 10°–75°
 - Centre label: HDG true, latitude and longitude with hemisphere, GNSS UTC, air pressure, temperature
-- Knob press cycles the chart view: FROM ZENITH (bow up, default) → FROM VESSEL (looking up from the boat, bow down, bearings counter-clockwise) → NORTH UP (true north up, needs no heading, bow arrow replaced by the cardinal points N/E/S/W); stored in NVS namespace `"celestial"`, key `"view"`
+- Knob press cycles the chart view: FROM ZENITH (bow up, default) → FROM VESSEL (looking up from the boat, bow down, bearings counter-clockwise) → NORTH UP (true north up, needs no heading, bow arrow replaced by the cardinal points N/E/S/W at the screen edge, outside the horizon circle); stored in NVS namespace `"celestial"`, key `"view"`
 - The view name replaces the centre data for 3 s on every view change and on screen entry
 - Per-source freshness, stale data is never shown as fresh: position 5 s and GNSS time 10 s (bodies hidden), weather 6 s
 - Heading loss in the bow-relative views, in two steps: after 2 s the heading shows `---°` and the body texts turn red, but bodies are still placed with the last heading; after 4 s the bodies are hidden. Normal display resumes as soon as the heading returns
@@ -30,8 +30,9 @@ New screen between ENGINE and BRIGHTNESS. Shows the computed altitude Hc and azi
 
 - `SW_VERSION` = `"v4.3.0"`
 - Requires UBLOX-ESP32-SignalK-gateway v1.3.0 or newer for the GNSS UTC (`DATETIME_DELTA`) used by the celestial screen
+- `espnow_protocol.h` synced with the fleet-wide copy: adds `HALMET_OIL_DELTA` (msg type 10) and `HALMETOilDelta` (engine oil pressure, Pa). Not used by this display — `ESPNowReceiver` ignores the message type
 
-Flash: 2 644 982 B (84 % of the 3 MB app partition), +81 860 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
+Flash: 2 644 978 B (84 % of the 3 MB app partition), +81 856 B over v4.2.4 built the same way (arduino-cli, ESP32 core 3.3.11). Static RAM +1.9 KB; the celestial task allocates a 16 KB stack at boot.
 
 ## [v4.2.4] - 2026-10-12
 
